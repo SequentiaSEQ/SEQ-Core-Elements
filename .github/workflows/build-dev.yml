@@ -1,0 +1,39 @@
+name: Sequentia Core CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches:
+      - master
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+          wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
+          sudo /usr/sbin/update-ccache-symlinks
+
+      - name: Build
+        run: |
+          ./autogen.sh && CC=clang-15 CXX=clang++-15 ./configure --disable-bench --without-gui --without-natpmp --without-miniupnpc && make clean && make -j $(nproc)
+
+      - name: Publish artifact - linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: sequentia-linux
+          path: |
+            src/elementsd
+            src/elements-cli
+            src/elements-tx
+            src/elements-util
+            src/elements-wallet
