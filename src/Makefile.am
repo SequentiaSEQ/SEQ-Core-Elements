@@ -238,6 +238,7 @@ BITCOIN_CORE_H = \
   script/sign.h \
   script/signingprovider.h \
   script/standard.h \
+  sequentia/rpc/rawtransaction.cpp \
   shutdown.h \
   signet.h \
   streams.h \

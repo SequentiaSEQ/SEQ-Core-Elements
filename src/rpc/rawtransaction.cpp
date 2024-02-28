@@ -3,6 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#define __SEQUENTIA__ 1
+
 #include <asset.h>
 #include <base58.h>
 #include <block_proof.h>
@@ -39,6 +41,7 @@
 #include <script/sign.h>
 #include <script/signingprovider.h>
 #include <script/standard.h>
+#include <sequentia/rpc/rawtransaction.h>
 #include <uint256.h>
 #include <util/bip32.h>
 #include <util/moneystr.h>
@@ -457,7 +460,7 @@ static RPCHelpMan verifytxoutproof()
     };
 }
 
-static RPCHelpMan createrawtransaction()
+[[maybe_unused]] static RPCHelpMan createrawtransaction()
 {
     return RPCHelpMan{"createrawtransaction",
                 "\nCreate a transaction spending the given inputs and creating new outputs.\n"
@@ -3382,7 +3385,11 @@ static const CRPCCommand commands[] =
 { //  category              actor (function)            argNames
   //  --------------------- ------------------------        -----------------------     ----------
     { "rawtransactions",    &getrawtransaction,           },
+#ifdef __SEQUENTIA__
+    { "rawtransactions",    &sequentia::createrawtransaction, },
+#else
     { "rawtransactions",    &createrawtransaction,        },
+#endif
     { "rawtransactions",    &decoderawtransaction,        },
     { "rawtransactions",    &decodescript,                },
     { "rawtransactions",    &sendrawtransaction,          },
