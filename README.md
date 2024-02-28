@@ -1,14 +1,11 @@
-Elements Project blockchain platform
+Sequentia Project blockchain platform
 ====================================
 
-[![Build Status](https://travis-ci.org/ElementsProject/elements.svg?branch=master)](https://travis-ci.org/ElementsProject/elements)
+https://sequentia.io/
 
-https://elementsproject.org
+Sequentia is a Bitcoin sidechain dedicated to asset tokenization and decentralized exchanges.
 
-This is the integration and staging tree for the Elements blockchain platform,
-a collection of feature experiments and extensions to the Bitcoin protocol.
-This platform enables anyone to build their own businesses or networks
-pegged to Bitcoin as a sidechain or run as a standalone blockchain with arbitrary asset tokens.
+Based on Elements Version: 23.2.1
 
 Modes
 -----
