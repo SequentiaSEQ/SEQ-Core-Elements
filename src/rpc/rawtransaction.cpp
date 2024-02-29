@@ -4,6 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #define __SEQUENTIA__ 1
+#ifdef __SEQUENTIA__
+#include <sequentia/rpc/rawtransaction.h>
+#endif
 
 #include <asset.h>
 #include <base58.h>
@@ -41,7 +44,6 @@
 #include <script/sign.h>
 #include <script/signingprovider.h>
 #include <script/standard.h>
-#include <sequentia/rpc/rawtransaction.h>
 #include <uint256.h>
 #include <util/bip32.h>
 #include <util/moneystr.h>
