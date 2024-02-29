@@ -3378,18 +3378,15 @@ static RPCHelpMan updatepsbtpegin()
 // END ELEMENTS
 //
 
+#ifdef __SEQUENTIA__
 void RegisterRawTransactionRPCCommands(CRPCTable &t)
 {
 // clang-format off
-static const CRPCCommand commands[] =
+static const CRPCCommand commands[] = 
 { //  category              actor (function)            argNames
   //  --------------------- ------------------------        -----------------------     ----------
     { "rawtransactions",    &getrawtransaction,           },
-#ifdef __SEQUENTIA__
     { "rawtransactions",    &sequentia::createrawtransaction, },
-#else
-    { "rawtransactions",    &createrawtransaction,        },
-#endif
     { "rawtransactions",    &decoderawtransaction,        },
     { "rawtransactions",    &decodescript,                },
     { "rawtransactions",    &sendrawtransaction,          },
@@ -3421,3 +3418,44 @@ static const CRPCCommand commands[] =
         t.appendCommand(c.name, &c);
     }
 }
+#else
+void RegisterRawTransactionRPCCommands(CRPCTable &t)
+{
+// clang-format off
+static const CRPCCommand commands[] =
+{ //  category              actor (function)            argNames
+  //  --------------------- ------------------------        -----------------------     ----------
+    { "rawtransactions",    &getrawtransaction,           },
+    { "rawtransactions",    &createrawtransaction,        },
+    { "rawtransactions",    &decoderawtransaction,        },
+    { "rawtransactions",    &decodescript,                },
+    { "rawtransactions",    &sendrawtransaction,          },
+    { "rawtransactions",    &combinerawtransaction,       },
+    { "rawtransactions",    &signrawtransactionwithkey,   },
+    { "rawtransactions",    &testmempoolaccept,           },
+    { "rawtransactions",    &decodepsbt,                  },
+    { "rawtransactions",    &combinepsbt,                 },
+    { "rawtransactions",    &finalizepsbt,                },
+    { "rawtransactions",    &createpsbt,                  },
+    { "rawtransactions",    &converttopsbt,               },
+    { "rawtransactions",    &utxoupdatepsbt,              },
+    { "rawtransactions",    &parsepsbt,                   },
+#if 0
+    { "rawtransactions",    &joinpsbts,                   },
+#endif
+    { "rawtransactions",    &analyzepsbt,                 },
+
+    { "blockchain",         &gettxoutproof,               },
+    { "blockchain",         &verifytxoutproof,            },
+    { "rawtransactions",    &rawissueasset,               },
+    { "rawtransactions",    &rawreissueasset,             },
+    { "rawtransactions",    &rawblindrawtransaction,      },
+    { "rawtransactions",    &calculateasset,              },
+    { "rawtransactions",    &updatepsbtpegin,             },
+};
+// clang-format on
+    for (const auto& c : commands) {
+        t.appendCommand(c.name, &c);
+    }
+}
+#endif
