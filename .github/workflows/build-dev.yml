@@ -31,6 +31,7 @@ jobs:
         run: |
           ./autogen.sh
           ./contrib/install_db4.sh .
+          export BDB_PREFIX='/home/runner/work/SEQ-Core-Elements/SEQ-Core-Elements/db4'
           export CC=clang-15 CXX=clang++-15 BDB_LIBS='-L${BDB_PREFIX}/lib -ldb_cxx-4.8' BDB_CFLAGS='-I${BDB_PREFIX}/include'
           ./configure --disable-bench --without-gui --without-natpmp --without-miniupnpc
           make clean
