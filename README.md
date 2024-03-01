@@ -5,7 +5,37 @@ https://sequentia.io/
 
 Sequentia is a Bitcoin sidechain dedicated to asset tokenization and decentralized exchanges.
 
-Based on Elements Version: 23.2.1
+Current code is based on Elements Version: 23.2.1
+
+Quick Ubuntu build instructions for development:
+-----
+
+Instal build tools
+```bash
+sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+```
+Install clang 15:
+```bash
+wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
+```
+Setup ccache:
+```bash
+sudo /usr/sbin/update-ccache-symlinks
+echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+source ~/.bashrc
+```
+Build:
+```bash
+./autogen.sh
+./contrib/install_db4.sh .
+export CC=clang-15 CXX=clang++-15 BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include"
+./configure --without-gui --without-natpmp --without-miniupnpc
+make -j$(nproc)
+```
+To speed up the build if not necessary, disable bench and tests in configure:
+```bash
+./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
+```
 
 Modes
 -----
