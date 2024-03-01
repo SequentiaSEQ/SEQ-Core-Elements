@@ -3,11 +3,13 @@ name: Sequentia Core CI
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - dev
   pull_request:
     branches:
       - master
-      - feature/*
+      - dev
 
 jobs:
   build:
@@ -22,10 +24,22 @@ jobs:
           sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
           wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
           sudo /usr/sbin/update-ccache-symlinks
-
+          echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+          source ~/.bashrc
+          
       - name: Build
+        env:
+          BDB_PREFIX: '/home/runner/work/SEQ-Core-Elements/SEQ-Core-Elements/db4'
+          BDB_LIBS: '-L${BDB_PREFIX}/lib -ldb_cxx-4.8'
+          BDB_CFLAGS: '-I${BDB_PREFIX}/include'
+          CC: clang-15
+          CXX: clang++-15
         run: |
-          ./autogen.sh && CC=clang-15 CXX=clang++-15 ./configure --disable-bench --without-gui --without-natpmp --without-miniupnpc && make clean && make -j $(nproc)
+          ./autogen.sh
+          ./contrib/install_db4.sh .
+          ./configure --disable-bench --without-gui --without-natpmp --without-miniupnpc
+          make clean
+          make -j$(nproc)
 
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
