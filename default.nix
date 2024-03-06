@@ -69,15 +69,9 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = with lib; {
-    description = "Open Source implementation of advanced blockchain features extending the Bitcoin protocol";
-    longDescription= ''
-      The Elements blockchain platform is a collection of feature experiments and extensions to the
-      Bitcoin protocol. This platform enables anyone to build their own businesses or networks
-      pegged to Bitcoin as a sidechain or run as a standalone blockchain with arbitrary asset
-      tokens.
-    '';
-    homepage = "https://www.github.com/ElementsProject/elements";
-    maintainers = with maintainers; [ prusnak ];
+    description = "Sequentia is a Bitcoin sidechain dedicated to asset tokenization and decentralized exchanges";
+    homepage = "https://www.github.com/SequentiaSEQ/SEQ-Core-Elements";
+    maintainers = [];
     license = licenses.mit;
     platforms = platforms.unix;
   };
