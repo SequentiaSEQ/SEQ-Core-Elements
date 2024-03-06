@@ -151,3 +151,6 @@ osx_volname
 dist/
 
 /guix-build-*
+
+# nix
+result
