@@ -3,6 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#define __SEQUENTIA__ 1
+#ifdef __SEQUENTIA__
+#include <sequentia/rpc/rawtransaction.h>
+#endif
+
 #include <asset.h>
 #include <base58.h>
 #include <block_proof.h>
@@ -457,7 +462,7 @@ static RPCHelpMan verifytxoutproof()
     };
 }
 
-static RPCHelpMan createrawtransaction()
+[[maybe_unused]] static RPCHelpMan createrawtransaction()
 {
     return RPCHelpMan{"createrawtransaction",
                 "\nCreate a transaction spending the given inputs and creating new outputs.\n"
@@ -3375,6 +3380,47 @@ static RPCHelpMan updatepsbtpegin()
 // END ELEMENTS
 //
 
+#ifdef __SEQUENTIA__
+void RegisterRawTransactionRPCCommands(CRPCTable &t)
+{
+// clang-format off
+static const CRPCCommand commands[] = 
+{ //  category              actor (function)            argNames
+  //  --------------------- ------------------------        -----------------------     ----------
+    { "rawtransactions",    &getrawtransaction,           },
+    { "rawtransactions",    &sequentia::createrawtransaction, },
+    { "rawtransactions",    &decoderawtransaction,        },
+    { "rawtransactions",    &decodescript,                },
+    { "rawtransactions",    &sendrawtransaction,          },
+    { "rawtransactions",    &combinerawtransaction,       },
+    { "rawtransactions",    &signrawtransactionwithkey,   },
+    { "rawtransactions",    &testmempoolaccept,           },
+    { "rawtransactions",    &decodepsbt,                  },
+    { "rawtransactions",    &combinepsbt,                 },
+    { "rawtransactions",    &finalizepsbt,                },
+    { "rawtransactions",    &createpsbt,                  },
+    { "rawtransactions",    &converttopsbt,               },
+    { "rawtransactions",    &utxoupdatepsbt,              },
+    { "rawtransactions",    &parsepsbt,                   },
+#if 0
+    { "rawtransactions",    &joinpsbts,                   },
+#endif
+    { "rawtransactions",    &analyzepsbt,                 },
+
+    { "blockchain",         &gettxoutproof,               },
+    { "blockchain",         &verifytxoutproof,            },
+    { "rawtransactions",    &rawissueasset,               },
+    { "rawtransactions",    &rawreissueasset,             },
+    { "rawtransactions",    &rawblindrawtransaction,      },
+    { "rawtransactions",    &calculateasset,              },
+    { "rawtransactions",    &updatepsbtpegin,             },
+};
+// clang-format on
+    for (const auto& c : commands) {
+        t.appendCommand(c.name, &c);
+    }
+}
+#else
 void RegisterRawTransactionRPCCommands(CRPCTable &t)
 {
 // clang-format off
@@ -3414,3 +3460,4 @@ static const CRPCCommand commands[] =
         t.appendCommand(c.name, &c);
     }
 }
+#endif
