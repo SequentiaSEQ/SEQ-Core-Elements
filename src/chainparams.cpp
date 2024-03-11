@@ -1639,12 +1639,12 @@ public:
         parentGenesisBlockHash = uint256();
         const bool parent_genesis_is_null = parentGenesisBlockHash == uint256();
         assert(consensus.has_parent_chain != parent_genesis_is_null);
-        consensus.parentChainPowLimit = uint256S("0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.parentChainPowLimit = uint256();
         consensus.parent_chain_signblockscript = CScript(); // It has PoW
-        consensus.pegin_min_depth = 100;
+        consensus.pegin_min_depth = 0;
 
         const CScript default_script(CScript() << OP_TRUE);
-        consensus.fedpegScript = CScript();
+        consensus.fedpegScript = default_script;
 
         // Calculate pegged Bitcoin asset
         std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
@@ -1692,8 +1692,8 @@ std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, c
         return std::unique_ptr<CChainParams>(new CLiquidV1Params());
     } else if (chain == CBaseChainParams::LIQUID1TEST) {
         return std::unique_ptr<CChainParams>(new CLiquidV1TestParams(args));
-    } else if (chain == CBaseChainParams::LIQUIDTESTNET) {
-        return std::unique_ptr<CChainParams>(new CLiquidTestNetParams(chain, args));
+    } else if (chain == CBaseChainParams::SEQUENTIA) {
+        return std::unique_ptr<CChainParams>(new CSequentiaParams());
     }
 
     return std::unique_ptr<CChainParams>(new CCustomParams(chain, args));
