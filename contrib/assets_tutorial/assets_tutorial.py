@@ -101,8 +101,8 @@ print ("1c. Creating wallets on all daemons")
 # In Elements there is no block subsidy. In a production sidechain, `initialfreecoins`
 # will likely be set to zero, necessitating peg-in functionality to get a policy asset.
 
-e1.createwallet("wallet1")
-e2.createwallet("wallet2")
+e1.createwallet("wallet1", False, False, "", False, False)
+e2.createwallet("wallet2", False, False, "", False, False)
 
 # Because of https://github.com/ElementsProject/elements/issues/956 we need to run
 # `rescanblockchain` after creating the wallets to detect the `TRUE` outputs
@@ -500,8 +500,8 @@ assert e1.getbestblockhash() == e2.getbestblockhash()
 
 print ("6c. Import signing keys")
 # Now import signing keys
-e1.createwallet("wallet1")
-e2.createwallet("wallet2")
+e1.createwallet("wallet1", False, False, "", False, False)
+e2.createwallet("wallet2", False, False, "", False, False)
 e1.importprivkey(key1)
 e2.importprivkey(key2)
 
@@ -585,8 +585,8 @@ e2.restart(extra_args)
 e1.connect_to(e2)
 e2.connect_to(e1)
 
-e1.createwallet("wallet1")
-e2.createwallet("wallet2")
+e1.createwallet("wallet1", False, False, "", False, False)
+e2.createwallet("wallet2", False, False, "", False, False)
 e1.rescanblockchain()
 e2.rescanblockchain()
 assert e1.getwalletinfo()['balance'] == { 'bitcoin': 0 }

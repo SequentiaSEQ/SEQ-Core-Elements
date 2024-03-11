@@ -1537,6 +1537,138 @@ public:
     }
 };
 
+/**
+ * Sequentia
+ */
+class CSequentiaParams : public CChainParams {
+public:
+    CSequentiaParams()
+    {
+
+        strNetworkID = "sequentia";
+        consensus.nSubsidyHalvingInterval = 150;
+        consensus.BIP16Exception = uint256();
+        consensus.BIP34Height = 0;
+        consensus.BIP34Hash = uint256();
+        consensus.BIP65Height = 0;
+        consensus.BIP66Height = 0;
+        consensus.CSVHeight = 0;
+        consensus.SegwitHeight = 0;
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks;
+        consensus.nPowTargetSpacing = 60; // Minute block assumption
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = true;
+        consensus.nRuleChangeActivationThreshold = 108;
+        consensus.nMinerConfirmationWindow = 144;
+
+        consensus.nMinimumChainWork = uint256();
+        consensus.defaultAssumeValid = uint256();
+
+        nPruneAfterHeight = 1000;
+        fDefaultConsistencyChecks = false;
+        fRequireStandard = true;
+        m_is_test_chain = false;
+
+        m_assumed_blockchain_size = 3;
+        m_assumed_chain_state_size = 1;
+
+        bech32_hrp = "sx"; // ex(plicit)
+        blech32_hrp = "sq"; // l(i)q(uid)
+
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 57);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 39);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 128);
+        base58Prefixes[BLINDED_ADDRESS]= std::vector<unsigned char>(1,12);
+
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
+
+        base58Prefixes[PARENT_PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);
+        base58Prefixes[PARENT_SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);
+
+        pchMessageStart[0] = 0xfa;
+        pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xda;
+
+        nDefaultPort = 7042;
+
+        vSeeds.clear();
+        // vSeeds.emplace_back("seed.liquidnetwork.io");
+        // vFixedSeeds = std::vector<uint8_t>(std::begin(pnSeed6_liquidv1), std::end(pnSeed6_liquidv1));
+
+        //
+        // ELEMENTS fields
+
+        consensus.genesis_style = "elements"; // unused here but let's set it anyways
+
+        // Block signing encumberance script, default of 51 aka OP_TRUE
+        std::vector<unsigned char> sign_bytes = ParseHex("5b21026a2a106ec32c8a1e8052e5d02a7b0a150423dbd9b116fc48d46630ff6e6a05b92102791646a8b49c2740352b4495c118d876347bf47d0551c01c4332fdc2df526f1a2102888bda53a424466b0451627df22090143bbf7c060e9eacb1e38426f6b07f2ae12102aee8967150dee220f613de3b239320355a498808084a93eaf39a34dcd62024852102d46e9259d0a0bb2bcbc461a3e68f34adca27b8d08fbe985853992b4b104e27412102e9944e35e5750ab621e098145b8e6cf373c273b7c04747d1aa020be0af40ccd62102f9a9d4b10a6d6c56d8c955c547330c589bb45e774551d46d415e51cd9ad5116321033b421566c124dfde4db9defe4084b7aa4e7f36744758d92806b8f72c2e943309210353dcc6b4cf6ad28aceb7f7b2db92a4bf07ac42d357adf756f3eca790664314b621037f55980af0455e4fb55aad9b85a55068bb6dc4740ea87276dc693f4598db45fa210384001daa88dabd23db878dbb1ce5b4c2a5fa72c3113e3514bf602325d0c37b8e21039056d089f2fe72dbc0a14780b4635b0dc8a1b40b7a59106325dd1bc45cc70493210397ab8ea7b0bf85bc7fc56bb27bf85e75502e94e76a6781c409f3f2ec3d1122192103b00e3b5b77884bf3cae204c4b4eac003601da75f96982ffcb3dcb29c5ee419b92103c1f3c0874cfe34b8131af34699589aacec4093399739ae352e8a46f80a6f68375fae");
+        consensus.signblockscript = CScript(sign_bytes.begin(), sign_bytes.end());
+        // 11 signatures, 15 pubkeys, plus wiggle room
+        consensus.max_block_signature_size = 12*74+16*33;
+        g_signed_blocks = true;
+
+        g_con_blockheightinheader = true;
+        g_con_elementsmode = true;
+        consensus.elements_mode = g_con_elementsmode;
+        consensus.total_valid_epochs = 2;
+        consensus.dynamic_epoch_length = 20160;
+
+
+        consensus.genesis_subsidy = 0;
+
+        // All non-zero coinbase outputs must go to this scriptPubKey
+        std::vector<unsigned char> man_bytes = ParseHex("76a914fc26751a5025129a2fd006c6fbfa598ddd67f7e188ac");
+        consensus.mandatory_coinbase_destination = CScript(man_bytes.begin(), man_bytes.end()); // Blank script allows any coinbase destination
+
+        // Custom chains connect coinbase outputs to db by default
+        consensus.connect_genesis_outputs = true;
+
+        initialFreeCoins = 0;
+
+        anyonecanspend_aremine = false;
+
+        consensus.has_parent_chain = false;
+
+        enforce_pak = false;
+
+        multi_data_permitted = false;
+
+        parentGenesisBlockHash = uint256();
+        const bool parent_genesis_is_null = parentGenesisBlockHash == uint256();
+        assert(consensus.has_parent_chain != parent_genesis_is_null);
+        consensus.parentChainPowLimit = uint256S("0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.parent_chain_signblockscript = CScript(); // It has PoW
+        consensus.pegin_min_depth = 100;
+
+        const CScript default_script(CScript() << OP_TRUE);
+        consensus.fedpegScript = CScript();
+
+        // Calculate pegged Bitcoin asset
+        std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+        // uint256 entropy;
+        // GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
+
+        // Elements serialization uses derivation, bitcoin serialization uses 0x00
+        // if (g_con_elementsmode) {
+        //     CalculateAsset(consensus.pegged_asset, entropy);
+        // } else {
+            // assert(consensus.pegged_asset == CAsset());
+        // }
+
+        consensus.parent_pegged_asset.SetHex("0x00"); // No parent pegged asset
+        initial_reissuance_tokens = 0;
+
+        consensus.subsidy_asset = consensus.pegged_asset = CAsset();
+
+        // Finally, create genesis block
+        genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1710156316, 2, 0x207fffff, 1, 0);
+        consensus.hashGenesisBlock = genesis.GetHash();
+        // assert(consensus.hashGenesisBlock.GetHex() == "1466275836220db2944ca059a3a10ef6fd2ea684b0688d2c379296888a206003");
+    }
+};
 
 static std::unique_ptr<const CChainParams> globalChainParams;
 
