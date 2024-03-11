@@ -1562,13 +1562,13 @@ public:
         consensus.nRuleChangeActivationThreshold = 108;
         consensus.nMinerConfirmationWindow = 144;
 
-        consensus.nMinimumChainWork = uint256();
-        consensus.defaultAssumeValid = uint256();
+        consensus.nMinimumChainWork = uint256S(("0x0"));
+        consensus.defaultAssumeValid = uint256S(("0x00"));
 
         nPruneAfterHeight = 1000;
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
-        m_is_test_chain = false;
+        m_is_test_chain = true;
 
         m_assumed_blockchain_size = 3;
         m_assumed_chain_state_size = 1;
@@ -1608,7 +1608,7 @@ public:
         consensus.signblockscript = CScript(sign_bytes.begin(), sign_bytes.end());
         // 11 signatures, 15 pubkeys, plus wiggle room
         consensus.max_block_signature_size = 12*74+16*33;
-        g_signed_blocks = true;
+        g_signed_blocks = false;
 
         g_con_blockheightinheader = true;
         g_con_elementsmode = true;
