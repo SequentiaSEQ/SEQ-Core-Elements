@@ -28,6 +28,9 @@ static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 // Globals to avoid circular dependencies.
 extern bool g_con_elementsmode;
 
+// SEQUENTIA:
+extern bool g_con_sequentiamode;
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
