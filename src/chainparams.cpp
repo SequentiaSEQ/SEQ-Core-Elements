@@ -1512,6 +1512,11 @@ public:
         UpdateElementsActivationParametersFromArgs(consensus, args);
 
         // END ELEMENTS fields
+
+        // SEQUENTIA fields
+        g_con_sequentiamode = true;
+
+        // END SEQUENTIA fields
     }
 
     // XXX: This is copy-and-pasted from CCustomParams; sharing it would be better, but is annoying.
