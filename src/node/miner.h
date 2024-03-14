@@ -151,6 +151,9 @@ private:
     const CTxMemPool& m_mempool;
     CChainState& m_chainstate;
 
+    // SEQUENTIA:
+    CAmountMap feeMap;
+
 public:
     struct Options {
         Options();

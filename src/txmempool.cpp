@@ -104,6 +104,27 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
       nSigOpCostWithAncestors{sigOpCost},
       setPeginsSpent(_setPeginsSpent) {}
 
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset,
+                                 int64_t time, unsigned int entry_height,
+                                 bool spends_coinbase, int64_t sigops_cost, LockPoints lp,
+                                 const std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent)
+    : tx{tx},
+      nFee{fee},
+      feeAsset{feeAsset},
+      nTxWeight(GetTransactionWeight(*tx)),
+      nUsageSize{RecursiveDynamicUsage(tx)},
+      nTime{time},
+      entryHeight{entry_height},
+      spendsCoinbase{spends_coinbase},
+      sigOpCost{sigops_cost},
+      lockPoints{lp},
+      nSizeWithDescendants{GetTxSize()},
+      nModFeesWithDescendants{nFee},
+      nSizeWithAncestors{GetTxSize()},
+      nModFeesWithAncestors{nFee},
+      nSigOpCostWithAncestors{sigOpCost},
+      setPeginsSpent(_setPeginsSpent) {}
+
 void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
 {
     nModFeesWithDescendants += newFeeDelta - feeDelta;
