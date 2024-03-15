@@ -192,7 +192,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
-    if (feeMap.size() > 0) {
+    if (g_con_sequentiamode && feeMap.size() > 0) {
         coinbaseTx.vin.resize(feeMap.size());
         coinbaseTx.vout.resize(feeMap.size());
         int index = 0;
@@ -200,16 +200,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             coinbaseTx.vin[index].prevout.SetNull();
             coinbaseTx.vout[index].scriptPubKey = scriptPubKeyIn;
             coinbaseTx.vout[index].nAsset = fee.first;
-            coinbaseTx.vout[index].nValue = fee.second + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
-            if (g_con_elementsmode) {
-                if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
-                    // Only claim the subsidy if it's the same as the policy asset.
-                    coinbaseTx.vout[index].nValue = fee.second;
-                }
-                // 0-value outputs must be unspendable
-                if (coinbaseTx.vout[index].nValue.GetAmount() == 0) {
-                    coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
-                }
+            coinbaseTx.vout[index].nValue = fee.second;
+            if (coinbaseTx.vout[index].nValue.GetAmount() == 0) {
+                coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
             }
             coinbaseTx.vin[index].scriptSig = CScript() << nHeight << OP_0;
             // Non-consensus commitment output before finishing coinbase transaction
