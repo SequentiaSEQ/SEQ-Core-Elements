@@ -17,6 +17,7 @@ const std::string CBaseChainParams::REGTEST = "regtest";
 const std::string CBaseChainParams::LIQUID1 = "liquidv1";
 const std::string CBaseChainParams::LIQUID1TEST = "liquidv1test";
 const std::string CBaseChainParams::LIQUIDTESTNET = "liquidtestnet";
+const std::string CBaseChainParams::SEQUENTIA = "sequentia";
 
 const std::string CBaseChainParams::DEFAULT = CBaseChainParams::LIQUID1;
 

@@ -1094,7 +1094,7 @@ bool AppInitParameterInteraction(const ArgsManager& args)
     }
 
     try {
-        const std::string default_asset_name = gArgs.GetArg("-defaultpeggedassetname", "bitcoin");
+        const std::string default_asset_name = gArgs.GetArg("-defaultpeggedassetname", "gasset");
         InitGlobalAssetDir(gArgs.GetArgs("-assetdir"), default_asset_name);
     } catch (const std::exception& e) {
         return InitError(Untranslated(strprintf("Error in -assetdir: %s\n", e.what())));

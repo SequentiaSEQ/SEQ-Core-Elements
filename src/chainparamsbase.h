@@ -26,6 +26,8 @@ public:
     static const std::string LIQUID1;
     static const std::string LIQUID1TEST;
     static const std::string LIQUIDTESTNET;
+    static const std::string SEQUENTIA;
+
     ///@}
 
     static const std::string DEFAULT;
