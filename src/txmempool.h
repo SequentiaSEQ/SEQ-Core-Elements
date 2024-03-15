@@ -118,6 +118,9 @@ private:
     CAmount nModFeesWithAncestors;
     int64_t nSigOpCostWithAncestors;
 
+    // SEQUENTIA:
+    const CAsset feeAsset;
+
 public:
     CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
                     int64_t time, unsigned int entry_height,
@@ -169,6 +172,15 @@ public:
 
     // ELEMENTS:
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
+
+    // SEQUENTIA:
+    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset,
+            int64_t time, unsigned int entry_height,
+            bool spends_coinbase,
+            int64_t sigops_cost, LockPoints lp,
+            const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
+
+    const CAsset& GetFeeAsset() const { return feeAsset; }
 };
 
 // extracts a transaction hash from CTxMemPoolEntry or CTransactionRef
