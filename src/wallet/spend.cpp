@@ -939,11 +939,12 @@ static bool CreateTransactionInternal(
 
     CoinSelectionParams coin_selection_params; // Parameters for coin selection, init with dummy
     coin_selection_params.m_avoid_partial_spends = coin_control.m_avoid_partial_spends;
+    coin_selection_params.m_fee_asset = coin_control.m_fee_asset;
 
     CScript dummy_script = CScript() << 0x00;
     CAmountMap map_recipients_sum;
-    // Always assume that we are at least sending policyAsset.
-    map_recipients_sum[::policyAsset] = 0;
+    // Always assume that we are at least sending fee asset.
+    map_recipients_sum[coin_selection_params.m_fee_asset] = 0;
     std::vector<std::unique_ptr<ReserveDestination>> reservedest;
     // Set the long term feerate estimate to the wallet's consolidate feerate
     coin_selection_params.m_long_term_feerate = wallet.m_consolidate_feerate;
@@ -972,7 +973,6 @@ static bool CreateTransactionInternal(
             coin_selection_params.m_subtract_fee_outputs = true;
         }
     }
-    coin_selection_params.m_fee_asset = coin_selection_params.m_fee_asset.value();
 
     // Create change script that will be used if we need change
     // ELEMENTS: A map that keeps track of the change script for each asset and also
