@@ -162,6 +162,7 @@ RPCHelpMan sendtoaddress()
                     {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                     {"ignoreblindfail", RPCArg::Type::BOOL, RPCArg::Default{true}, "Return a transaction even when a blinding attempt fails due to number of blinded inputs/outputs."},
                     {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
+                    {"fee_assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for fee payment."},
                     {"verbose", RPCArg::Type::BOOL, RPCArg::Default{false}, "If true, return extra information about the transaction."},
                 },
                 {
@@ -237,6 +238,18 @@ RPCHelpMan sendtoaddress()
 
     SetFeeEstimateMode(*pwallet, coin_control, /* conf_target */ request.params[6], /* estimate_mode */ request.params[7], /* fee_rate */ request.params[11], /* override_min_fee */ false);
 
+    CAsset feeAsset = asset;
+    if (g_con_sequentiamode) {
+        if (request.params.size() > 12 && request.params[12].isStr() && !request.params[12].get_str().empty()) {
+            std::string strFeeAsset = request.params[12].get_str();
+            feeAsset = GetAssetFromString(strFeeAsset);
+            if (feeAsset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+            }
+        }
+    }
+    coin_control.m_fee_asset = feeAsset;
+
     EnsureWalletIsUnlocked(*pwallet);
 
     UniValue address_amounts(UniValue::VOBJ);
@@ -251,7 +264,7 @@ RPCHelpMan sendtoaddress()
 
     std::vector<CRecipient> recipients;
     ParseRecipients(address_amounts, address_assets, subtractFeeFromAmount, recipients);
-    bool verbose = request.params[12].isNull() ? false: request.params[12].get_bool();
+    bool verbose = request.params[13].isNull() ? false: request.params[13].get_bool();
 
     return SendMoney(*pwallet, coin_control, recipients, mapValue, verbose, ignore_blind_fail);
 },
