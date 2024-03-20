@@ -1,8 +1,8 @@
-let 
+let
   pkgs = import ./pkgs.nix;
-  sequentia = pkgs.callPackage ./default.nix {};
+  sequentia = pkgs.sequentia;
 in pkgs.mkShell {
   inputsFrom = [
     sequentia
   ];
-} 
+}
