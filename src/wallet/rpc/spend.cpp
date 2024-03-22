@@ -490,6 +490,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                 {"locktime", UniValueType(UniValue::VNUM)},
                 {"fee_rate", UniValueType()}, // will be checked by AmountFromValue() in SetFeeEstimateMode()
                 {"feeRate", UniValueType()}, // will be checked by AmountFromValue() below
+                {"feeAsset", UniValueType(UniValue::VSTR)},
                 {"psbt", UniValueType(UniValue::VBOOL)},
                 {"solving_data", UniValueType(UniValue::VOBJ)},
                 {"subtractFeeFromOutputs", UniValueType(UniValue::VARR)},
@@ -516,6 +517,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                 if (!IsValidDestination(dest)) {
                     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Change address must be a valid address");
                 }
+                // @SEQUENTIA
                 destinations[::policyAsset] = dest;
             } else if (change_address.isObject()) {
                 // Map of assets to destinations.
@@ -593,6 +595,17 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
     } else {
         // if options is null and not a bool
         coinControl.fAllowWatchOnly = ParseIncludeWatchonly(NullUniValue, wallet);
+    }
+
+    if (options.exists("feeAsset")) {
+        std::string strFeeAsset = options["feeAsset"].get_str();
+        CAsset feeAsset = GetAssetFromString(strFeeAsset);
+        if (feeAsset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+        }
+        coinControl.m_fee_asset = feeAsset;
+    } else {
+        coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
     }
 
     if (options.exists("solving_data")) {
@@ -776,6 +789,7 @@ RPCHelpMan fundrawtransaction()
                             {"lockUnspents", RPCArg::Type::BOOL, RPCArg::Default{false}, "Lock selected unspent outputs"},
                             {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
                             {"feeRate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_UNIT + "/kvB."},
+                            {"feeAsset", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for fee payment."},
                             {"subtractFeeFromOutputs", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR}, "The integers.\n"
                                                           "The fee will be equally deducted from the amount of each specified output.\n"
                                                           "Those recipients will receive less coins than you enter in their corresponding amount field.\n"
