@@ -150,6 +150,7 @@ BITCOIN_CORE_H = \
   deploymentinfo.h \
   deploymentstatus.h \
   dynafed.h \
+  exchangerates.h \
   external_signer.h \
   flatfile.h \
   fs.h \
@@ -351,6 +352,7 @@ libbitcoin_node_a_SOURCES = \
   dynafed.cpp \
   dbwrapper.cpp \
   deploymentstatus.cpp \
+  exchangerates.cpp \
   flatfile.cpp \
   httprpc.cpp \
   httpserver.cpp \
