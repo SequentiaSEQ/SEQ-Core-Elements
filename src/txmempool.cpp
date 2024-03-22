@@ -104,13 +104,14 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
       nSigOpCostWithAncestors{sigOpCost},
       setPeginsSpent(_setPeginsSpent) {}
 
-CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset,
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeAmount,
                                  int64_t time, unsigned int entry_height,
                                  bool spends_coinbase, int64_t sigops_cost, LockPoints lp,
                                  const std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent)
     : tx{tx},
       nFee{fee},
-      feeAsset{feeAsset},
+      nFeeAsset{feeAsset},
+      nFeeAmount{feeAmount},
       nTxWeight(GetTransactionWeight(*tx)),
       nUsageSize{RecursiveDynamicUsage(tx)},
       nTime{time},
