@@ -95,7 +95,9 @@ private:
     const CTransactionRef tx;
     mutable Parents m_parents;
     mutable Children m_children;
-    const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
+    CAmount nFee;                   //!< Value in reference unit. Cached to avoid expensive parent-transaction lookups.
+    const CAsset nFeeAsset;         //!< SEQUENTIA: Asset used for fee payment.
+    const CAmount nFeeAmount;       //!< SEQUENTIA: Amount in the transaction. 
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool
@@ -117,9 +119,6 @@ private:
     uint64_t nSizeWithAncestors;
     CAmount nModFeesWithAncestors;
     int64_t nSigOpCostWithAncestors;
-
-    // SEQUENTIA:
-    const CAsset feeAsset;
 
 public:
     CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
@@ -174,13 +173,13 @@ public:
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
 
     // SEQUENTIA:
-    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset,
+    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeAmount,
             int64_t time, unsigned int entry_height,
             bool spends_coinbase,
             int64_t sigops_cost, LockPoints lp,
             const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
 
-    const CAsset& GetFeeAsset() const { return feeAsset; }
+    const CAsset& GetFeeAsset() const { return nFeeAsset; }
 };
 
 // extracts a transaction hash from CTxMemPoolEntry or CTransactionRef
