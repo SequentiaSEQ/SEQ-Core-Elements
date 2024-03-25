@@ -883,14 +883,11 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_WITNESS_MUTATED, "bad-witness-nonstandard");
 
     int64_t nSigOpsCost = GetTransactionSigOpCost(tx, m_view, STANDARD_SCRIPT_VERIFY_FLAGS);
-
+    
     CAsset feeAsset;
     if (g_con_sequentiamode) {
-        for (auto fee : fee_map) {
-            feeAsset = fee.first;
-        }
+        feeAsset = fee_map.begin()->first;
     } else {
-        // We only consider policyAsset
         feeAsset = policyAsset;
     }
     ws.m_base_fees = fee_map[feeAsset];
