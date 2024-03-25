@@ -18,7 +18,7 @@ static void AddTx(const CTransactionRef& tx, const CAmount& nFee, CTxMemPool& po
     LockPoints lp;
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
     pool.addUnchecked(CTxMemPoolEntry(
-        tx, nFee, nTime, nHeight,
+        tx, nFee, ::policyAsset, nFee, nTime, nHeight,
         spendsCoinbase, sigOpCost, lp, setPeginsSpent));
 }
 
