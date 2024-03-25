@@ -121,15 +121,17 @@ private:
     int64_t nSigOpCostWithAncestors;
 
 public:
-    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
-                    int64_t time, unsigned int entry_height,
-                    bool spends_coinbase,
-                    int64_t sigops_cost, LockPoints lp,
-                    const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
+    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, const CAsset feeAsset, const CAmount feeAmount,
+                int64_t time, unsigned int entry_height,
+                bool spends_coinbase,
+                int64_t sigops_cost, LockPoints lp,
+                const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
 
     const CTransaction& GetTx() const { return *this->tx; }
     CTransactionRef GetSharedTx() const { return this->tx; }
     const CAmount& GetFee() const { return nFee; }
+    const CAsset& GetFeeAsset() const { return nFeeAsset; }
+    const CAmount& GetFeeAmount() const { return nFeeAmount; }
     size_t GetTxSize() const;
     size_t GetTxWeight() const { return nTxWeight; }
     std::chrono::seconds GetTime() const { return std::chrono::seconds{nTime}; }
@@ -171,15 +173,6 @@ public:
 
     // ELEMENTS:
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
-
-    // SEQUENTIA:
-    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeAmount,
-            int64_t time, unsigned int entry_height,
-            bool spends_coinbase,
-            int64_t sigops_cost, LockPoints lp,
-            const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
-
-    const CAsset& GetFeeAsset() const { return nFeeAsset; }
 };
 
 // extracts a transaction hash from CTxMemPoolEntry or CTransactionRef
