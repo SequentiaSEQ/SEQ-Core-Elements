@@ -13,7 +13,7 @@ static void AddTx(const CTransactionRef& tx, const CAmount& fee, CTxMemPool& poo
 {
     LockPoints lp;
     std::set<std::pair<uint256, COutPoint> > setPeginsSpent;
-    pool.addUnchecked(CTxMemPoolEntry(tx, fee, /*time=*/0, /*entry_height=*/1, /*spends_coinbase=*/false, /*sigops_cost=*/4, lp, setPeginsSpent));
+    pool.addUnchecked(CTxMemPoolEntry(tx, fee, ::policyAsset, fee, /*time=*/0, /*entry_height=*/1, /*spends_coinbase=*/false, /*sigops_cost=*/4, lp, setPeginsSpent));
 }
 
 static void RpcMempool(benchmark::Bench& bench)

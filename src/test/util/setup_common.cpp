@@ -386,7 +386,7 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CMutableTransaction& tx) co
 
 CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransactionRef& tx) const
 {
-    return CTxMemPoolEntry(tx, nFee, nTime, nHeight,
+    return CTxMemPoolEntry(tx, nFee, ::policyAsset, nFee, nTime, nHeight,
                            spendsCoinbase, sigOpCost, lp, setPeginsSpent);
 }
 
