@@ -12,6 +12,7 @@
 #include <consensus/consensus.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
+#include <exchangerates.h>
 #include <pegins.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -67,6 +68,16 @@ private:
     int64_t feeDelta;
 };
 
+struct update_fee
+{
+    explicit update_fee(int64_t _fee) : fee(_fee) { }
+
+    void operator() (CTxMemPoolEntry &e) { e.UpdateFee(fee); }
+
+private:
+    int64_t fee;
+};
+
 bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
 {
     AssertLockHeld(cs_main);
@@ -111,6 +122,13 @@ void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
     nModFeesWithDescendants += newFeeDelta - feeDelta;
     nModFeesWithAncestors += newFeeDelta - feeDelta;
     feeDelta = newFeeDelta;
+}
+
+void CTxMemPoolEntry::UpdateFee(const CAmount newFee)
+{
+    nModFeesWithDescendants += newFee - nFee;
+    nModFeesWithAncestors += newFee - nFee;
+    nFee = newFee;
 }
 
 void CTxMemPoolEntry::UpdateLockPoints(const LockPoints& lp)
@@ -1046,6 +1064,38 @@ void CTxMemPool::ClearPrioritisation(const uint256& hash)
 {
     AssertLockHeld(cs);
     mapDeltas.erase(hash);
+}
+
+void CTxMemPool::RecomputeFees()
+{
+    {
+        LOCK(cs);
+        for (CTxMemPoolEntry tx : mapTx) {
+            txiter it = mapTx.find(tx.GetTx().GetHash());
+            CAmount newFee = CalculateExchangeValue(tx.GetFeeAmount(), tx.GetFeeAsset());
+            CAmount feeDelta = newFee - tx.GetFee();
+            if (feeDelta != 0) {
+                mapTx.modify(it, update_fee(newFee));
+                
+                // Now update all ancestors' modified fees with descendants
+                setEntries setAncestors;
+                uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
+                std::string dummy;
+                CalculateMemPoolAncestors(tx, setAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
+                for (txiter ancestorIt : setAncestors) {
+                    mapTx.modify(ancestorIt, update_descendant_state(0, feeDelta, 0));
+                }
+                // Now update all descendants' modified fees with ancestors
+                setEntries setDescendants;
+                CalculateDescendants(it, setDescendants);
+                setDescendants.erase(it);
+                for (txiter descendantIt : setDescendants) {
+                    mapTx.modify(descendantIt, update_ancestor_state(0, feeDelta, 0, 0));
+                }
+                ++nTransactionsUpdated;
+            }
+        }
+    }
 }
 
 const CTransaction* CTxMemPool::GetConflictTx(const COutPoint& prevout) const

@@ -4,11 +4,13 @@
 
 #include <rpc/server_util.h>
 
+#include <assetsdir.h>
 #include <exchangerates.h>
 #include <rpc/register.h>
 #include <rpc/server.h>
+#include <rpc/server_util.h>
 #include <rpc/util.h>
-#include <assetsdir.h>
+#include <txmempool.h>
 
 using node::NodeContext;
 
@@ -60,14 +62,22 @@ static RPCHelpMan setfeeexchangerates()
     UniValue ratesField = request.params[0].get_obj();
     std::map<std::string, UniValue> rates;
     ratesField.getObjMap(rates);
+    bool isUpdated = false;
     for (auto rate : rates) {
         CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
             throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", asset.GetHex()));
         }
-        uint64_t rateValue = rate.second.get_int();
-        EXCHANGE_RATE_MAP[asset] = CAssetExchangeRate(rateValue);
+        CAmount newRateValue = rate.second.get_int();
+        CAmount currentRateValue = EXCHANGE_RATE_MAP[asset].scaledValue;
+        if (newRateValue != currentRateValue) {
+            EXCHANGE_RATE_MAP[asset] = newRateValue;
+            isUpdated = true;
+        }
     } 
+    if (isUpdated) {
+        EnsureAnyMemPool(request.context).RecomputeFees();
+    }
     return NullUniValue;
 },
     };
