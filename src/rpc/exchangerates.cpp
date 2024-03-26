@@ -49,9 +49,7 @@ static RPCHelpMan setfeeexchangerates()
                             {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
                         }
                     },
-                    {"expiry_timestamp", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "A expiry timestamp (unix timestamp UTC) until which to accept those rates."},
-                    {"reference_asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "A reference asset tag."},
-                },
+               },
                 RPCResult{RPCResult::Type::NONE, "", ""},
                 RPCExamples{
                     HelpExampleCli("setfeeexchangerates", "")
