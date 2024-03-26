@@ -6,7 +6,7 @@
 #include <uint256.h>
 
 // TODO: Do we need a lock to protect this?
-std::map<CAsset, CAssetExchangeRate> EXCHANGE_RATE_MAP = {{::policyAsset, EXCHANGE_RATE_SCALE}};
+std::map<CAsset, CAssetExchangeRate> EXCHANGE_RATE_MAP = {};
 
 /**
  * Calculate the exchange value
