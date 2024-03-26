@@ -148,6 +148,8 @@ public:
     // Updates the fee delta used for mining priority score, and the
     // modified fees with descendants.
     void UpdateFeeDelta(int64_t feeDelta);
+    // Updates the base fee and the modified fees with ancestors and descendants.
+    void UpdateFee(const CAmount fee);
     // Update the LockPoints after a reorg
     void UpdateLockPoints(const LockPoints& lp);
 
@@ -627,7 +629,10 @@ public:
     /** Affect CreateNewBlock prioritisation of transactions */
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);
     void ApplyDelta(const uint256& hash, CAmount &nFeeDelta) const EXCLUSIVE_LOCKS_REQUIRED(cs);
-    void ClearPrioritisation(const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    void ClearPrioritisation(const uint256& hash);
+
+    /** Recompute valuation of all transaction fees, called whenever exchange rates have been updated. */
+    void RecomputeFees();
 
     /** Get the transaction in the pool that spends the same prevout */
     const CTransaction* GetConflictTx(const COutPoint& prevout) const EXCLUSIVE_LOCKS_REQUIRED(cs);
