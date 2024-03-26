@@ -17,6 +17,7 @@
 #include <compat/sanity.h>
 #include <consensus/amount.h>
 #include <deploymentstatus.h>
+#include <exchangerates.h>
 #include <fs.h>
 #include <hash.h>
 #include <httprpc.h>
@@ -1327,7 +1328,9 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
-
+    if (g_con_sequentiamode) {
+        EXCHANGE_RATE_MAP[policyAsset] = EXCHANGE_RATE_SCALE;
+    }
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
      * that the server is there and will be ready later).  Warmup mode will
