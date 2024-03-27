@@ -512,13 +512,12 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
             std::map<CAsset, CTxDestination> destinations;
 
             if (change_address.isStr()) {
-                // Single destination for default asset (policyAsset).
+                // Single destination for fee asset.
                 CTxDestination dest = DecodeDestination(change_address.get_str());
                 if (!IsValidDestination(dest)) {
                     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Change address must be a valid address");
                 }
-                // @SEQUENTIA
-                destinations[::policyAsset] = dest;
+                destinations[coinControl.m_fee_asset] = dest;
             } else if (change_address.isObject()) {
                 // Map of assets to destinations.
                 std::map<std::string, UniValue> kvMap;
