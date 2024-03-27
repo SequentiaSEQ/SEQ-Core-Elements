@@ -6,7 +6,7 @@
 #include <uint256.h>
 
 // TODO: Do we need a lock to protect this?
-std::map<CAsset, CAssetExchangeRate> EXCHANGE_RATE_MAP = {};
+std::map<CAsset, CAssetExchangeRate> g_exchange_rate_map = {};
 
 /**
  * Calculate the exchange value
@@ -16,13 +16,13 @@ std::map<CAsset, CAssetExchangeRate> EXCHANGE_RATE_MAP = {};
  * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
  */
 CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
-    auto it = EXCHANGE_RATE_MAP.find(asset); 
-    if (it == EXCHANGE_RATE_MAP.end()) {
+    auto it = g_exchange_rate_map.find(asset); 
+    if (it == g_exchange_rate_map.end()) {
         return 0;
     }
     auto scaledValue = it->second.scaledValue;
     // TODO: Find cleaner alternative if possible.
-    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaledValue) / (__uint128_t)EXCHANGE_RATE_SCALE;
+    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaledValue) / (__uint128_t)g_exchange_rate_scale;
     if (value > UINT64_MAX) {
         return UINT64_MAX;
     } else {

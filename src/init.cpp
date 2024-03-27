@@ -1329,7 +1329,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     if (g_con_sequentiamode) {
-        EXCHANGE_RATE_MAP[policyAsset] = EXCHANGE_RATE_SCALE;
+        g_exchange_rate_map[policyAsset] = g_exchange_rate_scale;
     }
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections

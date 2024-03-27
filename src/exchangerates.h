@@ -19,9 +19,9 @@ public:
 };
 
 // TODO: Do we need a lock to protect this?
-extern std::map<CAsset, CAssetExchangeRate> EXCHANGE_RATE_MAP;
+extern std::map<CAsset, CAssetExchangeRate> g_exchange_rate_map;
 
-const CAmount EXCHANGE_RATE_SCALE = 1000000000L;
+const CAmount g_exchange_rate_scale = 1000000000L;
 
 /**
  * Calculate the exchange value
