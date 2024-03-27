@@ -32,7 +32,7 @@ static RPCHelpMan getfeeexchangerates()
 {
     UniValue response = UniValue{UniValue::VOBJ};
     UniValue rates = UniValue{UniValue::VOBJ};
-    for (auto rate: EXCHANGE_RATE_MAP) {
+    for (auto rate: g_exchange_rate_map) {
         rates.pushKV(rate.first.GetHex(), rate.second.scaledValue);
     }
     response.pushKV("rates", rates);
@@ -69,9 +69,9 @@ static RPCHelpMan setfeeexchangerates()
             throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", asset.GetHex()));
         }
         CAmount newRateValue = rate.second.get_int();
-        CAmount currentRateValue = EXCHANGE_RATE_MAP[asset].scaledValue;
+        CAmount currentRateValue = g_exchange_rate_map[asset].scaledValue;
         if (newRateValue != currentRateValue) {
-            EXCHANGE_RATE_MAP[asset] = newRateValue;
+            g_exchange_rate_map[asset] = newRateValue;
             isUpdated = true;
         }
     } 
