@@ -257,11 +257,6 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
         if (!MoneyRange(fee_map)) {
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-block-total-fee-outofrange");
         }
-        if (g_con_sequentiamode) {
-            if (fee_map.size() > 1) {
-                return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-block-fees", "fees can only be paid on one currency");
-            }
-        }
     } else {
         const CAmount value_out = tx.GetValueOutMap()[CAsset()];
         if (nValueIn < value_out) {
