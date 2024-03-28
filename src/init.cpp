@@ -641,6 +641,8 @@ void SetupServerArgs(ArgsManager& argsman)
     argsman.AddArg("-initialreissuancetokens=<n>", "The amount of reissuance tokens created in the genesis block. (default: 0)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_bits", strprintf("The default number of hiding bits in a rangeproof. Will be exceeded to cover amounts exceeding the maximum hiding value. (default: %d)", 52), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_exponent", strprintf("The hiding exponent. (default: %s)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
+    argsman.AddArg("-exchangeratesconf=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.conf"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
+
 
 #if defined(USE_SYSCALL_SANDBOX)
     argsman.AddArg("-sandbox=<mode>", "Use the experimental syscall sandbox in the specified mode (-sandbox=log-and-abort or -sandbox=abort). Allow only expected syscalls to be used by bitcoind. Note that this is an experimental new feature that may cause bitcoind to exit or crash unexpectedly: use with caution. In the \"log-and-abort\" mode the invocation of an unexpected syscall results in a debug handler being invoked which will log the incident and terminate the program (without executing the unexpected syscall). In the \"abort\" mode the invocation of an unexpected syscall results in the entire process being killed immediately by the kernel without executing the unexpected syscall.", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
@@ -1329,7 +1331,15 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     if (g_con_sequentiamode) {
-        g_exchange_rate_map[policyAsset] = g_exchange_rate_scale;
+        std::string file_path = gArgs.GetArg("-exchangeratesconf", "");
+        if (!file_path.empty()) {
+            std::string error;
+            if (!LoadExchangeRatesFromConfigFile(file_path, error)) {
+                return InitError(strprintf(_("Unable to load exchange rates from config file %s: %s"), file_path, error));
+            };
+        } else {
+            g_exchange_rate_map[policyAsset] = g_exchange_rate_scale;
+        }
     }
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
