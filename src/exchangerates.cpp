@@ -8,13 +8,6 @@
 // TODO: Do we need a lock to protect this?
 std::map<CAsset, CAssetExchangeRate> g_exchange_rate_map = {};
 
-/**
- * Calculate the exchange value
- *
- * @param[out]  value        Corresponds to CTxMemPoolEntry.nFee      
- * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeAmount
- * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
- */
 CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
     auto it = g_exchange_rate_map.find(asset); 
     if (it == g_exchange_rate_map.end()) {
