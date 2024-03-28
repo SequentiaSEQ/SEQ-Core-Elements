@@ -192,12 +192,12 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
+    coinbaseTx.vin.resize(1);
+    coinbaseTx.vin[0].prevout.SetNull();
     if (g_con_sequentiamode && feeMap.size() > 0) {
-        coinbaseTx.vin.resize(feeMap.size());
         coinbaseTx.vout.resize(feeMap.size());
         int index = 0;
         for (auto fee : feeMap) {
-            coinbaseTx.vin[index].prevout.SetNull();
             coinbaseTx.vout[index].scriptPubKey = scriptPubKeyIn;
             coinbaseTx.vout[index].nAsset = fee.first;
             coinbaseTx.vout[index].nValue = fee.second;
@@ -217,8 +217,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             index++;
         }
     } else {
-        coinbaseTx.vin.resize(1);
-        coinbaseTx.vin[0].prevout.SetNull();
         coinbaseTx.vout.resize(1);
         coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
         coinbaseTx.vout[0].nAsset = policyAsset;
