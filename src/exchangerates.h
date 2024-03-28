@@ -26,9 +26,9 @@ const CAmount g_exchange_rate_scale = 1000000000L;
 /**
  * Calculate the exchange value
  *
- * @param[out]  value        Corresponds to CTxMemPoolEntry.nFee      
  * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeAmount
  * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
+ * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee      
  */
 CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
