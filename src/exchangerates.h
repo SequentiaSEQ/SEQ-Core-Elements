@@ -39,7 +39,7 @@ CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
  * @param[in]   error         String reference for storing error message, if there is any.
  * @return true on success
  */
-bool LoadExchangeRatesFromConfigFile(std::string file_path, std::string& error);
+bool LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error);
 
 
 #endif // BITCOIN_EXCHANGERATES_H
