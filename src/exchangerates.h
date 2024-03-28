@@ -32,4 +32,14 @@ const CAmount g_exchange_rate_scale = 1000000000L;
  */
 CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
+/**
+ * Populate the exchange rate map using a config file.
+ *
+ * @param[in]   file_path     File path to INI config file where keys are asset labels and values are exchange rates.
+ * @param[in]   error         String reference for storing error message, if there is any.
+ * @return true on success
+ */
+bool LoadExchangeRatesFromConfigFile(std::string file_path, std::string& error);
+
+
 #endif // BITCOIN_EXCHANGERATES_H
