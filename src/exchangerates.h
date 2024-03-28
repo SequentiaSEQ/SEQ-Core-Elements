@@ -11,7 +11,7 @@ class CAssetExchangeRate
 {
 public:
     /** Fee rate. */
-    CAmount scaledValue; // TODO: Maybe use exatoken (10^18) rather than gigatoken (10^9).
+    CAmount scaledValue;
 
     CAssetExchangeRate() : scaledValue(0) { }
     CAssetExchangeRate(CAmount amount) : scaledValue(amount) { }
