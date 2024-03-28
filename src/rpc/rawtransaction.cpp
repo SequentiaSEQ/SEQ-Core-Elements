@@ -137,7 +137,7 @@ static std::vector<RPCArg> CreateTxDoc()
                 {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                     {
                         {"fee", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The key is \"fee\", the value the fee output you want to add."},
-                        {"asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The asset tag for the fee if it is not the main chain asset"},
+                        {"fee_asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The asset tag for the fee if it is not the main chain asset"},
                     },
                     },
             },
