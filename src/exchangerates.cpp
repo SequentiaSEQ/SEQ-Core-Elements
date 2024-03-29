@@ -57,7 +57,7 @@ bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(std::string file_path, std::
     std::map<std::string, UniValue> assetMap;
     json.getObjMap(assetMap);
 
-    // Load exchange rates into global map
+    // Load exchange rates into map
     for (auto assetEntry : assetMap) {
         auto assetIdentifier = assetEntry.first;
         auto assetData = assetEntry.second;
