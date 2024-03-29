@@ -515,6 +515,7 @@ RPCHelpMan listtransactions()
                             {RPCResult::Type::NUM, "vout", "the vout value"},
                             {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the\n"
                                  "'send' category of transactions."},
+                            {RPCResult::Type::STR_AMOUNT, "feeasset", /*optional=*/true, "The label or hex id of the asset used for fee payment. This is only available in the 'send' category of transactions."},
                         },
                         TransactionDescriptionString()),
                         {
