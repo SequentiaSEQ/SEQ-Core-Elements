@@ -490,7 +490,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                 {"locktime", UniValueType(UniValue::VNUM)},
                 {"fee_rate", UniValueType()}, // will be checked by AmountFromValue() in SetFeeEstimateMode()
                 {"feeRate", UniValueType()}, // will be checked by AmountFromValue() below
-                {"feeAsset", UniValueType(UniValue::VSTR)},
+                {"fee_asset", UniValueType(UniValue::VSTR)},
                 {"psbt", UniValueType(UniValue::VBOOL)},
                 {"solving_data", UniValueType(UniValue::VOBJ)},
                 {"subtractFeeFromOutputs", UniValueType(UniValue::VARR)},
@@ -596,8 +596,8 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
         coinControl.fAllowWatchOnly = ParseIncludeWatchonly(NullUniValue, wallet);
     }
 
-    if (options.exists("feeAsset")) {
-        std::string strFeeAsset = options["feeAsset"].get_str();
+    if (g_con_sequentiamode && options.exists("fee_asset")) {
+        std::string strFeeAsset = options["fee_asset"].get_str();
         CAsset feeAsset = GetAssetFromString(strFeeAsset);
         if (feeAsset.IsNull()) {
             throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
@@ -788,7 +788,7 @@ RPCHelpMan fundrawtransaction()
                             {"lockUnspents", RPCArg::Type::BOOL, RPCArg::Default{false}, "Lock selected unspent outputs"},
                             {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
                             {"feeRate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_UNIT + "/kvB."},
-                            {"feeAsset", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for fee payment."},
+                            {"fee_asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "The hex id or label of asset used for fee payment."},
                             {"subtractFeeFromOutputs", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR}, "The integers.\n"
                                                           "The fee will be equally deducted from the amount of each specified output.\n"
                                                           "Those recipients will receive less coins than you enter in their corresponding amount field.\n"
