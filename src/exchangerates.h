@@ -4,6 +4,7 @@
 
 #include <asset.h>
 #include <consensus/amount.h>
+#include <fs.h>
 #include <policy/policy.h>
 #include <uint256.h>
 
@@ -45,7 +46,7 @@ public:
      * @param[in]   error         String reference for storing error message, if there is any.
      * @return true on success
      */
-    bool LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error);
+    bool LoadExchangeRatesFromJSONFile(fs::path file_path, std::string& error);
 };
 
 #endif // BITCOIN_EXCHANGERATES_H
