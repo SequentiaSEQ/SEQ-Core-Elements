@@ -37,7 +37,7 @@ CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAs
     }
 }
 
-bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error) {
+bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(fs::path file_path, std::string& error) {
     // Read config file
     std::ifstream ifs(file_path);
     if (!ifs.is_open()) {

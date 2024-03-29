@@ -1331,11 +1331,12 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     if (g_con_sequentiamode) {
-        std::string file_path = gArgs.GetArg("-exchangeratesjsonfile", "");
-        if (!file_path.empty()) {
+        std::string file_path_string = gArgs.GetArg("-exchangeratesjsonfile", "");
+        if (!file_path_string.empty()) {
+            fs::path file_path = AbsPathForConfigVal(fs::PathFromString(file_path_string));
             std::string error;
             if (!ExchangeRateMap::GetInstance().LoadExchangeRatesFromJSONFile(file_path, error)) {
-                return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: %s"), file_path, error));
+                return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: %s"), file_path_string, error));
             };
         }
     }
