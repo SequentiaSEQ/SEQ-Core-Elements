@@ -1075,9 +1075,10 @@ void CTxMemPool::RecomputeFees()
 {
     {
         LOCK(cs);
+        ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
         for (CTxMemPoolEntry tx : mapTx) {
             txiter it = mapTx.find(tx.GetTx().GetHash());
-            CAmount newFee = CalculateExchangeValue(tx.GetFeeAmount(), tx.GetFeeAsset());
+            CAmount newFee = exchangeRateMap.CalculateExchangeValue(tx.GetFeeAmount(), tx.GetFeeAsset());
             CAmount feeDelta = newFee - tx.GetFee();
             if (feeDelta != 0) {
                 mapTx.modify(it, update_fee(newFee));
