@@ -9,17 +9,27 @@
 #include <uint256.h>
 #include <univalue.h>
 
-// TODO: Do we need a lock to protect this?
-std::map<CAsset, CAssetExchangeRate> g_exchange_rate_map = {};
+ExchangeRateMap* ExchangeRateMap::_instance = nullptr;
 
-CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
-    auto it = g_exchange_rate_map.find(asset);
-    if (it == g_exchange_rate_map.end()) {
+void ExchangeRateMap::Initialize() {
+    (*this)[::policyAsset] = exchange_rate_scale;
+}
+
+ExchangeRateMap& ExchangeRateMap::GetInstance() {
+    if (_instance == nullptr) {
+        _instance = new ExchangeRateMap();
+        _instance->Initialize(); 
+    }
+    return *_instance;
+}
+
+CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
+    auto it = (*this).find(asset);
+    if (it == (*this).end()) {
         return 0;
     }
     auto scaledValue = it->second.scaledValue;
-    // TODO: Find cleaner alternative if possible.
-    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaledValue) / (__uint128_t)g_exchange_rate_scale;
+    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaledValue) / (__uint128_t)exchange_rate_scale;
     if (value > UINT64_MAX) {
         return UINT64_MAX;
     } else {
@@ -27,8 +37,7 @@ CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
     }
 }
 
-bool LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error)
-{
+bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error) {
     // Read config file
     std::ifstream ifs(file_path);
     if (!ifs.is_open()) {
@@ -68,7 +77,7 @@ bool LoadExchangeRatesFromJSONFile(std::string file_path, std::string& error)
             error = strprintf("Invalid value for asset %s: %d", assetIdentifier, assetData.getValStr());
             return false;
         }
-        g_exchange_rate_map[asset] = exchangeRateValue;
+        (*this)[asset] = exchangeRateValue;
     }
     return true;
 }

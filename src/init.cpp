@@ -1334,11 +1334,9 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         std::string file_path = gArgs.GetArg("-exchangeratesjson", "");
         if (!file_path.empty()) {
             std::string error;
-            if (!LoadExchangeRatesFromJSONFile(file_path, error)) {
+            if (!ExchangeRateMap::GetInstance().LoadExchangeRatesFromJSONFile(file_path, error)) {
                 return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: %s"), file_path, error));
             };
-        } else {
-            g_exchange_rate_map[policyAsset] = g_exchange_rate_scale;
         }
     }
     /* Start the RPC server already.  It will be started in "warmup" mode
