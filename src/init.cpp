@@ -641,7 +641,7 @@ void SetupServerArgs(ArgsManager& argsman)
     argsman.AddArg("-initialreissuancetokens=<n>", "The amount of reissuance tokens created in the genesis block. (default: 0)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_bits", strprintf("The default number of hiding bits in a rangeproof. Will be exceeded to cover amounts exceeding the maximum hiding value. (default: %d)", 52), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_exponent", strprintf("The hiding exponent. (default: %s)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
-    argsman.AddArg("-exchangeratesjson=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.conf"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
+    argsman.AddArg("-exchangeratesjsonfile=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.json"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
 
 
 #if defined(USE_SYSCALL_SANDBOX)
@@ -1331,7 +1331,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     if (g_con_sequentiamode) {
-        std::string file_path = gArgs.GetArg("-exchangeratesjson", "");
+        std::string file_path = gArgs.GetArg("-exchangeratesjsonfile", "");
         if (!file_path.empty()) {
             std::string error;
             if (!ExchangeRateMap::GetInstance().LoadExchangeRatesFromJSONFile(file_path, error)) {
