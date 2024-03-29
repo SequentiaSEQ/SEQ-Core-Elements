@@ -68,7 +68,7 @@ bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(fs::path file_path, std::str
         }
         CAmount exchangeRateValue;
         if (assetData.isNum()) {
-            exchangeRateValue = assetData.get_int();
+            exchangeRateValue = assetData.get_int64();
         } else if (assetData.isObject()) {
             std::map<std::string, UniValue> assetFields;
             assetData.getObjMap(assetFields);
