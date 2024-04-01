@@ -13,6 +13,7 @@
 #include <assert.h>
 
 bool g_con_elementsmode = false;
+// TODO: Default to false and override using new chain params class for Sequentia
 bool g_con_sequentiamode = true;
 
 const int32_t CTransaction::CURRENT_VERSION = 2;

@@ -65,7 +65,7 @@ public:
     int m_min_depth = DEFAULT_MIN_DEPTH;
     //! Maximum chain depth value for coin availability
     int m_max_depth = DEFAULT_MAX_DEPTH;
-    //! SEQUENTIA: Override the protocol's policyAsset for fee payment
+    //! SEQUENTIA: Enables overriding of the protocol's policyAsset for fee payment
     CAsset m_fee_asset = policyAsset;
 
     CCoinControl();
