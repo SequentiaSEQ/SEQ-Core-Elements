@@ -846,8 +846,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     assert(m_active_chainstate.m_blockman.LookupBlockIndex(m_view.GetBestBlock()) == m_active_chainstate.m_chain.Tip());
 
-
-     // Only accept BIP68 sequence locked transactions that can be mined in the next
+    // Only accept BIP68 sequence locked transactions that can be mined in the next
     // block; we don't want our mempool filled up with transactions that can't
     // be mined yet.
     // Pass in m_view which has all of the relevant inputs cached. Note that, since m_view's

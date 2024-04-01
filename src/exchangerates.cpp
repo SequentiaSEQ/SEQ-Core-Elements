@@ -24,8 +24,8 @@ ExchangeRateMap& ExchangeRateMap::GetInstance() {
 }
 
 CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
-    auto it = (*this).find(asset);
-    if (it == (*this).end()) {
+    auto it = this->find(asset);
+    if (it == this->end()) {
         return 0;
     }
     auto scaledValue = it->second.scaledValue;
