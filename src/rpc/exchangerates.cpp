@@ -63,6 +63,7 @@ static RPCHelpMan setfeeexchangerates()
     std::map<std::string, UniValue> rates;
     ratesField.getObjMap(rates);
     ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
+    exchangeRateMap.clear();
     for (auto rate : rates) {
         CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
