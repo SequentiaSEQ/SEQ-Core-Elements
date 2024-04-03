@@ -317,7 +317,7 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     nBlockSigOpsCost += iter->GetSigOpCost();
     // TODO: Make sure that this value stays within MoneyRange to prevent overflow exploits. 
     // Or better yet, make sure that asset tokens are kept under the MAX_MONEY limit.
-    feeMap[iter->GetFeeAsset()] += iter->GetFee();
+    feeMap[iter->GetFeeAsset()] += iter->GetFeeAmount();
     inBlock.insert(iter);
 
     bool fPrintPriority = gArgs.GetBoolArg("-printpriority", DEFAULT_PRINTPRIORITY);
