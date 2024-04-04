@@ -194,7 +194,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CMutableTransaction coinbaseTx;
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
-    if (g_con_sequentiamode && feeMap.size() > 0) {
+    if (g_con_any_asset_fees && feeMap.size() > 0) {
         coinbaseTx.vout.resize(feeMap.size());
         int index = 0;
         for (auto fee : feeMap) {

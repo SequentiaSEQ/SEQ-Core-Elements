@@ -1239,7 +1239,7 @@ UniValue AmountMapToUniv(const CAmountMap& balanceOrig, std::string strasset)
 {
     // Make sure the policyAsset is always present in the balance map.
     CAmountMap balance = balanceOrig;
-    if (!g_con_sequentiamode) {
+    if (!g_con_any_asset_fees) {
         balance[::policyAsset] += 0;
     }
 
