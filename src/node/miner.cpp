@@ -114,7 +114,6 @@ void BlockAssembler::resetBlock()
 
     // These counters do not include coinbase tx
     nBlockTx = 0;
-    nFees = 0;
     feeMap = CAmountMap();
 }
 
@@ -217,6 +216,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             index++;
         }
     } else {
+        CAmount nFees = feeMap[::policyAsset];
         coinbaseTx.vout.resize(1);
         coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
         coinbaseTx.vout[0].nAsset = policyAsset;
@@ -241,9 +241,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
         pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
         pblocktemplate->vTxFees[0] = -nFees;
-
     }
-    LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+    LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, feeMap, nBlockSigOpsCost);
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
