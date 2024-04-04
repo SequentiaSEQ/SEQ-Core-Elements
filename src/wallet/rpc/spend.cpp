@@ -239,7 +239,7 @@ RPCHelpMan sendtoaddress()
     SetFeeEstimateMode(*pwallet, coin_control, /* conf_target */ request.params[6], /* estimate_mode */ request.params[7], /* fee_rate */ request.params[11], /* override_min_fee */ false);
 
     CAsset feeAsset = asset;
-    if (g_con_sequentiamode) {
+    if (g_con_any_asset_fees) {
         if (request.params.size() > 12 && request.params[12].isStr() && !request.params[12].get_str().empty()) {
             std::string strFeeAsset = request.params[12].get_str();
             feeAsset = GetAssetFromString(strFeeAsset);
@@ -596,7 +596,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
         coinControl.fAllowWatchOnly = ParseIncludeWatchonly(NullUniValue, wallet);
     }
 
-    if (g_con_sequentiamode && options.exists("fee_asset")) {
+    if (g_con_any_asset_fees && options.exists("fee_asset")) {
         std::string strFeeAsset = options["fee_asset"].get_str();
         CAsset feeAsset = GetAssetFromString(strFeeAsset);
         if (feeAsset.IsNull()) {

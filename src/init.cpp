@@ -1330,7 +1330,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
-    if (g_con_sequentiamode) {
+    if (g_con_any_asset_fees) {
         std::string file_path_string = gArgs.GetArg("-exchangeratesjsonfile", "");
         if (!file_path_string.empty()) {
             fs::path file_path = AbsPathForConfigVal(fs::PathFromString(file_path_string));

@@ -262,7 +262,7 @@ void CachedTxGetAmounts(const CWallet& wallet, const CWalletTx& wtx,
     if (mapDebit > CAmountMap()) // debit>0 means we signed/sent this transaction
     {
         CAmountMap feeMap = GetFeeMap(*wtx.tx);
-        nFeeAsset = g_con_sequentiamode ? feeMap.begin()->first : ::policyAsset;
+        nFeeAsset = g_con_any_asset_fees ? feeMap.begin()->first : ::policyAsset;
         nFee = -feeMap[nFeeAsset];
     }
 
