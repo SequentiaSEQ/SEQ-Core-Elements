@@ -140,7 +140,7 @@ private:
     uint64_t nBlockWeight;
     uint64_t nBlockTx;
     uint64_t nBlockSigOpsCost;
-    CAmount nFees;
+    CAmountMap feeMap;
     CTxMemPool::setEntries inBlock;
 
     // Chain context for the block
@@ -150,9 +150,6 @@ private:
     const CChainParams& chainparams;
     const CTxMemPool& m_mempool;
     CChainState& m_chainstate;
-
-    // SEQUENTIA:
-    CAmountMap feeMap;
 
 public:
     struct Options {
