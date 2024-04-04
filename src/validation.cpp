@@ -884,7 +884,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     int64_t nSigOpsCost = GetTransactionSigOpCost(tx, m_view, STANDARD_SCRIPT_VERIFY_FLAGS);
     
     CAsset feeAsset;
-    if (g_con_sequentiamode) {
+    if (g_con_any_asset_fees) {
         feeAsset = fee_map.begin()->first;
     } else {
         feeAsset = policyAsset;
