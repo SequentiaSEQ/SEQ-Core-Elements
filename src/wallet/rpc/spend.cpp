@@ -506,6 +506,17 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
         if (options.exists("add_inputs") ) {
             coinControl.m_add_inputs = options["add_inputs"].get_bool();
         }
+        
+        if (g_con_any_asset_fees && options.exists("fee_asset")) {
+            std::string strFeeAsset = options["fee_asset"].get_str();
+            CAsset feeAsset = GetAssetFromString(strFeeAsset);
+            if (feeAsset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+            }
+            coinControl.m_fee_asset = feeAsset;
+        } else {
+            coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
+        }
 
         if (options.exists("changeAddress") || options.exists("change_address")) {
             const UniValue& change_address  = options.exists("change_address") ? options["change_address"] : options["changeAddress"];
@@ -594,17 +605,6 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
     } else {
         // if options is null and not a bool
         coinControl.fAllowWatchOnly = ParseIncludeWatchonly(NullUniValue, wallet);
-    }
-
-    if (g_con_any_asset_fees && options.exists("fee_asset")) {
-        std::string strFeeAsset = options["fee_asset"].get_str();
-        CAsset feeAsset = GetAssetFromString(strFeeAsset);
-        if (feeAsset.IsNull()) {
-            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
-        }
-        coinControl.m_fee_asset = feeAsset;
-    } else {
-        coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
     }
 
     if (options.exists("solving_data")) {
