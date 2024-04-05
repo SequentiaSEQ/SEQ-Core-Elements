@@ -939,7 +939,7 @@ static bool CreateTransactionInternal(
 
     CoinSelectionParams coin_selection_params; // Parameters for coin selection, init with dummy
     coin_selection_params.m_avoid_partial_spends = coin_control.m_avoid_partial_spends;
-    coin_selection_params.m_fee_asset = coin_control.m_fee_asset;
+    coin_selection_params.m_fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
 
     CScript dummy_script = CScript() << 0x00;
     CAmountMap map_recipients_sum;
