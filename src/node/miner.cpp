@@ -193,55 +193,42 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CMutableTransaction coinbaseTx;
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
-    if (g_con_any_asset_fees && feeMap.size() > 0) {
-        coinbaseTx.vout.resize(feeMap.size());
-        int index = 0;
-        for (auto fee : feeMap) {
-            coinbaseTx.vout[index].scriptPubKey = scriptPubKeyIn;
-            coinbaseTx.vout[index].nAsset = fee.first;
-            coinbaseTx.vout[index].nValue = fee.second;
-            if (coinbaseTx.vout[index].nValue.GetAmount() == 0) {
-                coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
-            }
-            coinbaseTx.vin[index].scriptSig = CScript() << nHeight << OP_0;
-            // Non-consensus commitment output before finishing coinbase transaction
-            if (commit_scripts && !commit_scripts->empty()) {
-                for (auto commit_script: *commit_scripts) {
-                    coinbaseTx.vout.insert(std::prev(coinbaseTx.vout.end()), CTxOut(policyAsset, 0, commit_script));
-                }
-            }
-            pblock->vtx[index] = MakeTransactionRef(std::move(coinbaseTx));
-            pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
-            pblocktemplate->vTxFees[index] = fee.second;
-            index++;
+    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+    coinbaseTx.vout.resize(g_con_any_asset_fees ? feeMap.size() : 1);
+    int index = 0;
+    for (auto fee : feeMap) {
+        CAsset fee_asset = fee.first;
+        CAmount fee_amount = fee.second; 
+        if (!g_con_any_asset_fees && fee_asset != ::policyAsset) {
+            continue;
         }
-    } else {
-        CAmount nFees = feeMap[::policyAsset];
-        coinbaseTx.vout.resize(1);
-        coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
-        coinbaseTx.vout[0].nAsset = policyAsset;
-        coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+        coinbaseTx.vout[index].scriptPubKey = scriptPubKeyIn;
+        coinbaseTx.vout[index].nAsset = fee_asset;
+        coinbaseTx.vout[index].nValue = fee_amount;
+        if (fee_asset == chainparams.GetConsensus().subsidy_asset) {
+            coinbaseTx.vout[index].nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());     
+        }
         if (g_con_elementsmode) {
             if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
                 // Only claim the subsidy if it's the same as the policy asset.
-                coinbaseTx.vout[0].nValue = nFees;
+                coinbaseTx.vout[index].nValue = fee_amount;
             }
             // 0-value outputs must be unspendable
-            if (coinbaseTx.vout[0].nValue.GetAmount() == 0) {
-                coinbaseTx.vout[0].scriptPubKey = CScript() << OP_RETURN;
+            if (coinbaseTx.vout[index].nValue.GetAmount() == 0) {
+                coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
             }
         }
-        coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
         // Non-consensus commitment output before finishing coinbase transaction
         if (commit_scripts && !commit_scripts->empty()) {
             for (auto commit_script: *commit_scripts) {
                 coinbaseTx.vout.insert(std::prev(coinbaseTx.vout.end()), CTxOut(policyAsset, 0, commit_script));
             }
         }
-        pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
-        pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
-        pblocktemplate->vTxFees[0] = -nFees;
+        pblock->vtx[index] = MakeTransactionRef(std::move(coinbaseTx));
+        pblocktemplate->vTxFees[index] = -fee_amount;
+        index++;
     }
+    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, feeMap, nBlockSigOpsCost);
 
     // Fill in header
