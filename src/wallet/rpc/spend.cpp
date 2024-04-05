@@ -530,7 +530,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                 if (!IsValidDestination(dest)) {
                     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Change address must be a valid address");
                 }
-                destinations[coinControl.m_fee_asset] = dest;
+                destinations[coinControl.m_fee_asset.value_or(::policyAsset)] = dest;
             } else if (change_address.isObject()) {
                 // Map of assets to destinations.
                 std::map<std::string, UniValue> kvMap;
