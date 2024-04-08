@@ -115,7 +115,6 @@ void BlockAssembler::resetBlock()
     // These counters do not include coinbase tx
     nBlockTx = 0;
     feeMap = CAmountMap();
-    feeMap[chainparams.GetConsensus().subsidy_asset] = 0;
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, std::chrono::seconds min_tx_age, DynaFedParamEntry* proposed_entry, const std::vector<CScript>* commit_scripts)
@@ -195,6 +194,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+    if (feeMap.size() == 0) {
+        feeMap[::policyAsset] = 0;
+    }
     coinbaseTx.vout.resize(feeMap.size());
     int index = 0;
     for (auto fee : feeMap) {
