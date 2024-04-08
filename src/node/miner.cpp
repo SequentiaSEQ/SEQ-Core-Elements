@@ -219,15 +219,15 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                 coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
             }
         }
-        // Non-consensus commitment output before finishing coinbase transaction
-        if (commit_scripts && !commit_scripts->empty()) {
-            for (auto commit_script: *commit_scripts) {
-                coinbaseTx.vout.insert(std::prev(coinbaseTx.vout.end()), CTxOut(policyAsset, 0, commit_script));
-            }
-        }
         pblock->vtx[index] = MakeTransactionRef(std::move(coinbaseTx));
         pblocktemplate->vTxFees[index] = -fee_amount;
         index++;
+    }
+    // Non-consensus commitment output before finishing coinbase transaction
+    if (commit_scripts && !commit_scripts->empty()) {
+        for (auto commit_script: *commit_scripts) {
+            coinbaseTx.vout.insert(std::prev(coinbaseTx.vout.end()), CTxOut(policyAsset, 0, commit_script));
+        }
     }
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, feeMap, nBlockSigOpsCost);
