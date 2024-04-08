@@ -1343,11 +1343,9 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: %s"), file_path_string, error));
             };
         }
-    } else {
-        // Otherwise, all fees must be paid using the policy asset.
-        policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     }
-
+    policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
+    
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
      * that the server is there and will be ready later).  Warmup mode will
