@@ -32,10 +32,10 @@ static RPCHelpMan getfeeexchangerates()
 {
     UniValue response = UniValue{UniValue::VOBJ};
     UniValue rates = UniValue{UniValue::VOBJ};
-    for (auto rate: ExchangeRateMap::GetInstance()) {
-        rates.pushKV(rate.first.GetHex(), rate.second.scaledValue);
+    ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
+    for (auto rate : exchangeRateMap) {
+        response.pushKV(rate.first.GetHex(), rate.second.scaledValue);
     }
-    response.pushKV("rates", rates);
     return response;
 },
     };
@@ -46,10 +46,8 @@ static RPCHelpMan setfeeexchangerates()
     return RPCHelpMan{"setfeeexchangerates",
                 "\nPrivileged call to set the set of accepted assets for paying fees, and the exchange rate for each of these assets.\n",
                 {
-                    {"rates", RPCArg::Type::OBJ_USER_KEYS, RPCArg::Optional::NO, "A table mapping asset tag to rate of exchange for one unit of the asset in terms of the reference fee asset.",
-                        {
-                            {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
-                        }
+                    {
+                        {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
                     },
                },
                 RPCResult{RPCResult::Type::NONE, "", ""},
@@ -69,7 +67,7 @@ static RPCHelpMan setfeeexchangerates()
         if (asset.IsNull()) {
             throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", rate.first));
         }
-        CAmount newRateValue = rate.second.get_int();
+        CAmount newRateValue = rate.second.get_int64();
         exchangeRateMap[asset] = newRateValue;
     } 
     EnsureAnyMemPool(request.context).RecomputeFees();
