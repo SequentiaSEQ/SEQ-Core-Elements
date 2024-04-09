@@ -8,34 +8,38 @@
 #include <policy/policy.h>
 #include <uint256.h>
 
+constexpr const CAmount exchange_rate_scale = 1000000000L;
+
 class CAssetExchangeRate
 {
 public:
     /** Fee rate. */
-    CAmount scaledValue;
+    CAmount m_scaled_value;
 
-    CAssetExchangeRate() : scaledValue(0) { }
-    CAssetExchangeRate(CAmount amount) : scaledValue(amount) { }
-    CAssetExchangeRate(uint64_t amount) : scaledValue(amount) { }
+    CAssetExchangeRate() : m_scaled_value(0) { }
+    CAssetExchangeRate(CAmount amount) : m_scaled_value(amount) { }
+    CAssetExchangeRate(uint64_t amount) : m_scaled_value(amount) { }
 };
 
 class ExchangeRateMap : public std::map<CAsset, CAssetExchangeRate>
 {
 private:
-    static ExchangeRateMap* _instance;
-    const CAmount exchange_rate_scale = 1000000000L;
-
     ExchangeRateMap() {}
+    ExchangeRateMap(const CAmount& default_asset_rate) {
+        (*this)[::policyAsset] = default_asset_rate;
+    }
 public:
-    static ExchangeRateMap& GetInstance();
-    void Initialize(); 
+    static ExchangeRateMap& GetInstance() {
+        static ExchangeRateMap instance(exchange_rate_scale); // Guaranteed to be destroyed and instantiated only once
+        return instance;
+    }
 
     /**
      * Calculate the exchange value
      *
      * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeAmount
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
-     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee      
+     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
     CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 

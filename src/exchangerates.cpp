@@ -10,28 +10,13 @@
 #include <uint256.h>
 #include <univalue.h>
 
-ExchangeRateMap* ExchangeRateMap::_instance = nullptr;
-
-void ExchangeRateMap::Initialize() {
-    (*this)[::policyAsset] = exchange_rate_scale;
-}
-
-ExchangeRateMap& ExchangeRateMap::GetInstance() {
-    if (_instance == nullptr) {
-        LogPrintf("Creating ExchangeRateMap singleton");
-        _instance = new ExchangeRateMap();
-        _instance->Initialize(); 
-    }
-    return *_instance;
-}
-
 CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
     auto it = this->find(asset);
     if (it == this->end()) {
         return 0;
     }
-    auto scaledValue = it->second.scaledValue;
-    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaledValue) / (__uint128_t)exchange_rate_scale;
+    auto scaled_value = it->second.m_scaled_value;
+    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
     if (value > UINT64_MAX) {
         return UINT64_MAX;
     } else {
