@@ -32,9 +32,8 @@ static RPCHelpMan getfeeexchangerates()
 {
     UniValue response = UniValue{UniValue::VOBJ};
     UniValue rates = UniValue{UniValue::VOBJ};
-    ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
-    for (auto rate : exchangeRateMap) {
-        response.pushKV(rate.first.GetHex(), rate.second.scaledValue);
+    for (auto rate: ExchangeRateMap::GetInstance()) {
+        rates.pushKV(rate.first.GetHex(), rate.second.m_scaled_value);
     }
     return response;
 },
@@ -60,8 +59,7 @@ static RPCHelpMan setfeeexchangerates()
     UniValue ratesField = request.params[0].get_obj();
     std::map<std::string, UniValue> rates;
     ratesField.getObjMap(rates);
-    ExchangeRateMap& exchangeRateMap = ExchangeRateMap::GetInstance();
-    exchangeRateMap.clear();
+    auto& exchangeRateMap = ExchangeRateMap::GetInstance();
     for (auto rate : rates) {
         CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
@@ -69,7 +67,7 @@ static RPCHelpMan setfeeexchangerates()
         }
         CAmount newRateValue = rate.second.get_int64();
         exchangeRateMap[asset] = newRateValue;
-    } 
+    }
     EnsureAnyMemPool(request.context).RecomputeFees();
     return NullUniValue;
 },
