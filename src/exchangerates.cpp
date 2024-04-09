@@ -63,7 +63,7 @@ bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(fs::path file_path, std::str
         auto assetData = assetEntry.second;
         CAsset asset = GetAssetFromString(assetIdentifier);
         if (asset.IsNull()) {
-            error = strprintf("Unknown label and invalid asset hex: %s", asset.GetHex());
+            error = strprintf("Unknown label and invalid asset hex: %s", assetIdentifier);
             return false;
         }
         CAmount exchangeRateValue;
