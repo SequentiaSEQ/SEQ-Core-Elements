@@ -241,6 +241,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "calculateasset", 3, "blind_reissuance" },
     { "updatepsbtpegin", 1, "input" },
     { "updatepsbtpegin", 2, "value" },
+    { "setfeeexchangerates", 0, "rates"},
 
 };
 // clang-format on
