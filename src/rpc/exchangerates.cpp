@@ -67,7 +67,7 @@ static RPCHelpMan setfeeexchangerates()
     for (auto rate : rates) {
         CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
-            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", asset.GetHex()));
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", rate.first));
         }
         CAmount newRateValue = rate.second.get_int();
         exchangeRateMap[asset] = newRateValue;
