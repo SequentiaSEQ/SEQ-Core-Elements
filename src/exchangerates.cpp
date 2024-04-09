@@ -5,6 +5,7 @@
 #include <exchangerates.h>
 #include <fs.h>
 #include <fstream>
+#include <logging.h>
 #include <policy/policy.h>
 #include <uint256.h>
 #include <univalue.h>
@@ -17,6 +18,7 @@ void ExchangeRateMap::Initialize() {
 
 ExchangeRateMap& ExchangeRateMap::GetInstance() {
     if (_instance == nullptr) {
+        LogPrintf("Creating ExchangeRateMap singleton");
         _instance = new ExchangeRateMap();
         _instance->Initialize(); 
     }
@@ -58,6 +60,7 @@ bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(fs::path file_path, std::str
     json.getObjMap(assetMap);
 
     // Load exchange rates into map
+    this->clear();
     for (auto assetEntry : assetMap) {
         auto assetIdentifier = assetEntry.first;
         auto assetData = assetEntry.second;
