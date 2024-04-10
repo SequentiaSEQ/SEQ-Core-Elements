@@ -31,9 +31,8 @@ static RPCHelpMan getfeeexchangerates()
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
     UniValue response = UniValue{UniValue::VOBJ};
-    UniValue rates = UniValue{UniValue::VOBJ};
-    for (auto rate: ExchangeRateMap::GetInstance()) {
-        rates.pushKV(rate.first.GetHex(), rate.second.m_scaled_value);
+    for (auto rate : ExchangeRateMap::GetInstance()) {
+        response.pushKV(rate.first.GetHex(), rate.second.m_scaled_value);
     }
     return response;
 },
