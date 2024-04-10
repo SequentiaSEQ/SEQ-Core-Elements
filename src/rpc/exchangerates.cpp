@@ -56,16 +56,21 @@ static RPCHelpMan setfeeexchangerates()
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
     UniValue ratesField = request.params[0].get_obj();
-    std::map<std::string, UniValue> rates;
-    ratesField.getObjMap(rates);
-    auto& exchangeRateMap = ExchangeRateMap::GetInstance();
-    for (auto rate : rates) {
+    std::map<std::string, UniValue> rawRates;
+    ratesField.getObjMap(rawRates);
+    std::map<CAsset, CAmount> parsedRates;
+    for (auto rate : rawRates) {
         CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
             throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", rate.first));
         }
         CAmount newRateValue = rate.second.get_int64();
-        exchangeRateMap[asset] = newRateValue;
+        parsedRates[asset] = newRateValue;
+    }
+    auto& exchangeRateMap = ExchangeRateMap::GetInstance();
+    exchangeRateMap.clear();
+    for (auto rate : parsedRates) {
+        exchangeRateMap[rate.first] = rate.second;
     }
     EnsureAnyMemPool(request.context).RecomputeFees();
     return NullUniValue;
