@@ -197,7 +197,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     if (feeMap.size() == 0) {
         feeMap[::policyAsset] = 0;
     }
-    coinbaseTx.vout.resize(feeMap.size());
     int index = 0;
     for (auto fee : feeMap) {
         CAsset fee_asset = fee.first;
@@ -205,23 +204,24 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         if (!g_con_any_asset_fees && fee_asset != ::policyAsset) {
             continue;
         }
-        coinbaseTx.vout[index].scriptPubKey = scriptPubKeyIn;
-        coinbaseTx.vout[index].nAsset = fee_asset;
-        coinbaseTx.vout[index].nValue = fee_amount;
+        CTxOut newTxOut;
+        newTxOut.scriptPubKey = scriptPubKeyIn;
+        newTxOut.nAsset = fee_asset;
+        newTxOut.nValue = fee_amount;
         if (fee_asset == chainparams.GetConsensus().subsidy_asset) {
-            coinbaseTx.vout[index].nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());     
+            newTxOut.nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());     
         }
         if (g_con_elementsmode) {
             if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
                 // Only claim the subsidy if it's the same as the policy asset.
-                coinbaseTx.vout[index].nValue = fee_amount;
+                newTxOut.nValue = fee_amount;
             }
             // 0-value outputs must be unspendable
-            if (coinbaseTx.vout[index].nValue.GetAmount() == 0) {
-                coinbaseTx.vout[index].scriptPubKey = CScript() << OP_RETURN;
+            if (newTxOut.nValue.GetAmount() == 0) {
+                newTxOut.scriptPubKey = CScript() << OP_RETURN;
             }
         }
-        pblock->vtx[index] = MakeTransactionRef(std::move(coinbaseTx));
+        coinbaseTx.vout.push_back(newTxOut);
         pblocktemplate->vTxFees[index] = -fee_amount;
         index++;
     }
@@ -231,6 +231,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             coinbaseTx.vout.insert(std::prev(coinbaseTx.vout.end()), CTxOut(policyAsset, 0, commit_script));
         }
     }
+    pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, feeMap, nBlockSigOpsCost);
 
