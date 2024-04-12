@@ -2,11 +2,8 @@
 #ifndef BITCOIN_EXCHANGERATES_H
 #define BITCOIN_EXCHANGERATES_H
 
-#include <asset.h>
-#include <consensus/amount.h>
 #include <fs.h>
 #include <policy/policy.h>
-#include <uint256.h>
 
 constexpr const CAmount exchange_rate_scale = 1000000000L;
 
