@@ -75,6 +75,8 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             assetlabel=self.asset,
             fee_assetlabel=self.asset)
 
+        self.nodes[0].sendtoaddress(self.node1_address, 1) # node crashes if thiss TX is included to the block
+
         self.generatetoaddress(self.nodes[0], 1, self.node0_address)
         self.sync_all()
 
