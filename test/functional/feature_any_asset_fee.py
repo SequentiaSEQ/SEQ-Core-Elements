@@ -35,7 +35,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.sync_all()
 
         assert self.nodes[0].dumpassetlabels() == {'gasset': 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'}
-        assert self.nodes[0].getfeeexchangerates() == { 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23': 100000000 }
+        assert self.nodes[0].getfeeexchangerates() == { 'gasset': 100000000 }
 
         self.issue_amount = Decimal('100')
         self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
@@ -62,8 +62,11 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.node1_address = self.nodes[1].getnewaddress()
         self.node1_nonct_address = self.nodes[1].getaddressinfo(self.node1_address)["unconfidential"]
 
-        self.nodes[0].setfeeexchangerates({ "gasset": 100000000, self.asset: 100000000 })
-        self.nodes[1].setfeeexchangerates({ "gasset": 100000000, self.asset: 100000000 })
+        new_rates = { "gasset": 100000000, self.asset: 100000000 }
+        self.nodes[0].setfeeexchangerates(new_rates)
+        assert self.nodes[0].getfeeexchangerates() == new_rates
+        self.nodes[1].setfeeexchangerates(new_rates)
+        assert self.nodes[1].getfeeexchangerates() == new_rates
 
     def transfer_asset_to_node1(self):
         node0_balance = self.nodes[0].getbalances()["mine"]
