@@ -96,8 +96,8 @@ private:
     mutable Parents m_parents;
     mutable Children m_children;
     CAmount nFee;                   //!< Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
-    const CAsset nFeeAsset;         //!< SEQUENTIA: The asset used for fee payment.
-    const CAmount nFeeAmount;       //!< SEQUENTIA: The amount of nFeeAsset used for fee payment.
+    const CAsset nFeeAsset;         //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
+    const CAmount nFeeAmount;       //!< ELEMENTS: The amount of nFeeAsset used for fee payment. Always equal to nFee unless con_any_asset_fees is enabled.
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool
