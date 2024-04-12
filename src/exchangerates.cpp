@@ -1,14 +1,9 @@
-#include <asset.h>
 #include <assetsdir.h>
-#include <consensus/amount.h>
-#include <cstdint>
 #include <exchangerates.h>
-#include <fs.h>
-#include <fstream>
-#include <logging.h>
 #include <policy/policy.h>
-#include <uint256.h>
 #include <univalue.h>
+
+#include <fstream>
 
 CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
     auto it = this->find(asset);
