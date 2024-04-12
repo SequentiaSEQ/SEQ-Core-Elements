@@ -65,26 +65,29 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.nodes[1].setfeeexchangerates({ "gasset": 100000000, self.asset: 100000000 })
 
     def transfer_asset_to_node1(self):
-        node0_balance = self.nodes[0].getbalance()
-        assert len(node0_balance) == 3
-        assert_equal(node0_balance[self.asset], self.issue_amount)
+        node0_balance = self.nodes[0].getbalances()["mine"]
+        assert len(node0_balance["trusted"]) == 3
+        assert_equal(node0_balance["trusted"][self.asset], self.issue_amount)
 
-        tx = self.nodes[0].sendtoaddress(
+        self.nodes[0].sendtoaddress(
             address=self.node1_address,
             amount=2.0,
             assetlabel=self.asset,
             fee_assetlabel=self.asset)
 
-        self.generate(self.nodes[0], 1)
+        self.generatetoaddress(self.nodes[0], 1, self.node0_address)
         self.sync_all()
 
-        node0_new_balance = self.nodes[0].getbalance()
-        assert_equal(node0_new_balance[self.asset], self.issue_amount - Decimal('2') - Decimal('0.00049820'))
-        assert_equal(node0_new_balance["gasset"], node0_balance["gasset"])
+        node0_new_balance = self.nodes[0].getbalances()["mine"]
+        assert_equal(node0_new_balance["trusted"][self.asset], self.issue_amount - Decimal('2') - Decimal('0.00049820'))
+        assert_equal(node0_new_balance["trusted"]["gasset"], node0_balance["trusted"]["gasset"])
+        assert_equal(node0_new_balance["immature"][self.asset], Decimal('0.00049820'))
 
-        node1_balance = self.nodes[1].getbalance()
-        assert len(node1_balance) == 1
-        assert_equal(node1_balance[self.asset], Decimal('2'))
+
+        node1_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node1_balance["trusted"]) == 1
+        assert len(node1_balance["immature"]) == 0
+        assert_equal(node1_balance["trusted"][self.asset], Decimal('2'))
 
         self.nodes[1].sendtoaddress(
             address=self.node0_address,
@@ -92,12 +95,13 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             assetlabel=self.asset,
             fee_assetlabel=self.asset)
 
-        self.generate(self.nodes[1], 1)
+        self.generatetoaddress(self.nodes[1], 1, self.node1_address)
         self.sync_all()
 
-        node1_new_balance = self.nodes[1].getbalance()
-        assert len(node1_new_balance) == 1
-        assert_equal(node1_new_balance[self.asset], Decimal('2') - Decimal('1')  - Decimal('0.00049820'))
+        node1_new_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node1_new_balance["trusted"]) == 1
+        assert_equal(node1_new_balance["trusted"][self.asset], Decimal('2') - Decimal('1')  - Decimal('0.00049820'))
+        assert_equal(node1_new_balance["immature"][self.asset], Decimal('0.00049820'))
 
     def run_test(self):
         self.init()
