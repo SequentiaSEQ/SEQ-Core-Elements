@@ -198,9 +198,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         feeMap[::policyAsset] = 0;
     }
     int index = 0;
-    for (auto fee : feeMap) {
-        CAsset fee_asset = fee.first;
-        CAmount fee_amount = fee.second; 
+    for (auto& fee : feeMap) {
+        auto& fee_asset = fee.first;
+        auto& fee_amount = fee.second;
         if (!g_con_any_asset_fees && fee_asset != ::policyAsset) {
             continue;
         }
@@ -209,7 +209,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         newTxOut.nAsset = fee_asset;
         newTxOut.nValue = fee_amount;
         if (fee_asset == chainparams.GetConsensus().subsidy_asset) {
-            newTxOut.nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());     
+            newTxOut.nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
         }
         if (g_con_elementsmode) {
             if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
