@@ -75,8 +75,6 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             assetlabel=self.asset,
             fee_assetlabel=self.asset)
 
-        self.nodes[0].sendtoaddress(self.node1_address, 1) # node crashes if thiss TX is included to the block
-
         self.generatetoaddress(self.nodes[0], 1, self.node0_address)
         self.sync_all()
 
@@ -84,7 +82,6 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         assert_equal(node0_new_balance["trusted"][self.asset], self.issue_amount - Decimal('2') - Decimal('0.00049820'))
         assert_equal(node0_new_balance["trusted"]["gasset"], node0_balance["trusted"]["gasset"])
         assert_equal(node0_new_balance["immature"][self.asset], Decimal('0.00049820'))
-
 
         node1_balance = self.nodes[1].getbalances()["mine"]
         assert len(node1_balance["trusted"]) == 1
@@ -105,10 +102,77 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         assert_equal(node1_new_balance["trusted"][self.asset], Decimal('2') - Decimal('1')  - Decimal('0.00049820'))
         assert_equal(node1_new_balance["immature"][self.asset], Decimal('0.00049820'))
 
+    def multiple_asset_fees_transfers(self):
+        node0_balance = self.nodes[0].getbalances()["mine"]
+        node1_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node0_balance["trusted"]) == 3
+        assert len(node1_balance["trusted"]) == 1
+
+        self.nodes[0].sendtoaddress(
+            address=self.node1_address,
+            amount=1.0,
+            assetlabel=self.asset,
+            fee_assetlabel=self.asset)
+
+        self.nodes[0].sendtoaddress(
+            address=self.node1_address,
+            amount=2.0,
+            assetlabel=self.asset,
+            fee_assetlabel="gasset")
+
+        self.nodes[0].sendtoaddress(
+            address=self.node1_address,
+            amount=3.0,
+            assetlabel="gasset",
+            fee_assetlabel=self.asset)
+
+        self.nodes[0].sendtoaddress(
+            address=self.node1_address,
+            amount=4.0,
+            assetlabel="gasset",
+            fee_assetlabel="gasset")
+
+        self.generatetoaddress(self.nodes[0], 1, self.node0_address)
+        self.sync_all()
+
+        node0_new_balance = self.nodes[0].getbalances()["mine"]
+        assert_equal(node0_new_balance["trusted"][self.asset], node0_balance["trusted"][self.asset] - Decimal('3') - Decimal('0.00125160'))
+        assert_equal(node0_new_balance["trusted"]["gasset"], node0_balance["trusted"]["gasset"] - Decimal('7') - Decimal('0.00125160'))
+
+        node1_new_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node1_new_balance["trusted"]) == 2
+        assert_equal(node1_new_balance["trusted"]["gasset"], Decimal('7'))
+        assert_equal(node1_new_balance["trusted"][self.asset], node1_balance["trusted"][self.asset] + Decimal('3'))
+
+    def transfer_asset_amount_including_fee(self):
+        node1_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node1_balance["trusted"]) == 2
+
+        self.nodes[1].sendtoaddress(
+            address=self.node0_address,
+            amount=self.nodes[1].getbalance()[self.asset],
+            assetlabel=self.asset,
+            subtractfeefromamount=True)
+
+        self.nodes[1].sendtoaddress(
+            address=self.node0_address,
+            amount=self.nodes[1].getbalance()["gasset"],
+            assetlabel="gasset",
+            subtractfeefromamount=True)
+
+        self.generatetoaddress(self.nodes[1], 1, self.node0_address)
+        self.sync_all()
+        node1_new_balance = self.nodes[1].getbalances()["mine"]
+        assert len(node1_new_balance["trusted"]) == 0
+
     def run_test(self):
         self.init()
 
         self.transfer_asset_to_node1()
+
+        self.multiple_asset_fees_transfers()
+
+        self.transfer_asset_amount_including_fee()
 
 if __name__ == '__main__':
     AnyAssetFeeTest().main()
