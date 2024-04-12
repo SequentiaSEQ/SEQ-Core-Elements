@@ -32,7 +32,11 @@ static RPCHelpMan getfeeexchangerates()
 {
     UniValue response = UniValue{UniValue::VOBJ};
     for (auto rate : ExchangeRateMap::GetInstance()) {
-        response.pushKV(rate.first.GetHex(), rate.second.m_scaled_value);
+        std::string label = gAssetsDir.GetLabel(rate.first);
+        if (label == "") {
+            label = rate.first.GetHex();
+        }
+        response.pushKV(label, rate.second.m_scaled_value);
     }
     return response;
 },
