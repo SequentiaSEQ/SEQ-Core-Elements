@@ -212,7 +212,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             newTxOut.nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
         }
         if (g_con_elementsmode) {
-            if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
+            if (chainparams.GetConsensus().subsidy_asset != policyAsset) {
                 // Only claim the subsidy if it's the same as the policy asset.
                 newTxOut.nValue = fee_amount;
             }
