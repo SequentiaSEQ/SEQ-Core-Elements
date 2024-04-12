@@ -35,6 +35,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.sync_all()
 
         assert self.nodes[0].dumpassetlabels() == {'gasset': 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'}
+        assert self.nodes[0].getfeeexchangerates() == { 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23': 100000000 }
 
         self.issue_amount = Decimal('100')
         self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
