@@ -199,22 +199,22 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
     int index = 0;
     for (auto& fee : feeMap) {
-        auto& fee_asset = fee.first;
-        auto& fee_amount = fee.second;
-        if (!g_con_any_asset_fees && fee_asset != ::policyAsset) {
+        auto& feeAsset = fee.first;
+        auto& feeAmount = fee.second;
+        if (!g_con_any_asset_fees && feeAsset != ::policyAsset) {
             continue;
         }
         CTxOut newTxOut;
         newTxOut.scriptPubKey = scriptPubKeyIn;
-        newTxOut.nAsset = fee_asset;
-        newTxOut.nValue = fee_amount;
-        if (fee_asset == chainparams.GetConsensus().subsidy_asset) {
-            newTxOut.nValue = fee_amount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+        newTxOut.nAsset = feeAsset;
+        newTxOut.nValue = feeAmount;
+        if (feeAsset == chainparams.GetConsensus().subsidy_asset) {
+            newTxOut.nValue = feeAmount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
         }
         if (g_con_elementsmode) {
             if (chainparams.GetConsensus().subsidy_asset != policyAsset) {
                 // Only claim the subsidy if it's the same as the policy asset.
-                newTxOut.nValue = fee_amount;
+                newTxOut.nValue = feeAmount;
             }
             // 0-value outputs must be unspendable
             if (newTxOut.nValue.GetAmount() == 0) {
@@ -222,7 +222,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             }
         }
         coinbaseTx.vout.push_back(newTxOut);
-        pblocktemplate->vTxFees[index] = -fee_amount;
+        pblocktemplate->vTxFees[index] = -feeAmount;
         index++;
     }
     // Non-consensus commitment output before finishing coinbase transaction
