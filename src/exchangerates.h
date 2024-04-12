@@ -5,7 +5,7 @@
 #include <fs.h>
 #include <policy/policy.h>
 
-constexpr const CAmount exchange_rate_scale = 1000000000L;
+constexpr const CAmount exchange_rate_scale = COIN;
 
 class CAssetExchangeRate
 {
