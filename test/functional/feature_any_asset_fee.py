@@ -6,6 +6,11 @@
 
 from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
+from decimal import Decimal
+from test_framework.util import (
+    assert_equal,
+    assert_raises_rpc_error,
+)
 
 class AnyAssetFeeTest(BitcoinTestFramework):
     def set_test_params(self):
@@ -31,7 +36,8 @@ class AnyAssetFeeTest(BitcoinTestFramework):
 
         assert self.nodes[0].dumpassetlabels() == {'gasset': 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'}
 
-        self.issuance = self.nodes[0].issueasset(100, 1)
+        self.issue_amount = Decimal('100')
+        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
         self.asset = self.issuance['asset']
         #token = issuance['token']
         self.issuance_txid = self.issuance['txid']
@@ -47,8 +53,8 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         issuance_key = self.nodes[0].dumpissuanceblindingkey(self.issuance_txid, self.issuance_vin)
         self.nodes[1].importissuanceblindingkey(self.issuance_txid, self.issuance_vin, issuance_key)
         issuances = self.nodes[1].listissuances()
-        assert (issuances[0]['tokenamount'] == 1 and issuances[0]['assetamount'] == 100) \
-            or (issuances[1]['tokenamount'] == 1 and issuances[1]['assetamount'] == 100)
+        assert (issuances[0]['tokenamount'] == 1 and issuances[0]['assetamount'] == self.issue_amount) \
+            or (issuances[1]['tokenamount'] == 1 and issuances[1]['assetamount'] == self.issue_amount)
 
         self.node0_address = self.nodes[0].getnewaddress()
         self.node0_nonct_address = self.nodes[0].getaddressinfo(self.node0_address)["unconfidential"]
@@ -56,18 +62,29 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.node1_nonct_address = self.nodes[1].getaddressinfo(self.node1_address)["unconfidential"]
 
         self.nodes[0].setfeeexchangerates({ "gasset": 100000000, self.asset: 100000000 })
-        print(self.nodes[0].getfeeexchangerates())
+        self.nodes[1].setfeeexchangerates({ "gasset": 100000000, self.asset: 100000000 })
 
     def transfer_asset_to_node1(self):
-        self.nodes[0].sendtoaddress(
+        node0_balance = self.nodes[0].getbalance()
+        assert len(node0_balance) == 3
+        assert_equal(node0_balance[self.asset], self.issue_amount)
+
+        tx = self.nodes[0].sendtoaddress(
             address=self.node1_address,
             amount=2.0,
             assetlabel=self.asset,
-            fee_assetlabel="gasset")
+            fee_assetlabel=self.asset)
 
         self.generate(self.nodes[0], 1)
-
         self.sync_all()
+
+        node0_new_balance = self.nodes[0].getbalance()
+        assert_equal(node0_new_balance[self.asset], self.issue_amount - Decimal('2') - Decimal('0.00049820'))
+        assert_equal(node0_new_balance["gasset"], node0_balance["gasset"])
+
+        node1_balance = self.nodes[1].getbalance()
+        assert len(node1_balance) == 1
+        assert_equal(node1_balance[self.asset], Decimal('2'))
 
         self.nodes[1].sendtoaddress(
             address=self.node0_address,
@@ -78,13 +95,14 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.generate(self.nodes[1], 1)
         self.sync_all()
 
+        node1_new_balance = self.nodes[1].getbalance()
+        assert len(node1_new_balance) == 1
+        assert_equal(node1_new_balance[self.asset], Decimal('2') - Decimal('1')  - Decimal('0.00049820'))
 
     def run_test(self):
         self.init()
 
         self.transfer_asset_to_node1()
-
-        print(self.nodes[1].getbalance())
 
 if __name__ == '__main__':
     AnyAssetFeeTest().main()
