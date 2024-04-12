@@ -65,7 +65,7 @@ public:
     int m_min_depth = DEFAULT_MIN_DEPTH;
     //! Maximum chain depth value for coin availability
     int m_max_depth = DEFAULT_MAX_DEPTH;
-    //! ELEMENT: Override the chain's default fee asset if set
+    //! ELEMENT: Override the chain's default fee asset if set and con_any_asset_fees is enabled
     std::optional<CAsset> m_fee_asset;
 
     CCoinControl();

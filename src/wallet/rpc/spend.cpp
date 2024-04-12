@@ -238,10 +238,9 @@ RPCHelpMan sendtoaddress()
 
     SetFeeEstimateMode(*pwallet, coin_control, /* conf_target */ request.params[6], /* estimate_mode */ request.params[7], /* fee_rate */ request.params[11], /* override_min_fee */ false);
 
-    CAsset feeAsset = ::policyAsset;
     if (g_con_any_asset_fees) {
         // Default to using the same asset being sent in the transaction
-        feeAsset = asset;
+        CAsset feeAsset = asset;
         if (request.params.size() > 12 && request.params[12].isStr() && !request.params[12].get_str().empty()) {
             std::string strFeeAsset = request.params[12].get_str();
             feeAsset = GetAssetFromString(strFeeAsset);
@@ -249,8 +248,8 @@ RPCHelpMan sendtoaddress()
                 throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
             }
         }
+        coin_control.m_fee_asset = feeAsset;
     }
-    coin_control.m_fee_asset = feeAsset;
 
     EnsureWalletIsUnlocked(*pwallet);
 
