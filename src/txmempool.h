@@ -95,7 +95,9 @@ private:
     const CTransactionRef tx;
     mutable Parents m_parents;
     mutable Children m_children;
-    const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
+    CAmount nFee;                   //!< Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
+    const CAsset nFeeAsset;         //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
+    const CAmount nFeeAmount;       //!< ELEMENTS: The amount of nFeeAsset used for fee payment. Always equal to nFee unless con_any_asset_fees is enabled.
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool
@@ -119,15 +121,17 @@ private:
     int64_t nSigOpCostWithAncestors;
 
 public:
-    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
-                    int64_t time, unsigned int entry_height,
-                    bool spends_coinbase,
-                    int64_t sigops_cost, LockPoints lp,
-                    const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
+    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, const CAsset feeAsset, const CAmount feeAmount,
+                int64_t time, unsigned int entry_height,
+                bool spends_coinbase,
+                int64_t sigops_cost, LockPoints lp,
+                const std::set<std::pair<uint256, COutPoint>>& setPeginsSpent);
 
     const CTransaction& GetTx() const { return *this->tx; }
     CTransactionRef GetSharedTx() const { return this->tx; }
     const CAmount& GetFee() const { return nFee; }
+    const CAsset& GetFeeAsset() const { return nFeeAsset; }
+    const CAmount& GetFeeAmount() const { return nFeeAmount; }
     size_t GetTxSize() const;
     size_t GetTxWeight() const { return nTxWeight; }
     std::chrono::seconds GetTime() const { return std::chrono::seconds{nTime}; }
@@ -144,6 +148,8 @@ public:
     // Updates the fee delta used for mining priority score, and the
     // modified fees with descendants.
     void UpdateFeeDelta(int64_t feeDelta);
+    // Updates the base fee and the modified fees with ancestors and descendants.
+    void UpdateFee(const CAmount fee);
     // Update the LockPoints after a reorg
     void UpdateLockPoints(const LockPoints& lp);
 
@@ -624,6 +630,9 @@ public:
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);
     void ApplyDelta(const uint256& hash, CAmount &nFeeDelta) const EXCLUSIVE_LOCKS_REQUIRED(cs);
     void ClearPrioritisation(const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs);
+
+    /** Recompute valuation of all transaction fees, called whenever exchange rates have been updated. */
+    void RecomputeFees();
 
     /** Get the transaction in the pool that spends the same prevout */
     const CTransaction* GetConflictTx(const COutPoint& prevout) const EXCLUSIVE_LOCKS_REQUIRED(cs);

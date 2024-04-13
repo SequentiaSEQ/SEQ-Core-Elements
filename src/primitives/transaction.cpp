@@ -13,6 +13,7 @@
 #include <assert.h>
 
 bool g_con_elementsmode = false;
+bool g_con_any_asset_fees = false;
 
 const int32_t CTransaction::CURRENT_VERSION = 2;
 

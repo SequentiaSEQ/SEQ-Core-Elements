@@ -17,6 +17,7 @@
 #include <consensus/validation.h>
 #include <cuckoocache.h>
 #include <deploymentstatus.h>
+#include <exchangerates.h>
 #include <flatfile.h>
 #include <hash.h>
 #include <index/blockfilterindex.h>
@@ -881,9 +882,19 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_WITNESS_MUTATED, "bad-witness-nonstandard");
 
     int64_t nSigOpsCost = GetTransactionSigOpCost(tx, m_view, STANDARD_SCRIPT_VERIFY_FLAGS);
-
-    // We only consider policyAsset
-    ws.m_base_fees = fee_map[policyAsset];
+    
+    CAsset feeAsset;
+    if (g_con_any_asset_fees) {
+        // ConstructTransaction() ensures that transactions can only have a single fee output
+        // and therefore that there will be exactly one entry in fee_map.
+        // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate 
+        // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple 
+        // fee assets.
+        feeAsset = fee_map.begin()->first;
+    } else {
+        feeAsset = policyAsset;
+    }
+    ws.m_base_fees = fee_map[feeAsset];
 
     // ws.m_modified_fees includes any fee deltas from PrioritiseTransaction
     ws.m_modified_fees = ws.m_base_fees;
@@ -904,7 +915,8 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         }
     }
 
-    entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
+    CAmount currentFeeValuation = ExchangeRateMap::GetInstance().CalculateExchangeValue(ws.m_base_fees, feeAsset);
+    entry.reset(new CTxMemPoolEntry(ptx, currentFeeValuation, feeAsset, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     ws.m_vsize = entry->GetTxSize();
 
