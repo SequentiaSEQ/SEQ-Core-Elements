@@ -164,6 +164,9 @@ BASE_SCRIPTS = [
     'feature_reindex.py',
     'feature_abortnode.py',
     # vv Tests less than 30s vv
+    # Sequentia tests
+    'feature_any_asset_fee.py',
+    # -------------------
     'wallet_keypool_topup.py --legacy-wallet',
     'wallet_keypool_topup.py --descriptors',
     'interface_zmq.py',
