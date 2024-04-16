@@ -1,6 +1,8 @@
 #include <assetsdir.h>
 #include <exchangerates.h>
 #include <policy/policy.h>
+#include <util/settings.h>
+#include <util/system.h>
 #include <univalue.h>
 
 #include <fstream>
@@ -19,44 +21,60 @@ CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAs
     }
 }
 
-bool ExchangeRateMap::LoadExchangeRatesFromJSONFile(fs::path file_path, std::string& error) {
-    // Read config file
-    std::ifstream ifs(file_path);
-    if (!ifs.is_open()) {
-        error = "Failed to open file";
+bool ExchangeRateMap::LoadFromDefaultJSONFile(std::vector<std::string>& errors) {
+    fs::path file_path = AbsPathForConfigVal(fs::PathFromString(exchange_rates_config_file));    
+    if (fs::exists(file_path)) {
+        return LoadFromJSONFile(file_path, errors);
+    } else {
+        return true;
+    }
+}
+
+bool ExchangeRateMap::LoadFromJSONFile(fs::path file_path, std::vector<std::string>& errors) {
+    std::map <std::string, UniValue> json;
+    if (!util::ReadSettings(file_path, json, errors)) {
         return false;
     }
-    std::stringstream buffer;
-    buffer << ifs.rdbuf();
+    return this->LoadFromJSON(json, errors);
+}
 
-    // Parse as JSON
-    std::string rawJson = buffer.str();
-    UniValue json;
-    if (!json.read(rawJson)) {
-        error = "Cannot parse JSON";
-        return false;
+bool ExchangeRateMap::SaveToJSONFile(std::vector<std::string>& errors) {
+    UniValue json = this->ToJSON();
+    std::map<std::string, util::SettingsValue> settings;
+    json.getObjMap(settings);
+    fs::path file_path = AbsPathForConfigVal(fs::PathFromString(exchange_rates_config_file));
+    return util::WriteSettings(file_path, settings, errors);
+}
+
+UniValue ExchangeRateMap::ToJSON() {
+    UniValue json = UniValue{UniValue::VOBJ};
+    for (auto rate : *this) {
+        std::string label = gAssetsDir.GetLabel(rate.first);
+        if (label == "") {
+            label = rate.first.GetHex();
+        }
+        json.pushKV(label, rate.second.m_scaled_value);
     }
-    std::map<std::string, UniValue> assetMap;
-    json.getObjMap(assetMap);
+    return json;
+}
 
-    // Load exchange rates into map
-    this->clear();
-    for (auto assetEntry : assetMap) {
-        auto assetIdentifier = assetEntry.first;
-        auto assetData = assetEntry.second;
-        CAsset asset = GetAssetFromString(assetIdentifier);
+bool ExchangeRateMap::LoadFromJSON(std::map<std::string, UniValue> json, std::vector<std::string>& errors) {
+    bool hasError = false;
+    std::map<CAsset, CAmount> parsedRates;
+    for (auto rate : json) {
+        CAsset asset = GetAssetFromString(rate.first);
         if (asset.IsNull()) {
-            error = strprintf("Unknown label and invalid asset hex: %s", assetIdentifier);
-            return false;
-        }
-        CAmount exchangeRateValue;
-        if (assetData.isNum()) {
-            exchangeRateValue = assetData.get_int64();
+            errors.push_back(strprintf("Unknown label and invalid asset hex: %s", rate.first));
+            hasError = true;
         } else {
-            error = strprintf("Invalid value for asset %s: %d", assetIdentifier, assetData.getValStr());
-            return false;
+            CAmount newRateValue = rate.second.get_int64();
+            parsedRates[asset] = newRateValue;
         }
-        (*this)[asset] = exchangeRateValue;
     }
-    return true;
+    if (hasError) return false;
+    this->clear();
+    for (auto rate : parsedRates) {
+        (*this)[rate.first] = rate.second;
+    }
+    return true; 
 }
