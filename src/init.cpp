@@ -1341,7 +1341,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         std::string file_path_string = gArgs.GetArg("-initialexchangeratesjsonfile", "");
         std::vector<std::string> errors;
         if (!file_path_string.empty()) {
-            fs::path file_path = AbsPathForConfigVal(fs::PathFromString(file_path_string));
+            fs::path file_path = GetConfigFile(file_path_string);
             if (!exchangeRateMap.LoadFromJSONFile(file_path, errors)) {
                 return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: \n%s\n"), file_path_string, MakeUnorderedList(errors)));
             };
