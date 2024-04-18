@@ -4,8 +4,10 @@
 
 #include <fs.h>
 #include <policy/policy.h>
+#include <univalue.h>
 
 constexpr const CAmount exchange_rate_scale = COIN;
+const std::string exchange_rates_config_file = "exchangerates.json";
 
 class CAssetExchangeRate
 {
@@ -40,14 +42,34 @@ public:
      */
     CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
-    /**
-     * Populate the exchange rate map using a config file.
+/**
+     * Load the exchange rate map from the default JSON config file in <datadir>/exchangerates.json.
      *
-     * @param[in]   file_path     File path to INI config file where keys are asset labels and values are exchange rates.
-     * @param[in]   error         String reference for storing error message, if there is any.
+     * @param[in]   errors        Vector for storing error messages, if there are any.
      * @return true on success
      */
-    bool LoadExchangeRatesFromJSONFile(fs::path file_path, std::string& error);
+    bool LoadFromDefaultJSONFile(std::vector<std::string>& errors);
+    
+    /**
+     * Load the exchange rate map from a JSON config file.
+     *
+     * @param[in]   file_path     File path to JSON config file where keys are asset labels and values are exchange rates.
+     * @param[in]   errors        Vector for storing error messages, if there are any.
+     * @return true on success
+     */
+    bool LoadFromJSONFile(fs::path file_path, std::vector<std::string>& errors);
+
+    /**
+     * Save the exchange rate map to a JSON config file in the node's data directory.
+     *
+     * @param[in]   errors        Vector for storing error messages, if there are any.
+     * @return true on success
+     */
+    bool SaveToJSONFile(std::vector<std::string>& errors);
+
+    UniValue ToJSON();
+
+    bool LoadFromJSON(std::map<std::string, UniValue> json, std::vector<std::string>& error);
 };
 
 #endif // BITCOIN_EXCHANGERATES_H

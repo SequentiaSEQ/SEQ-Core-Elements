@@ -642,7 +642,7 @@ void SetupServerArgs(ArgsManager& argsman)
     argsman.AddArg("-ct_bits", strprintf("The default number of hiding bits in a rangeproof. Will be exceeded to cover amounts exceeding the maximum hiding value. (default: %d)", 52), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_exponent", strprintf("The hiding exponent. (default: %s)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-con_any_asset_fees", "Enable transation sees to be paid with any asset (default: false)", ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
-    argsman.AddArg("-exchangeratesjsonfile=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Only used when con_any_asset_fees is enabled. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.json"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
+    argsman.AddArg("-initialexchangeratesjsonfile=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Only used when con_any_asset_fees is enabled. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.json"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
 
 
 #if defined(USE_SYSCALL_SANDBOX)
@@ -1330,21 +1330,31 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 #endif
 
     // ELEMENTS:
+    policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
+
     g_con_any_asset_fees = gArgs.GetBoolArg("-con_any_asset_fees", false);
     if (g_con_any_asset_fees) {
         // If fees can be paid in any asset, node operators need to be able to specify asset exchange 
         // rates using either the static config file and/or the exchange rates RPCs.
         RegisterExchangeRatesRPCCommands(tableRPC);
-        std::string file_path_string = gArgs.GetArg("-exchangeratesjsonfile", "");
+        ExchangeRateMap& exchangeRateMap = ExchangeRateMap::GetInstance();
+        std::string file_path_string = gArgs.GetArg("-initialexchangeratesjsonfile", "");
+        std::vector<std::string> errors;
         if (!file_path_string.empty()) {
-            fs::path file_path = AbsPathForConfigVal(fs::PathFromString(file_path_string));
-            std::string error;
-            if (!ExchangeRateMap::GetInstance().LoadExchangeRatesFromJSONFile(file_path, error)) {
-                return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: %s"), file_path_string, error));
+            fs::path file_path = GetConfigFile(file_path_string);
+            if (!exchangeRateMap.LoadFromJSONFile(file_path, errors)) {
+                return InitError(strprintf(_("Unable to load exchange rates from JSON file %s: \n%s\n"), file_path_string, MakeUnorderedList(errors)));
+            };
+        } else {
+            if (!exchangeRateMap.LoadFromDefaultJSONFile(errors)) {
+                return InitError(strprintf(_("Unable to load exchange rates from default JSON file %s: \n%s\n"), exchange_rates_config_file, MakeUnorderedList(errors)));
             };
         }
+        errors.clear();
+        if (!exchangeRateMap.SaveToJSONFile(errors)) {
+            return InitError(strprintf(_("Unable to save exchange rates to JSON file %s: \n%s\n"), exchange_rates_config_file, MakeUnorderedList(errors)));
+        };
     }
-    policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
     
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
