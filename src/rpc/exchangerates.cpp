@@ -29,17 +29,9 @@ static RPCHelpMan getfeeexchangerates()
                   + HelpExampleRpc("getfeeexchangerates", "")
                 },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-{
-    UniValue response = UniValue{UniValue::VOBJ};
-    for (auto rate : ExchangeRateMap::GetInstance()) {
-        std::string label = gAssetsDir.GetLabel(rate.first);
-        if (label == "") {
-            label = rate.first.GetHex();
-        }
-        response.pushKV(label, rate.second.m_scaled_value);
+    {
+        return ExchangeRateMap::GetInstance().ToJSON();
     }
-    return response;
-},
     };
 }
 
@@ -59,23 +51,17 @@ static RPCHelpMan setfeeexchangerates()
                 },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
-    UniValue ratesField = request.params[0].get_obj();
-    std::map<std::string, UniValue> rawRates;
-    ratesField.getObjMap(rawRates);
-    std::map<CAsset, CAmount> parsedRates;
-    for (auto rate : rawRates) {
-        CAsset asset = GetAssetFromString(rate.first);
-        if (asset.IsNull()) {
-            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", rate.first));
-        }
-        CAmount newRateValue = rate.second.get_int64();
-        parsedRates[asset] = newRateValue;
-    }
+    UniValue json = request.params[0].get_obj();
+    std::map<std::string, UniValue> jsonRates;
+    json.getObjMap(jsonRates);
     auto& exchangeRateMap = ExchangeRateMap::GetInstance();
-    exchangeRateMap.clear();
-    for (auto rate : parsedRates) {
-        exchangeRateMap[rate.first] = rate.second;
+    std::vector<std::string> errors;
+    if (!exchangeRateMap.LoadFromJSON(jsonRates, errors)) {
+        throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Error loading rates from JSON: %s", MakeUnorderedList(errors)));
     }
+    if (!exchangeRateMap.SaveToJSONFile(errors)) {
+        return JSONRPCError(RPC_WALLET_ERROR, strprintf("Error saving exchange rates to JSON file %s: \n%s\n", exchange_rates_config_file, MakeUnorderedList(errors)));
+    };
     EnsureAnyMemPool(request.context).RecomputeFees();
     return NullUniValue;
 },
