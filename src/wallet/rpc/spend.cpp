@@ -464,6 +464,9 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
     bool lockUnspents = false;
     UniValue subtractFeeFromOutputs;
     std::set<int> setSubtractFeeFromOutputs;
+    if (g_con_any_asset_fees && !tx.vout.empty()) {
+        coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
+    }
 
     if (!options.isNull()) {
       if (options.type() == UniValue::VBOOL) {
@@ -516,8 +519,6 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                     throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
                 }
                 coinControl.m_fee_asset = feeAsset;
-            } else {
-                coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
             }
         }
 
