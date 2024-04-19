@@ -5,4 +5,8 @@ in pkgs.mkShell {
   inputsFrom = [
     sequentia
   ];
+  buildInputs = [
+    pkgs.python3
+    pkgs.clang-tools
+  ];
 }
