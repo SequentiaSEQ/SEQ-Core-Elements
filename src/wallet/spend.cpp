@@ -1695,8 +1695,7 @@ static bool CreateTransactionInternal(
     if (g_con_any_asset_fees) {
         ExchangeRateMap& exchangeRateMap = ExchangeRateMap::GetInstance();
         CAmount nFeeRetValue = exchangeRateMap.CalculateExchangeValue(nFeeRet, coin_selection_params.m_fee_asset); 
-        CAmount m_default_max_tx_fee_value = exchangeRateMap.CalculateExchangeValue(wallet.m_default_max_tx_fee, coin_selection_params.m_fee_asset);
-        if (nFeeRetValue > m_default_max_tx_fee_value) {
+        if (nFeeRetValue > wallet.m_default_max_tx_fee) {
             error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
             return false;
         }
