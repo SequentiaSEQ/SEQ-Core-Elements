@@ -305,7 +305,7 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     nBlockWeight += iter->GetTxWeight();
     ++nBlockTx;
     nBlockSigOpsCost += iter->GetSigOpCost();
-    feeMap[iter->GetFeeAsset()] += iter->GetFeeAmount();
+    feeMap[iter->GetFeeAsset()] += iter->GetFee();
     inBlock.insert(iter);
 
     bool fPrintPriority = gArgs.GetBoolArg("-printpriority", DEFAULT_PRINTPRIORITY);

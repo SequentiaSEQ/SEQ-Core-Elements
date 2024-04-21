@@ -68,14 +68,14 @@ private:
     int64_t feeDelta;
 };
 
-struct update_fee
+struct update_fee_value
 {
-    explicit update_fee(int64_t _fee) : fee(_fee) { }
+    explicit update_fee_value(int64_t _feeValue) : feeValue(_feeValue) { }
 
-    void operator() (CTxMemPoolEntry &e) { e.UpdateFee(fee); }
+    void operator() (CTxMemPoolEntry &e) { e.UpdateFeeValue(feeValue); }
 
 private:
-    int64_t fee;
+    int64_t feeValue;
 };
 
 bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
@@ -95,14 +95,14 @@ bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
     return true;
 }
 
-CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeAmount,
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeValue,
                                  int64_t time, unsigned int entry_height,
                                  bool spends_coinbase, int64_t sigops_cost, LockPoints lp,
                                  const std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent)
     : tx{tx},
       nFee{fee},
       nFeeAsset{feeAsset},
-      nFeeAmount{feeAmount},
+      nFeeValue{feeValue},
       nTxWeight(GetTransactionWeight(*tx)),
       nUsageSize{RecursiveDynamicUsage(tx)},
       nTime{time},
@@ -111,9 +111,9 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset 
       sigOpCost{sigops_cost},
       lockPoints{lp},
       nSizeWithDescendants{GetTxSize()},
-      nModFeesWithDescendants{nFee},
+      nModFeesWithDescendants{nFeeValue},
       nSizeWithAncestors{GetTxSize()},
-      nModFeesWithAncestors{nFee},
+      nModFeesWithAncestors{nFeeValue},
       nSigOpCostWithAncestors{sigOpCost},
       setPeginsSpent(_setPeginsSpent) {}
 
@@ -124,11 +124,11 @@ void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
     feeDelta = newFeeDelta;
 }
 
-void CTxMemPoolEntry::UpdateFee(const CAmount newFee)
+void CTxMemPoolEntry::UpdateFeeValue(const CAmount newFeeValue)
 {
-    nModFeesWithDescendants += newFee - nFee;
-    nModFeesWithAncestors += newFee - nFee;
-    nFee = newFee;
+    nModFeesWithDescendants += newFeeValue - nFeeValue;
+    nModFeesWithAncestors += newFeeValue - nFeeValue;
+    nFeeValue = newFeeValue;
 }
 
 void CTxMemPoolEntry::UpdateLockPoints(const LockPoints& lp)
@@ -1078,10 +1078,10 @@ void CTxMemPool::RecomputeFees()
         ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
         for (CTxMemPoolEntry tx : mapTx) {
             txiter it = mapTx.find(tx.GetTx().GetHash());
-            CAmount newFee = exchangeRateMap.CalculateExchangeValue(tx.GetFeeAmount(), tx.GetFeeAsset());
-            CAmount feeDelta = newFee - tx.GetFee();
-            if (feeDelta != 0) {
-                mapTx.modify(it, update_fee(newFee));
+            CAmount newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
+            CAmount feeValueDelta = newFeeValue - tx.GetFeeValue();
+            if (feeValueDelta != 0) {
+                mapTx.modify(it, update_fee_value(newFeeValue));
                 
                 // Now update all ancestors' modified fees with descendants
                 setEntries setAncestors;
@@ -1089,14 +1089,14 @@ void CTxMemPool::RecomputeFees()
                 std::string dummy;
                 CalculateMemPoolAncestors(tx, setAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
                 for (txiter ancestorIt : setAncestors) {
-                    mapTx.modify(ancestorIt, update_descendant_state(0, feeDelta, 0));
+                    mapTx.modify(ancestorIt, update_descendant_state(0, feeValueDelta, 0));
                 }
                 // Now update all descendants' modified fees with ancestors
                 setEntries setDescendants;
                 CalculateDescendants(it, setDescendants);
                 setDescendants.erase(it);
                 for (txiter descendantIt : setDescendants) {
-                    mapTx.modify(descendantIt, update_ancestor_state(0, feeDelta, 0, 0));
+                    mapTx.modify(descendantIt, update_ancestor_state(0, feeValueDelta, 0, 0));
                 }
                 ++nTransactionsUpdated;
             }

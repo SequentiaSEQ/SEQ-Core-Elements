@@ -915,8 +915,8 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         }
     }
 
-    CAmount currentFeeValuation = ExchangeRateMap::GetInstance().CalculateExchangeValue(ws.m_base_fees, feeAsset);
-    entry.reset(new CTxMemPoolEntry(ptx, currentFeeValuation, feeAsset, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
+    CAmount currentFeeValue = ExchangeRateMap::GetInstance().CalculateExchangeValue(ws.m_base_fees, feeAsset);
+    entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, feeAsset, currentFeeValue, nAcceptTime, m_active_chainstate.m_chain.Height(),
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     ws.m_vsize = entry->GetTxSize();
 
