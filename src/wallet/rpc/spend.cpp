@@ -378,8 +378,6 @@ RPCHelpMan sendmany()
 
     std::vector<CRecipient> recipients;
     ParseRecipients(sendTo, assets, subtractFeeFromAmount, recipients);
-    bool verbose = request.params[12].isNull() ? false : request.params[12].get_bool();
-
     if (g_con_any_asset_fees && !recipients.empty()) {
         CAsset feeAsset = recipients[0].asset;
         if (request.params.size() > 11) {
@@ -391,6 +389,7 @@ RPCHelpMan sendmany()
         }
         coin_control.m_fee_asset = feeAsset;
     }
+    bool verbose = request.params[12].isNull() ? false : request.params[12].get_bool();
 
     return SendMoney(*pwallet, coin_control, recipients, std::move(mapValue), verbose, ignore_blind_fail);
 },
