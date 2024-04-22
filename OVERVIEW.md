@@ -121,7 +121,6 @@ The former category includes:
 | `wallet` | `walletcreatefundedpsbt` | Reinterpret or rename `fee_rate` and `feeRate` to be in fee asset and in fee value unit respectively. Add `fee_asset` field to specify the fee asset. In the result, make `fee` denominated in the fee asset, add a `fee_asset` field, then add a `fee_value` for the value as interpreted by the node. | 
 | `wallet` | `sendtoaddress` | Add `fee_asset` field to specify the asset used for fee payment, otherwise default to the asset being sent in the transaction |
 | `wallet` | `sendmany` | Add `fee_asset` field to specify the asset used for fee payment, otherwise default to the asset being sent in the transaction |
-| `wallet` | `settxfee` | Add optional “fee_asset” parameter, defaulting to the asset being sent in the transaction |
 
 And the latter:
 
