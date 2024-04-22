@@ -169,6 +169,26 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         node1_new_balance = self.nodes[1].getbalances()["mine"]
         assert len(node1_new_balance["trusted"]) == 0
 
+    def raw_transfer_asset_to_node1(self):
+        node0 = self.nodes[0]
+        node1 = self.nodes[1]
+
+        node1_balance = node1.getbalances()['mine']
+
+        raw_tx = node0.createrawtransaction(outputs=[{self.node1_address: 1.0, 'asset': self.asset }])
+        funded_tx = node0.fundrawtransaction(raw_tx)['hex']
+        assert node0.decoderawtransaction(funded_tx)['fee'] == { self.asset: Decimal('0.00049820')}
+        blinded_tx = node0.blindrawtransaction(funded_tx)
+        signed_tx = node0.signrawtransactionwithwallet(blinded_tx)['hex']
+        sent_tx = node0.sendrawtransaction(signed_tx)
+        tx = node0.gettransaction(sent_tx)
+        assert tx['fee'] ==  { self.asset: Decimal('-0.00049820') }
+
+        self.generatetoaddress(node0, 1, self.node1_address)
+        self.sync_all()
+        node1_new_balance = node1.getbalances()['mine']
+        assert_equal(node1_new_balance['trusted'][self.asset], Decimal('1'))
+
     def run_test(self):
         self.init()
 
@@ -177,6 +197,8 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         self.multiple_asset_fees_transfers()
 
         self.transfer_asset_amount_including_fee()
+
+        self.raw_transfer_asset_to_node1()
 
 if __name__ == '__main__':
     AnyAssetFeeTest().main()
