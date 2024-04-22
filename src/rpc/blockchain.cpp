@@ -532,6 +532,8 @@ static std::vector<RPCResult> MempoolEntryDescription() { return {
             RPCResult{RPCResult::Type::STR_AMOUNT, "modified", "transaction fee with fee deltas used for mining priority, denominated in " + CURRENCY_UNIT},
             RPCResult{RPCResult::Type::STR_AMOUNT, "ancestor", "transaction fees of in-mempool ancestors (including this one) with fee deltas used for mining priority, denominated in " + CURRENCY_UNIT},
             RPCResult{RPCResult::Type::STR_AMOUNT, "descendant", "transaction fees of in-mempool descendants (including this one) with fee deltas used for mining priority, denominated in " + CURRENCY_UNIT},
+            RPCResult{RPCResult::Type::STR_HEX, "asset", /*optional=*/true, "asset used to pay transaction fee"},
+            RPCResult{RPCResult::Type::STR_AMOUNT, "value", /*optional=*/true, "value of transaction fee according to current exchange rates, denominated in reference fee unit"},
         }},
     RPCResult{RPCResult::Type::ARR, "depends", "unconfirmed transactions used as inputs for this transaction",
         {RPCResult{RPCResult::Type::STR_HEX, "transactionid", "parent transaction id"}}},
@@ -572,6 +574,10 @@ static void entryToJSON(const CTxMemPool& pool, UniValue& info, const CTxMemPool
     fees.pushKV("modified", ValueFromAmount(e.GetModifiedFee()));
     fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors()));
     fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants()));
+    if (g_con_any_asset_fees) {
+        fees.pushKV("asset", e.GetFeeAsset().GetHex());
+        fees.pushKV("value", ValueFromAmount(e.GetFeeValue()));
+    }
     info.pushKV("fees", fees);
 
     const CTransaction& tx = e.GetTx();
