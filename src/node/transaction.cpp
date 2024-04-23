@@ -76,7 +76,7 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
                 if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
                     return HandleATMPError(result.m_state, err_string);
                 } else if (g_con_any_asset_fees) {
-                    CAmount mBaseFeesValue = node.mempool->mapTx.find(txid)->GetFee();
+                    CAmount mBaseFeesValue = ExchangeRateMap::GetInstance().CalculateExchangeValue(result.m_base_fees.value(), tx->GetFeeAsset(::policyAsset));
                     if (mBaseFeesValue > max_tx_fee) {
                         return TransactionError::MAX_FEE_EXCEEDED;
                     }
