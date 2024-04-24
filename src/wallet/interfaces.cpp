@@ -8,7 +8,6 @@
 #include <interfaces/chain.h>
 #include <interfaces/handler.h>
 #include <policy/fees.h>
-#include <policy/value.h>
 #include <primitives/transaction.h>
 #include <rpc/server.h>
 #include <script/standard.h>
