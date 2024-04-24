@@ -65,11 +65,6 @@ struct CValue
     }
 };
 
-bool operator==(const CValue left, const CValue right)
-{
-    return left.value == right.value;
-}
-
 std::ostream &operator<<(std::ostream &out, const CValue& operand)
 {
     out << operand.value;
