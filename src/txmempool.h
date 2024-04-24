@@ -313,10 +313,10 @@ public:
         // Compare feerate with ancestors to feerate of the transaction, and
         // return the fee/size for the min.
         double f1 = (double)a.GetModifiedFee() * a.GetSizeWithAncestors();
-        double f2 = (double)a.GetModFeesWithAncestors().value * a.GetTxSize();
+        double f2 = (double)a.GetModFeesWithAncestors() * a.GetTxSize();
 
         if (f1 > f2) {
-            mod_fee = a.GetModFeesWithAncestors().value;
+            mod_fee = a.GetModFeesWithAncestors();
             size = a.GetSizeWithAncestors();
         } else {
             mod_fee = a.GetModifiedFee();

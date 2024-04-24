@@ -1255,7 +1255,7 @@ CFeeRate CTxMemPool::GetMinFee(size_t sizelimit) const {
         rollingMinimumFeeRate = rollingMinimumFeeRate / pow(2.0, (time - lastRollingFeeUpdate) / halflife);
         lastRollingFeeUpdate = time;
 
-        if (rollingMinimumFeeRate < (double)incrementalRelayFee.GetFeePerK().value / 2) {
+        if (rollingMinimumFeeRate < (double)incrementalRelayFee.GetFeePerK() / 2) {
             rollingMinimumFeeRate = 0;
             return CFeeRate(0);
         }
@@ -1266,7 +1266,7 @@ CFeeRate CTxMemPool::GetMinFee(size_t sizelimit) const {
 void CTxMemPool::trackPackageRemoved(const CFeeRate& rate) {
     AssertLockHeld(cs);
     if (rate.GetFeePerK() > rollingMinimumFeeRate) {
-        rollingMinimumFeeRate = rate.GetFeePerK().value;
+        rollingMinimumFeeRate = rate.GetFeePerK();
         blockSinceLastRollingFeeBump = false;
     }
 }
@@ -1343,7 +1343,7 @@ void CTxMemPool::GetTransactionAncestry(const uint256& txid, size_t& ancestors, 
     if (it != mapTx.end()) {
         ancestors = it->GetCountWithAncestors();
         if (ancestorsize) *ancestorsize = it->GetSizeWithAncestors();
-        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().value;
+        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors();
         descendants = CalculateDescendantMaximum(it);
     }
 }

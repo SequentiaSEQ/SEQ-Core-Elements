@@ -54,7 +54,6 @@ int ParseSighashString(const UniValue& sighash);
 
 // core_write.cpp
 UniValue ValueFromAmount(const CAmount amount);
-UniValue ValueFromAmount(const CValue amount);
 std::string FormatScript(const CScript& script);
 std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags = 0);
 UniValue EncodeHexScriptWitness(const CScriptWitness& witness);

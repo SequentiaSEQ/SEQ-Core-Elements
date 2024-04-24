@@ -49,14 +49,14 @@ public:
      * param@[in]   nFeePaid    The fee paid by a transaction, in satoshis
      * param@[in]   num_bytes   The vsize of a transaction, in vbytes
      */
-    CFeeRate(const CValue& nFeePaid, uint32_t num_bytes);
+    CFeeRate(const CAmount& nFeePaid, uint32_t num_bytes);
 
     /**
      * Return the fee in satoshis for the given vsize in vbytes.
      * If the calculated fee would have fractional satoshis, then the
      * returned fee will always be rounded up to the nearest satoshi.
      */
-    CValue GetFee(uint32_t num_bytes) const;
+    CAmount GetFee(uint32_t num_bytes) const;
 
     /**
      * Return the fee in denominations of the fee asset for the given
@@ -67,7 +67,7 @@ public:
     /**
      * Return the fee in satoshis for a vsize of 1000 vbytes
      */
-    CValue GetFeePerK() const { return GetFee(1000); }
+    CAmount GetFeePerK() const { return GetFee(1000); }
     friend bool operator<(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK < b.nSatoshisPerK; }
     friend bool operator>(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK > b.nSatoshisPerK; }
     friend bool operator==(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK == b.nSatoshisPerK; }

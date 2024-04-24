@@ -3,7 +3,6 @@
 
 #include <fs.h>
 #include <policy/policy.h>
-#include <policy/value.h>
 #include <univalue.h>
 
 constexpr const CAmount exchange_rate_scale = COIN; // 100,000,000
@@ -40,16 +39,16 @@ public:
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
-    CValue CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
+    CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
     /**
      * Calculate the amount from an exchange rate value
      *
-     * @param[in]   value        Corresponds to CTxMemPoolEntry.nFeeValue
+     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeValue
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the amount at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
-    CAmount CalculateExchangeAmount(const CValue& value, const CAsset& asset);
+    CAmount CalculateExchangeAmount(const CAmount& amount, const CAsset& asset);
 
     /**
      * Load the exchange rate map from the default JSON config file in <datadir>/exchangerates.json.

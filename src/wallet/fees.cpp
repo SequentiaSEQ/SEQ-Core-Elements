@@ -11,7 +11,7 @@
 
 
 namespace wallet {
-CValue GetRequiredFee(const CWallet& wallet, unsigned int nTxBytes)
+CAmount GetRequiredFee(const CWallet& wallet, unsigned int nTxBytes)
 {
     return GetRequiredFeeRate(wallet).GetFee(nTxBytes);
 }

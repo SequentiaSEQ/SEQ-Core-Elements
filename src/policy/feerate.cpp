@@ -12,18 +12,18 @@
 
 #include <cmath>
 
-CFeeRate::CFeeRate(const CValue& nFeePaid, uint32_t num_bytes)
+CFeeRate::CFeeRate(const CAmount& nFeePaid, uint32_t num_bytes)
 {
     const int64_t nSize{num_bytes};
 
     if (nSize > 0) {
-        nSatoshisPerK = nFeePaid.value * 1000 / nSize;
+        nSatoshisPerK = nFeePaid * 1000 / nSize;
     } else {
         nSatoshisPerK = 0;
     }
 }
 
-CValue CFeeRate::GetFee(uint32_t num_bytes) const
+CAmount CFeeRate::GetFee(uint32_t num_bytes) const
 {
     const int64_t nSize{num_bytes};
 
@@ -36,16 +36,16 @@ CValue CFeeRate::GetFee(uint32_t num_bytes) const
         if (nSatoshisPerK < 0) nFee = CAmount(-1);
     }
 
-    return CValue(nFee);
+    return nFee;
 }
 
 CAmount CFeeRate::GetFee(uint32_t num_bytes, const CAsset& asset) const
 {
-    CValue nFee = this->GetFee(num_bytes);
+    CAmount nFee = this->GetFee(num_bytes);
     if (g_con_any_asset_fees) {
         nFee = ExchangeRateMap::GetInstance().CalculateExchangeAmount(nFee, asset); 
     }
-    return nFee.value;
+    return nFee;
 }
 
 std::string CFeeRate::ToString(const FeeEstimateMode& fee_estimate_mode) const

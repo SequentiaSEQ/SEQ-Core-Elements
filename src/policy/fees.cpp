@@ -572,11 +572,11 @@ void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, boo
     CFeeRate feeRate(entry.GetFee(), entry.GetTxSize());
 
     mapMemPoolTxs[hash].blockHeight = txHeight;
-    unsigned int bucketIndex = feeStats->NewTx(txHeight, (double)feeRate.GetFeePerK().value);
+    unsigned int bucketIndex = feeStats->NewTx(txHeight, (double)feeRate.GetFeePerK());
     mapMemPoolTxs[hash].bucketIndex = bucketIndex;
-    unsigned int bucketIndex2 = shortStats->NewTx(txHeight, (double)feeRate.GetFeePerK().value);
+    unsigned int bucketIndex2 = shortStats->NewTx(txHeight, (double)feeRate.GetFeePerK());
     assert(bucketIndex == bucketIndex2);
-    unsigned int bucketIndex3 = longStats->NewTx(txHeight, (double)feeRate.GetFeePerK().value);
+    unsigned int bucketIndex3 = longStats->NewTx(txHeight, (double)feeRate.GetFeePerK());
     assert(bucketIndex == bucketIndex3);
 }
 
@@ -602,9 +602,9 @@ bool CBlockPolicyEstimator::processBlockTx(unsigned int nBlockHeight, const CTxM
     // Feerates are stored and reported as BTC-per-kb:
     CFeeRate feeRate(entry->GetFee(), entry->GetTxSize());
 
-    feeStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK().value);
-    shortStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK().value);
-    longStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK().value);
+    feeStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK());
+    shortStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK());
+    longStats->Record(blocksToConfirm, (double)feeRate.GetFeePerK());
     return true;
 }
 
@@ -1005,7 +1005,7 @@ void CBlockPolicyEstimator::FlushUnconfirmed() {
 
 FeeFilterRounder::FeeFilterRounder(const CFeeRate& minIncrementalFee)
 {
-    CAmount minFeeLimit = std::max(CAmount(1), minIncrementalFee.GetFeePerK().value / 2);
+    CAmount minFeeLimit = std::max(CAmount(1), minIncrementalFee.GetFeePerK() / 2);
     feeset.insert(0);
     for (double bucketBoundary = minFeeLimit; bucketBoundary <= MAX_FILTER_FEERATE; bucketBoundary *= FEE_FILTER_SPACING) {
         feeset.insert(bucketBoundary);

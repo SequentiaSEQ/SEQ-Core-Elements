@@ -37,11 +37,6 @@ std::string FormatMoney(const CAmount n)
     return str;
 }
 
-std::string FormatMoney(const CValue n)
-{
-    return FormatMoney(n.value);
-}
-
 std::optional<CAmount> ParseMoney(const std::string& money_string)
 {
     if (!ValidAsCString(money_string)) {

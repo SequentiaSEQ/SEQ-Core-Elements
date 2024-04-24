@@ -11,7 +11,6 @@
 
 #include <attributes.h>
 #include <consensus/amount.h>
-#include <policy/value.h>
 
 #include <optional>
 #include <string>
@@ -20,7 +19,6 @@
  * JSON but use AmountFromValue and ValueFromAmount for that.
  */
 std::string FormatMoney(const CAmount n);
-std::string FormatMoney(const CValue n);
 /** Parse an amount denoted in full coins. E.g. "0.0034" supplied on the command line. **/
 std::optional<CAmount> ParseMoney(const std::string& str);
 
