@@ -14,11 +14,11 @@ CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAs
         return 0;
     }
     auto scaled_value = it->second.m_scaled_value;
-    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
-    if (value > int64_max) {
+    __uint128_t result = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
+    if (result > int64_max) {
         return int64_max;
     } else {
-        return (int64_t) value;
+        return (int64_t) result;
     }
 }
 
@@ -29,11 +29,11 @@ CAmount ExchangeRateMap::CalculateExchangeAmount(const CAmount& amount, const CA
         return int64_max;
     }
     auto scaled_value = it->second.m_scaled_value;
-    __uint128_t amount = ((__uint128_t)amount * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
-    if (amount > int64_max) {
+    __uint128_t result = ((__uint128_t)amount * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
+    if (result > int64_max) {
         return int64_max;
     } else {
-        return (int64_t) amount;
+        return (int64_t) result;
     }
 }
 
