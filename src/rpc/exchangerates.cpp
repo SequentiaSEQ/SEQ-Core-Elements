@@ -40,10 +40,12 @@ static RPCHelpMan setfeeexchangerates()
     return RPCHelpMan{"setfeeexchangerates",
                 "\nPrivileged call to set the set of accepted assets for paying fees, and the exchange rate for each of these assets.\n",
                 {
-                    {
-                        {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
+                    {"rates", RPCArg::Type::OBJ, RPCArg::Optional::NO, "Exchange rates for assets",
+                        {
+                            {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
+                        },
                     },
-               },
+                },
                 RPCResult{RPCResult::Type::NONE, "", ""},
                 RPCExamples{
                     HelpExampleCli("setfeeexchangerates", "")

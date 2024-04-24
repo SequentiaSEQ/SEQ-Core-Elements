@@ -31,6 +31,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterMiscRPCCommands(t);
     RegisterMiningRPCCommands(t);
     RegisterRawTransactionRPCCommands(t);
+    RegisterExchangeRatesRPCCommands(t);
 #ifdef ENABLE_EXTERNAL_SIGNER
     RegisterSignerRPCCommands(t);
 #endif // ENABLE_EXTERNAL_SIGNER
