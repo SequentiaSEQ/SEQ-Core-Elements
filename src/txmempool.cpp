@@ -1085,14 +1085,14 @@ void CTxMemPool::RecomputeFees()
                 std::string dummy;
                 CalculateMemPoolAncestors(tx, setAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
                 for (txiter ancestorIt : setAncestors) {
-                    mapTx.modify(ancestorIt, update_descendant_state(0, feeValueDelta.value, 0));
+                    mapTx.modify(ancestorIt, update_descendant_state(0, feeValueDelta, 0));
                 }
                 // Now update all descendants' modified fees with ancestors
                 setEntries setDescendants;
                 CalculateDescendants(it, setDescendants);
                 setDescendants.erase(it);
                 for (txiter descendantIt : setDescendants) {
-                    mapTx.modify(descendantIt, update_ancestor_state(0, feeValueDelta.value, 0, 0));
+                    mapTx.modify(descendantIt, update_ancestor_state(0, feeValueDelta, 0, 0));
                 }
                 ++nTransactionsUpdated;
             }
