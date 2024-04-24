@@ -30,7 +30,7 @@
 // Helpers for modifying CTxMemPool::mapTx, which is a boost multi_index.
 struct update_descendant_state
 {
-    update_descendant_state(int64_t _modifySize, CAmount _modifyFee, int64_t _modifyCount) :
+    update_descendant_state(int64_t _modifySize, CValue _modifyFee, int64_t _modifyCount) :
         modifySize(_modifySize), modifyFee(_modifyFee), modifyCount(_modifyCount)
     {}
 
@@ -39,13 +39,13 @@ struct update_descendant_state
 
     private:
         int64_t modifySize;
-        CAmount modifyFee;
+        CValue modifyFee;
         int64_t modifyCount;
 };
 
 struct update_ancestor_state
 {
-    update_ancestor_state(int64_t _modifySize, CAmount _modifyFee, int64_t _modifyCount, int64_t _modifySigOpsCost) :
+    update_ancestor_state(int64_t _modifySize, CValue _modifyFee, int64_t _modifyCount, int64_t _modifySigOpsCost) :
         modifySize(_modifySize), modifyFee(_modifyFee), modifyCount(_modifyCount), modifySigOpsCost(_modifySigOpsCost)
     {}
 
@@ -54,7 +54,7 @@ struct update_ancestor_state
 
     private:
         int64_t modifySize;
-        CAmount modifyFee;
+        CValue modifyFee;
         int64_t modifyCount;
         int64_t modifySigOpsCost;
 };
@@ -467,7 +467,7 @@ void CTxMemPool::UpdateForRemoveFromMempool(const setEntries &entriesToRemove, b
     }
 }
 
-void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount)
+void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CValue modifyFee, int64_t modifyCount)
 {
     nSizeWithDescendants += modifySize;
     assert(int64_t(nSizeWithDescendants) > 0);
@@ -476,7 +476,7 @@ void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CAmount modifyFe
     assert(int64_t(nCountWithDescendants) > 0);
 }
 
-void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount, int64_t modifySigOps)
+void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize, CValue modifyFee, int64_t modifyCount, int64_t modifySigOps)
 {
     nSizeWithAncestors += modifySize;
     assert(int64_t(nSizeWithAncestors) > 0);
@@ -1074,9 +1074,9 @@ void CTxMemPool::RecomputeFees()
         ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
         for (CTxMemPoolEntry tx : mapTx) {
             txiter it = mapTx.find(tx.GetTx().GetHash());
-            CValue newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
-            CValue feeValueDelta = newFeeValue - tx.GetFeeValue();
-            if (feeValueDelta.value != 0) {
+            CAmount newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
+            CValue feeValueDelta = CValue(newFeeValue) - tx.GetFeeValue();
+            if (feeValueDelta != 0) {
                 mapTx.modify(it, update_fee_value(newFeeValue));
 
                 // Now update all ancestors' modified fees with descendants
