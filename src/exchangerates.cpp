@@ -14,10 +14,11 @@ CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAs
     }
     auto scaled_value = it->second.m_scaled_value;
     __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
-    if (value > UINT64_MAX) {
-        return UINT64_MAX;
+    int64_t int64_max = std::numeric_limits<int64_t>::max();
+    if (value > int64_max) {
+        return int64_max;
     } else {
-        return (uint64_t) value;
+        return (int64_t) value;
     }
 }
 
