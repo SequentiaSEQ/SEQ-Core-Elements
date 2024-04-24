@@ -53,7 +53,7 @@ CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
         nSize += (32 + 4 + 1 + 107 + 4); // the 148 mentioned above
     }
 
-    return dustRelayFeeIn.GetFee(nSize);
+    return dustRelayFeeIn.GetFee(nSize, txout.nAsset.GetAsset());
 }
 
 bool IsDust(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
