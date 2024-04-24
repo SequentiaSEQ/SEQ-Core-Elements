@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
-          wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 18
+          wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
           source ~/.bashrc
@@ -32,8 +32,8 @@ jobs:
           BDB_PREFIX: '/home/runner/work/SEQ-Core-Elements/SEQ-Core-Elements/db4'
           BDB_LIBS: '-L${BDB_PREFIX}/lib -ldb_cxx-4.8'
           BDB_CFLAGS: '-I${BDB_PREFIX}/include'
-          CC: clang-18
-          CXX: clang++-18
+          CC: clang-15
+          CXX: clang++-15
         run: |
           ./autogen.sh
           ./contrib/install_db4.sh .
@@ -53,7 +53,7 @@ jobs:
             src/elements-wallet
   tests:
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
@@ -61,5 +61,5 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py --ci -j4 --ansi --combinedlogslen=4000 --failfast
+          ./test/functional/test_runner.py --ci -j$(nproc) --ansi --combinedlogslen=4000 --failfast
 
