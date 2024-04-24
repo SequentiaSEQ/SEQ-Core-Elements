@@ -17,6 +17,7 @@
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/settings.h>
+#include <policy/value.h>
 #include <reverse_iterator.h>
 #include <util/moneystr.h>
 #include <util/system.h>

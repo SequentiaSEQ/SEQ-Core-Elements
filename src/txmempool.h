@@ -19,6 +19,7 @@
 #include <indirectmap.h>
 #include <policy/feerate.h>
 #include <policy/packages.h>
+#include <policy/value.h>
 #include <primitives/transaction.h>
 #include <primitives/pak.h>
 #include <random.h>
@@ -96,8 +97,8 @@ private:
     mutable Parents m_parents;
     mutable Children m_children;
     const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
-    const CAsset nFeeAsset;             //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
-    CValue nFeeValue;  //!< ELEMENTS: Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
+    const CAsset nFeeAsset;         //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
+    CValue nFeeValue;               //!< ELEMENTS: Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool

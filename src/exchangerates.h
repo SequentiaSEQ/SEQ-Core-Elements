@@ -3,9 +3,10 @@
 
 #include <fs.h>
 #include <policy/policy.h>
+#include <policy/value.h>
 #include <univalue.h>
 
-constexpr const CAmount exchange_rate_scale = COIN;
+constexpr const CAmount exchange_rate_scale = COIN; // 100,000,000
 const std::string exchange_rates_config_file = "exchangerates.json";
 
 class CAssetExchangeRate

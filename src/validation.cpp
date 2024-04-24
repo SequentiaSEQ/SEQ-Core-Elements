@@ -32,6 +32,7 @@
 #include <policy/policy.h>
 #include <policy/rbf.h>
 #include <policy/settings.h>
+#include <policy/value.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <script/pegins.h>

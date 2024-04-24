@@ -1,6 +1,7 @@
 #include <assetsdir.h>
 #include <exchangerates.h>
 #include <policy/policy.h>
+#include <policy/value.h>
 #include <util/settings.h>
 #include <util/system.h>
 #include <univalue.h>
@@ -22,14 +23,14 @@ CValue ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAss
     }
 }
 
-CAmount ExchangeRateMap::CalculateExchangeAmount(const CValue& rfu_amount, const CAsset& asset) {
+CAmount ExchangeRateMap::CalculateExchangeAmount(const CValue& value, const CAsset& asset) {
     int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {
         return int64_max;
     }
     auto scaled_value = it->second.m_scaled_value;
-    __uint128_t amount = ((__uint128_t)rfu_amount.value * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
+    __uint128_t amount = ((__uint128_t)value.value * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
     if (amount > int64_max) {
         return int64_max;
     } else {

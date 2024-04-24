@@ -12,69 +12,6 @@
 /** Amount in satoshis (Can be negative) */
 typedef int64_t CAmount;
 
-/** Amount denominated in the node's RFU (reference fee unit) */
-struct CValue 
-{ 
-
-    int64_t value;
-
-    CValue(): value(0) {}
-    CValue(const int64_t value): value(value) {}
-
-    CValue operator -(const CValue& operand)
-    {
-        return CValue(value - operand.value);
-    }
-
-    CValue operator -=(const CValue& operand)
-    {
-        value -= operand.value;
-        return *this;
-    }
-
-    CValue operator +(const CValue& operand)
-    {
-        return CValue(value + operand.value);
-    }
-
-    CValue operator +=(const CValue& operand)
-    {
-        value += operand.value;
-        return *this;
-    }
-
-    bool operator ==(const CValue& operand)
-    {
-        return value == operand.value;
-    }
-
-    bool operator !=(const CValue& operand)
-    {
-        return value != operand.value;
-    }
-
-    bool operator !=(int operand)
-    {
-        return value != operand;
-    }
-
-    bool operator <(const CValue& operand)
-    {
-        return value < operand.value;
-    }
-
-    bool operator >(const CValue& operand)
-    {
-        return value > operand.value;
-    }
-};
-
-std::ostream &operator<<(std::ostream &out, const CValue& operand)
-{
-    out << operand.value;
-    return out;
-}
-
 /** The amount of satoshis in one BTC. */
 static constexpr CAmount COIN = 100000000;
 

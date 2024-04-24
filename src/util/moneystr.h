@@ -11,6 +11,7 @@
 
 #include <attributes.h>
 #include <consensus/amount.h>
+#include <policy/value.h>
 
 #include <optional>
 #include <string>

@@ -8,6 +8,7 @@
 
 #include <asset.h>
 #include <consensus/amount.h>
+#include <policy/value.h>
 #include <serialize.h>
 
 #include <string>

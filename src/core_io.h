@@ -8,6 +8,7 @@
 #include <asset.h>
 #include <consensus/amount.h>
 #include <attributes.h>
+#include <policy/value.h>
 
 #include <string>
 #include <vector>
