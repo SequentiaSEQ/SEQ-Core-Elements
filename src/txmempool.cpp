@@ -1343,7 +1343,7 @@ void CTxMemPool::GetTransactionAncestry(const uint256& txid, size_t& ancestors, 
     if (it != mapTx.end()) {
         ancestors = it->GetCountWithAncestors();
         if (ancestorsize) *ancestorsize = it->GetSizeWithAncestors();
-        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors();
+        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().value;
         descendants = CalculateDescendantMaximum(it);
     }
 }
