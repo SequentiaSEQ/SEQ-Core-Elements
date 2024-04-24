@@ -7,7 +7,6 @@
 #define BITCOIN_POLICY_VALUE_H
 
 #include <cstdint>
-#include <ostream>
 
 /** Amount denominated in the node's RFU (reference fee unit) */
 struct CValue 
@@ -48,27 +47,6 @@ struct CValue
     {
         return value != operand.value;
     }
-
-    bool operator !=(int operand)
-    {
-        return value != operand;
-    }
-
-    bool operator <(const CValue& operand)
-    {
-        return value < operand.value;
-    }
-
-    bool operator >(const CValue& operand)
-    {
-        return value > operand.value;
-    }
 };
-
-std::ostream &operator<<(std::ostream &out, const CValue& operand)
-{
-    out << operand.value;
-    return out;
-}
 
 #endif // BITCOIN_POLICY_VALUE
