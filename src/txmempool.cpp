@@ -871,7 +871,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
         assert(it->GetCountWithAncestors() == nCountCheck);
         assert(it->GetSizeWithAncestors() == nSizeCheck);
         assert(it->GetSigOpCostWithAncestors() == nSigOpCheck);
-        assert(it->GetModFeesWithAncestors() == nFeesCheck);
+        assert(it->GetModFeesWithAncestors().value == nFeesCheck);
         // Sanity check: we are walking in ascending ancestor count order.
         assert(prev_ancestor_count <= it->GetCountWithAncestors());
         prev_ancestor_count = it->GetCountWithAncestors();
