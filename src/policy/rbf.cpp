@@ -166,7 +166,7 @@ std::optional<std::string> PaysForRBF(CAmount original_fees,
     // vector where attackers can cause a transaction to be replaced (and relayed) repeatedly by
     // increasing the fee by tiny amounts.
     CAmount additional_fees = replacement_fees - original_fees;
-    if (additional_fees < relay_fee.GetFee(replacement_vsize)) {
+    if (additional_fees < relay_fee.GetFee(replacement_vsize).value) {
         return strprintf("rejecting replacement %s, not enough additional fees to relay; %s < %s",
                          txid.ToString(),
                          FormatMoney(additional_fees),

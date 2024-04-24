@@ -450,7 +450,7 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
 
 void OutputGroup::Insert(const CInputCoin& output, int depth, bool from_me, size_t ancestors, size_t descendants, bool positive_only) {
     // Compute the effective value first
-    const CAmount coin_fee = output.m_input_bytes < 0 ? 0 : m_effective_feerate.GetFee(output.m_input_bytes);
+    const CAmount coin_fee = output.m_input_bytes < 0 ? 0 : m_effective_feerate.GetFee(output.m_input_bytes).value;
     // ELEMENTS: "effective value" only comes from the fee asset
     const CAmount ev = output.value * (output.asset == fee_asset) - coin_fee;
 
@@ -463,7 +463,7 @@ void OutputGroup::Insert(const CInputCoin& output, int depth, bool from_me, size
     coin.m_fee = coin_fee;
     fee += coin.m_fee;
 
-    coin.m_long_term_fee = coin.m_input_bytes < 0 ? 0 : m_long_term_feerate.GetFee(coin.m_input_bytes);
+    coin.m_long_term_fee = coin.m_input_bytes < 0 ? 0 : m_long_term_feerate.GetFee(coin.m_input_bytes).value;
     long_term_fee += coin.m_long_term_fee;
 
     coin.effective_value = ev;

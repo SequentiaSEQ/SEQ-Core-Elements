@@ -70,12 +70,12 @@ private:
 
 struct update_fee_value
 {
-    explicit update_fee_value(int64_t _feeValue) : feeValue(_feeValue) { }
+    explicit update_fee_value(CValue _feeValue) : feeValue(_feeValue) { }
 
     void operator() (CTxMemPoolEntry &e) { e.UpdateFeeValue(feeValue); }
 
 private:
-    int64_t feeValue;
+    CValue feeValue;
 };
 
 bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
@@ -95,7 +95,7 @@ bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
     return true;
 }
 
-CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeValue,
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CValue feeValue,
                                  int64_t time, unsigned int entry_height,
                                  bool spends_coinbase, int64_t sigops_cost, LockPoints lp,
                                  const std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent)
@@ -124,7 +124,7 @@ void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
     feeDelta = newFeeDelta;
 }
 
-void CTxMemPoolEntry::UpdateFeeValue(const CAmount newFeeValue)
+void CTxMemPoolEntry::UpdateFeeValue(CValue newFeeValue)
 {
     nModFeesWithDescendants += newFeeValue - nFeeValue;
     nModFeesWithAncestors += newFeeValue - nFeeValue;
@@ -1073,9 +1073,9 @@ void CTxMemPool::RecomputeFees()
         ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
         for (CTxMemPoolEntry tx : mapTx) {
             txiter it = mapTx.find(tx.GetTx().GetHash());
-            CAmount newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
-            CAmount feeValueDelta = newFeeValue - tx.GetFeeValue();
-            if (feeValueDelta != 0) {
+            CValue newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
+            CValue feeValueDelta = newFeeValue - tx.GetFeeValue();
+            if (feeValueDelta.value != 0) {
                 mapTx.modify(it, update_fee_value(newFeeValue));
 
                 // Now update all ancestors' modified fees with descendants
@@ -1084,14 +1084,14 @@ void CTxMemPool::RecomputeFees()
                 std::string dummy;
                 CalculateMemPoolAncestors(tx, setAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
                 for (txiter ancestorIt : setAncestors) {
-                    mapTx.modify(ancestorIt, update_descendant_state(0, feeValueDelta, 0));
+                    mapTx.modify(ancestorIt, update_descendant_state(0, feeValueDelta.value, 0));
                 }
                 // Now update all descendants' modified fees with ancestors
                 setEntries setDescendants;
                 CalculateDescendants(it, setDescendants);
                 setDescendants.erase(it);
                 for (txiter descendantIt : setDescendants) {
-                    mapTx.modify(descendantIt, update_ancestor_state(0, feeValueDelta, 0, 0));
+                    mapTx.modify(descendantIt, update_ancestor_state(0, feeValueDelta.value, 0, 0));
                 }
                 ++nTransactionsUpdated;
             }
@@ -1254,7 +1254,7 @@ CFeeRate CTxMemPool::GetMinFee(size_t sizelimit) const {
         rollingMinimumFeeRate = rollingMinimumFeeRate / pow(2.0, (time - lastRollingFeeUpdate) / halflife);
         lastRollingFeeUpdate = time;
 
-        if (rollingMinimumFeeRate < (double)incrementalRelayFee.GetFeePerK() / 2) {
+        if (rollingMinimumFeeRate < (double)incrementalRelayFee.GetFeePerK().value / 2) {
             rollingMinimumFeeRate = 0;
             return CFeeRate(0);
         }
@@ -1265,7 +1265,7 @@ CFeeRate CTxMemPool::GetMinFee(size_t sizelimit) const {
 void CTxMemPool::trackPackageRemoved(const CFeeRate& rate) {
     AssertLockHeld(cs);
     if (rate.GetFeePerK() > rollingMinimumFeeRate) {
-        rollingMinimumFeeRate = rate.GetFeePerK();
+        rollingMinimumFeeRate = rate.GetFeePerK().value;
         blockSinceLastRollingFeeBump = false;
     }
 }
@@ -1282,7 +1282,7 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint>* pvNoSpends
         // "minimum reasonable fee rate" (ie some value under which we consider txn
         // to have 0 fee). This way, we don't allow txn to enter mempool with feerate
         // equal to txn which were removed with no block in between.
-        CFeeRate removed(it->GetModFeesWithDescendants(), it->GetSizeWithDescendants());
+        CFeeRate removed(it->GetModFeesWithDescendants().value, it->GetSizeWithDescendants());
         removed += incrementalRelayFee;
         trackPackageRemoved(removed);
         maxFeeRateRemoved = std::max(maxFeeRateRemoved, removed);
@@ -1342,7 +1342,7 @@ void CTxMemPool::GetTransactionAncestry(const uint256& txid, size_t& ancestors, 
     if (it != mapTx.end()) {
         ancestors = it->GetCountWithAncestors();
         if (ancestorsize) *ancestorsize = it->GetSizeWithAncestors();
-        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors();
+        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().value;
         descendants = CalculateDescendantMaximum(it);
     }
 }

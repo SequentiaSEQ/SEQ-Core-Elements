@@ -19,7 +19,7 @@ class CWallet;
  * Return the minimum required absolute fee for this size
  * based on the required fee rate
  */
-CAmount GetRequiredFee(const CWallet& wallet, unsigned int nTxBytes);
+CValue GetRequiredFee(const CWallet& wallet, unsigned int nTxBytes);
 
 /**
  * Estimate the minimum fee considering user set parameters

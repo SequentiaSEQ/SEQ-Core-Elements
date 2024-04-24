@@ -625,7 +625,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // error = _("Missing solving data for estimating transaction size"); // ELEMENTS
             return std::nullopt; // Not solvable, can't estimate size for fee
         }
-        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes);
+        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes).value;
         if (coin_selection_params.m_subtract_fee_outputs) {
             value_to_select[coin.asset] -= coin.value;
         } else {
@@ -1118,8 +1118,8 @@ static bool CreateTransactionInternal(
     // For creating the change output now, we use the effective feerate.
     // For spending the change output in the future, we use the discard feerate for now.
     // So cost of change = (change output size * effective feerate) + (size of spending change output * discard feerate)
-    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size);
-    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size) + coin_selection_params.m_change_fee;
+    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size).value;
+    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size).value + coin_selection_params.m_change_fee;
 
     // vouts to the payees
     if (!coin_selection_params.m_subtract_fee_outputs) {
@@ -1193,7 +1193,7 @@ static bool CreateTransactionInternal(
     }
 
     // Include the fees for things that aren't inputs, excluding the change output
-    const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.tx_noinputs_size);
+    const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.tx_noinputs_size, coin_selection_params.m_fee_asset);
     CAmountMap map_selection_target = map_recipients_sum;
     map_selection_target[coin_selection_params.m_fee_asset] += not_input_fees;
 
@@ -1462,7 +1462,7 @@ static bool CreateTransactionInternal(
         error = _("Missing solving data for estimating transaction size");
         return false;
     }
-    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes).value;
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
@@ -1526,7 +1526,7 @@ static bool CreateTransactionInternal(
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), &wallet, &coin_control);
         nBytes = tx_sizes.vsize;
-        fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+        fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes).value;
     }
 
     // The only time that fee_needed should be less than the amount available for fees (in change_and_fee - change_amount) is when

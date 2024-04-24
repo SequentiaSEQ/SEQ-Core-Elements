@@ -490,7 +490,7 @@ public:
     CScript(const unsigned char* pbegin, const unsigned char* pend) : CScriptBase(pbegin, pend) { }
 
     SERIALIZE_METHODS(CScript, obj) { READWRITEAS(CScriptBase, obj); }
-
+p
     explicit CScript(int64_t b) { operator<<(b); }
     explicit CScript(opcodetype b)     { operator<<(b); }
     explicit CScript(const CScriptNum& b) { operator<<(b); }

@@ -96,8 +96,8 @@ private:
     mutable Parents m_parents;
     mutable Children m_children;
     const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
-    const CAsset nFeeAsset;         //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
-    CAmount nFeeValue;              //!< ELEMENTS: Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
+    const CAsset nFeeAsset;             //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
+    CValue nFeeValue;  //!< ELEMENTS: Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool
@@ -112,16 +112,16 @@ private:
     // descendants as well.
     uint64_t nCountWithDescendants{1}; //!< number of descendant transactions
     uint64_t nSizeWithDescendants;   //!< ... and size
-    CAmount nModFeesWithDescendants; //!< ... and total fees (all including us)
+    CValue nModFeesWithDescendants; //!< ... and total fees (all including us)
 
     // Analogous statistics for ancestor transactions
     uint64_t nCountWithAncestors{1};
     uint64_t nSizeWithAncestors;
-    CAmount nModFeesWithAncestors;
+    CValue nModFeesWithAncestors;
     int64_t nSigOpCostWithAncestors;
 
 public:
-    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, const CAsset feeAsset, const CAmount feeValue,
+    CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, const CAsset feeAsset, const CValue feeValue,
                 int64_t time, unsigned int entry_height,
                 bool spends_coinbase,
                 int64_t sigops_cost, LockPoints lp,
@@ -131,7 +131,7 @@ public:
     CTransactionRef GetSharedTx() const { return this->tx; }
     const CAmount& GetFee() const { return nFee; }
     const CAsset& GetFeeAsset() const { return nFeeAsset; }
-    const CAmount& GetFeeValue() const { return nFeeValue; }
+    const CValue& GetFeeValue() const { return nFeeValue; }
     size_t GetTxSize() const;
     size_t GetTxWeight() const { return nTxWeight; }
     std::chrono::seconds GetTime() const { return std::chrono::seconds{nTime}; }
@@ -149,19 +149,19 @@ public:
     // modified fees with descendants.
     void UpdateFeeDelta(int64_t feeDelta);
     // Updates the fee value and the modified fees with ancestors and descendants.
-    void UpdateFeeValue(const CAmount fee);
+    void UpdateFeeValue(CValue fee);
     // Update the LockPoints after a reorg
     void UpdateLockPoints(const LockPoints& lp);
 
     uint64_t GetCountWithDescendants() const { return nCountWithDescendants; }
     uint64_t GetSizeWithDescendants() const { return nSizeWithDescendants; }
-    CAmount GetModFeesWithDescendants() const { return nModFeesWithDescendants; }
+    CValue GetModFeesWithDescendants() const { return nModFeesWithDescendants; }
 
     bool GetSpendsCoinbase() const { return spendsCoinbase; }
 
     uint64_t GetCountWithAncestors() const { return nCountWithAncestors; }
     uint64_t GetSizeWithAncestors() const { return nSizeWithAncestors; }
-    CAmount GetModFeesWithAncestors() const { return nModFeesWithAncestors; }
+    CValue GetModFeesWithAncestors() const { return nModFeesWithAncestors; }
     int64_t GetSigOpCostWithAncestors() const { return nSigOpCostWithAncestors; }
 
     const Parents& GetMemPoolParentsConst() const { return m_parents; }
@@ -238,10 +238,10 @@ public:
         // Compare feerate with descendants to feerate of the transaction, and
         // return the fee/size for the max.
         double f1 = (double)a.GetModifiedFee() * a.GetSizeWithDescendants();
-        double f2 = (double)a.GetModFeesWithDescendants() * a.GetTxSize();
+        double f2 = (double)a.GetModFeesWithDescendants().value * a.GetTxSize();
 
         if (f2 > f1) {
-            mod_fee = a.GetModFeesWithDescendants();
+            mod_fee = a.GetModFeesWithDescendants().value;
             size = a.GetSizeWithDescendants();
         } else {
             mod_fee = a.GetModifiedFee();
@@ -312,10 +312,10 @@ public:
         // Compare feerate with ancestors to feerate of the transaction, and
         // return the fee/size for the min.
         double f1 = (double)a.GetModifiedFee() * a.GetSizeWithAncestors();
-        double f2 = (double)a.GetModFeesWithAncestors() * a.GetTxSize();
+        double f2 = (double)a.GetModFeesWithAncestors().value * a.GetTxSize();
 
         if (f1 > f2) {
-            mod_fee = a.GetModFeesWithAncestors();
+            mod_fee = a.GetModFeesWithAncestors().value;
             size = a.GetSizeWithAncestors();
         } else {
             mod_fee = a.GetModifiedFee();

@@ -79,7 +79,7 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CWalletTx& wt
         return feebumper::Result::WALLET_ERROR;
     }
 
-    CAmount new_total_fee = newFeerate.GetFee(maxTxSize);
+    CValue new_total_fee = newFeerate.GetFee(maxTxSize);
 
     CFeeRate incrementalRelayFee = std::max(wallet.chain().relayIncrementalFee(), CFeeRate(WALLET_INCREMENTAL_RELAY_FEE));
 
@@ -92,7 +92,7 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CWalletTx& wt
     const int64_t txSize = GetVirtualTransactionSize(*(wtx.tx));
     CFeeRate nOldFeeRate(old_fee, txSize);
     // Min total fee is old fee + relay fee
-    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize) + incrementalRelayFee.GetFee(maxTxSize);
+    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize).value + incrementalRelayFee.GetFee(maxTxSize).value;
 
     if (new_total_fee < minTotalFee) {
         errors.push_back(strprintf(Untranslated("Insufficient total fee %s, must be at least %s (oldFee %s + incrementalFee %s)"),
@@ -100,7 +100,7 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CWalletTx& wt
         return feebumper::Result::INVALID_PARAMETER;
     }
 
-    CAmount requiredFee = GetRequiredFee(wallet, maxTxSize);
+    CValue requiredFee = GetRequiredFee(wallet, maxTxSize);
     if (new_total_fee < requiredFee) {
         errors.push_back(strprintf(Untranslated("Insufficient total fee (cannot be less than required fee %s)"),
             FormatMoney(requiredFee)));

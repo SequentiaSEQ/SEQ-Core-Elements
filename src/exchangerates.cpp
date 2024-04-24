@@ -7,18 +7,33 @@
 
 #include <fstream>
 
-CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
+CValue ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
+    int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {
-        return 0;
+        return CValue(0); 
     }
     auto scaled_value = it->second.m_scaled_value;
     __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
-    int64_t int64_max = std::numeric_limits<int64_t>::max();
     if (value > int64_max) {
+        return CValue(int64_max);
+    } else {
+        return CValue((int64_t) value);
+    }
+}
+
+CAmount ExchangeRateMap::CalculateExchangeAmount(const CValue& rfu_amount, const CAsset& asset) {
+    int64_t int64_max = std::numeric_limits<int64_t>::max();
+    auto it = this->find(asset);
+    if (it == this->end()) {
+        return int64_max;
+    }
+    auto scaled_value = it->second.m_scaled_value;
+    __uint128_t amount = ((__uint128_t)rfu_amount.value * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
+    if (amount > int64_max) {
         return int64_max;
     } else {
-        return (int64_t) value;
+        return (int64_t) amount;
     }
 }
 

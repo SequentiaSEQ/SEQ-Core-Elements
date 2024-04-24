@@ -39,9 +39,18 @@ public:
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
-    CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
+    CValue CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
-/**
+    /**
+     * Calculate the amount from an exchange rate value
+     *
+     * @param[in]   value        Corresponds to CTxMemPoolEntry.nFeeValue
+     * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
+     * @return the amount at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
+     */
+    CAmount CalculateExchangeAmount(const CValue& value, const CAsset& asset);
+
+    /**
      * Load the exchange rate map from the default JSON config file in <datadir>/exchangerates.json.
      *
      * @param[in]   errors        Vector for storing error messages, if there are any.

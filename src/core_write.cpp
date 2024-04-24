@@ -60,6 +60,11 @@ UniValue ValueFromAmount(const CAmount amount)
             strprintf("%s%d.%08d", amount < 0 ? "-" : "", quotient, remainder));
 }
 
+UniValue ValueFromAmount(const CValue amount)
+{
+    return ValueFromAmount(amount.value);
+}
+
 std::string FormatScript(const CScript& script)
 {
     std::string ret;
