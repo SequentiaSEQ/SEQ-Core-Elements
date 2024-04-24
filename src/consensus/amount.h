@@ -7,6 +7,7 @@
 #define BITCOIN_CONSENSUS_AMOUNT_H
 
 #include <cstdint>
+#include <ostream>
 
 /** Amount in satoshis (Can be negative) */
 typedef int64_t CAmount;
@@ -67,6 +68,12 @@ struct CValue
         return value > operand.value;
     }
 };
+
+std::ostream &operator<<(std::ostream &out, const CValue& operand)
+{
+    out << operand.value;
+    return out;
+}
 
 /** The amount of satoshis in one BTC. */
 static constexpr CAmount COIN = 100000000;
