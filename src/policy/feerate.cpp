@@ -6,6 +6,7 @@
 #include <asset.h>
 #include <exchangerates.h>
 #include <policy/feerate.h>
+#include <policy/value.h>
 #include <primitives/transaction.h>
 
 #include <tinyformat.h>
@@ -41,11 +42,11 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes) const
 
 CAmount CFeeRate::GetFee(uint32_t num_bytes, const CAsset& asset) const
 {
-    CAmount nFee = this->GetFee(num_bytes);
+    CValue nFee = CValue(this->GetFee(num_bytes));
     if (g_con_any_asset_fees) {
         nFee = ExchangeRateMap::GetInstance().CalculateExchangeAmount(nFee, asset); 
     }
-    return nFee;
+    return nFee.value;
 }
 
 std::string CFeeRate::ToString(const FeeEstimateMode& fee_estimate_mode) const
