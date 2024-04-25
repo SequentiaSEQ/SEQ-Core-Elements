@@ -8,7 +8,7 @@
 
 #include <fstream>
 
-CValue ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
+CValue ExchangeRateMap::ConvertAmountToValue(const CAmount& amount, const CAsset& asset) {
     int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {
@@ -23,7 +23,7 @@ CValue ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAss
     }
 }
 
-CAmount ExchangeRateMap::CalculateExchangeAmount(const CValue& value, const CAsset& asset) {
+CAmount ExchangeRateMap::ConvertValueToAmount(const CValue& value, const CAsset& asset) {
     int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {

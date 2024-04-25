@@ -34,22 +34,22 @@ public:
     }
 
     /**
-     * Calculate the exchange value
+     * Convert an amount denominated in some asset to the node's RFU (reference fee unit)
      *
      * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFee
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFeeValue
      */
-    CValue CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
+    CValue ConvertAmountToValue(const CAmount& amount, const CAsset& asset);
 
     /**
-     * Calculate the amount from an exchange rate value
+     * Convert an amount denominated in the node's RFU (reference fee unit) into some asset
      *
-     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeValue
+     * @param[in]   value        Corresponds to CTxMemPoolEntry.nFeeValue
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the amount at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
-    CAmount CalculateExchangeAmount(const CValue& value, const CAsset& asset);
+    CAmount ConvertValueToAmount(const CValue& value, const CAsset& asset);
 
     /**
      * Load the exchange rate map from the default JSON config file in <datadir>/exchangerates.json.

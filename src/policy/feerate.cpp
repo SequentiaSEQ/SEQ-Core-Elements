@@ -44,7 +44,7 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes, const CAsset& asset) const
 {
     CValue nFee = CValue(this->GetFee(num_bytes));
     if (g_con_any_asset_fees) {
-        nFee = ExchangeRateMap::GetInstance().CalculateExchangeAmount(nFee, asset); 
+        nFee = ExchangeRateMap::GetInstance().ConvertValueToAmount(nFee, asset); 
     }
     return nFee.value;
 }
