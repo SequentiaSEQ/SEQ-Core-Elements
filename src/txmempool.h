@@ -239,10 +239,10 @@ public:
         // Compare feerate with descendants to feerate of the transaction, and
         // return the fee/size for the max.
         double f1 = (double)a.GetModifiedFee() * a.GetSizeWithDescendants();
-        double f2 = (double)a.GetModFeesWithDescendants().value * a.GetTxSize();
+        double f2 = (double)a.GetModFeesWithDescendants().GetValue() * a.GetTxSize();
 
         if (f2 > f1) {
-            mod_fee = a.GetModFeesWithDescendants().value;
+            mod_fee = a.GetModFeesWithDescendants().GetValue();
             size = a.GetSizeWithDescendants();
         } else {
             mod_fee = a.GetModifiedFee();
@@ -313,10 +313,10 @@ public:
         // Compare feerate with ancestors to feerate of the transaction, and
         // return the fee/size for the min.
         double f1 = (double)a.GetModifiedFee() * a.GetSizeWithAncestors();
-        double f2 = (double)a.GetModFeesWithAncestors().value * a.GetTxSize();
+        double f2 = (double)a.GetModFeesWithAncestors().GetValue() * a.GetTxSize();
 
         if (f1 > f2) {
-            mod_fee = a.GetModFeesWithAncestors().value;
+            mod_fee = a.GetModFeesWithAncestors().GetValue();
             size = a.GetSizeWithAncestors();
         } else {
             mod_fee = a.GetModifiedFee();

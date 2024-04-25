@@ -871,7 +871,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
         assert(it->GetCountWithAncestors() == nCountCheck);
         assert(it->GetSizeWithAncestors() == nSizeCheck);
         assert(it->GetSigOpCostWithAncestors() == nSigOpCheck);
-        assert(it->GetModFeesWithAncestors().value == nFeesCheck);
+        assert(it->GetModFeesWithAncestors().GetValue() == nFeesCheck);
         // Sanity check: we are walking in ascending ancestor count order.
         assert(prev_ancestor_count <= it->GetCountWithAncestors());
         prev_ancestor_count = it->GetCountWithAncestors();
@@ -1283,7 +1283,7 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint>* pvNoSpends
         // "minimum reasonable fee rate" (ie some value under which we consider txn
         // to have 0 fee). This way, we don't allow txn to enter mempool with feerate
         // equal to txn which were removed with no block in between.
-        CFeeRate removed(it->GetModFeesWithDescendants().value, it->GetSizeWithDescendants());
+        CFeeRate removed(it->GetModFeesWithDescendants().GetValue(), it->GetSizeWithDescendants());
         removed += incrementalRelayFee;
         trackPackageRemoved(removed);
         maxFeeRateRemoved = std::max(maxFeeRateRemoved, removed);
@@ -1343,7 +1343,7 @@ void CTxMemPool::GetTransactionAncestry(const uint256& txid, size_t& ancestors, 
     if (it != mapTx.end()) {
         ancestors = it->GetCountWithAncestors();
         if (ancestorsize) *ancestorsize = it->GetSizeWithAncestors();
-        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().value;
+        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().GetValue();
         descendants = CalculateDescendantMaximum(it);
     }
 }

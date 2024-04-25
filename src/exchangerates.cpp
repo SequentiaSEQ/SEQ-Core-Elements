@@ -30,7 +30,7 @@ CAmount ExchangeRateMap::ConvertValueToAmount(const CValue& value, const CAsset&
         return int64_max;
     }
     auto scaled_value = it->second.m_scaled_value;
-    __uint128_t result = ((__uint128_t)value.value * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
+    __uint128_t result = ((__uint128_t)value.GetValue() * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
     if (result > int64_max) {
         return int64_max;
     } else {

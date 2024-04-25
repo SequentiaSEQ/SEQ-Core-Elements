@@ -17,42 +17,49 @@
  */
 struct CValue 
 { 
-    int64_t value;
+    private: 
+        int64_t value;
 
-    CValue(): value(0) {}
-    CValue(const int64_t value): value(value) {}
+    public:
+        CValue(): value(0) {}
+        CValue(const int64_t value): value(value) {}
 
-    CValue operator -(const CValue& operand)
-    {
-        return CValue(value - operand.value);
-    }
+        int64_t GetValue() const
+        {
+            return value;
+        }
 
-    CValue operator -=(const CValue& operand)
-    {
-        value -= operand.value;
-        return *this;
-    }
+        CValue operator -(const CValue& operand)
+        {
+            return CValue(value - operand.value);
+        }
 
-    CValue operator +(const CValue& operand)
-    {
-        return CValue(value + operand.value);
-    }
+        CValue operator -=(const CValue& operand)
+        {
+            value -= operand.value;
+            return *this;
+        }
 
-    CValue operator +=(const CValue& operand)
-    {
-        value += operand.value;
-        return *this;
-    }
+        CValue operator +(const CValue& operand)
+        {
+            return CValue(value + operand.value);
+        }
 
-    bool operator ==(const CValue& operand)
-    {
-        return value == operand.value;
-    }
+        CValue operator +=(const CValue& operand)
+        {
+            value += operand.value;
+            return *this;
+        }
 
-    bool operator !=(const CValue& operand)
-    {
-        return value != operand.value;
-    }
+        bool operator ==(const CValue& operand)
+        {
+            return value == operand.value;
+        }
+
+        bool operator !=(const CValue& operand)
+        {
+            return value != operand.value;
+        }
 };
 
 #endif // BITCOIN_POLICY_VALUE

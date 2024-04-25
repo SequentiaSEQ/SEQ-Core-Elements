@@ -560,23 +560,23 @@ static void entryToJSON(const CTxMemPool& pool, UniValue& info, const CTxMemPool
     info.pushKV("descendantcount", e.GetCountWithDescendants());
     info.pushKV("descendantsize", e.GetSizeWithDescendants());
     if (deprecated_fee_fields_enabled) {
-        info.pushKV("descendantfees", e.GetModFeesWithDescendants().value);
+        info.pushKV("descendantfees", e.GetModFeesWithDescendants().GetValue());
     }
     info.pushKV("ancestorcount", e.GetCountWithAncestors());
     info.pushKV("ancestorsize", e.GetSizeWithAncestors());
     if (deprecated_fee_fields_enabled) {
-        info.pushKV("ancestorfees", e.GetModFeesWithAncestors().value);
+        info.pushKV("ancestorfees", e.GetModFeesWithAncestors().GetValue());
     }
     info.pushKV("wtxid", pool.vTxHashes[e.vTxHashesIdx].first.ToString());
 
     UniValue fees(UniValue::VOBJ);
     fees.pushKV("base", ValueFromAmount(e.GetFee()));
     fees.pushKV("modified", ValueFromAmount(e.GetModifiedFee()));
-    fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors().value));
-    fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants().value));
+    fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors().GetValue()));
+    fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants().GetValue()));
     if (g_con_any_asset_fees) {
         fees.pushKV("asset", e.GetFeeAsset().GetHex());
-        fees.pushKV("value", ValueFromAmount(e.GetFeeValue().value));
+        fees.pushKV("value", ValueFromAmount(e.GetFeeValue().GetValue()));
     }
     info.pushKV("fees", fees);
 
