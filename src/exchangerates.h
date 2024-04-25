@@ -3,6 +3,7 @@
 
 #include <fs.h>
 #include <policy/policy.h>
+#include <policy/value.h>
 #include <univalue.h>
 
 constexpr const CAmount exchange_rate_scale = COIN; // 100,000,000
@@ -39,7 +40,7 @@ public:
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
      * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
      */
-    CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
+    CValue CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
     /**
      * Calculate the amount from an exchange rate value

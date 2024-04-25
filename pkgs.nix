@@ -60,7 +60,7 @@ stdenv.mkDerivation rec {
     "--disable-gui-tests"
   ] ++ lib.optionals (!withWallet) [
     "--disable-wallet"
-  ] ++ lib.optionals withGui [
+  ] ++ lib.optionals withGui [./
     "--with-gui=qt5"
     "--with-qt-bindir=${qtbase.dev}/bin:${qttools.dev}/bin"
   ];
