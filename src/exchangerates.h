@@ -36,9 +36,9 @@ public:
     /**
      * Calculate the exchange value
      *
-     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeAmount
+     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFee
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
-     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
+     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFeeValue
      */
     CValue CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
 
