@@ -108,6 +108,7 @@
   "mocktime": 1557829404,
   "stats": [
     {
+      "asset": "b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23",
       "avgfee": 0,
       "avgfeerate": 0,
       "avgtxsize": 0,
@@ -145,6 +146,7 @@
       "utxo_size_inc": 233
     },
     {
+      "asset": "b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23",
       "avgfee": 6720,
       "avgfeerate": 20,
       "avgtxsize": 336,
@@ -182,6 +184,7 @@
       "utxo_size_inc": 424
     },
     {
+      "asset": "b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23",
       "avgfee": 32320,
       "avgfeerate": 107,
       "avgtxsize": 358,
