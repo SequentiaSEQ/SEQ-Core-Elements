@@ -552,7 +552,7 @@ void CTxMemPool::addUnchecked(const CTxMemPoolEntry &entry, setEntries &setAnces
 
     nTransactionsUpdated++;
     totalTxSize += entry.GetTxSize();
-    m_total_fee += entry.GetFee();
+    m_total_fee += entry.GetFeeValue();
     if (minerPolicyEstimator) {
         minerPolicyEstimator->processTransaction(entry, validFeeEstimate);
     }
@@ -591,7 +591,7 @@ void CTxMemPool::removeUnchecked(txiter it, MemPoolRemovalReason reason)
         vTxHashes.clear();
 
     totalTxSize -= it->GetTxSize();
-    m_total_fee -= it->GetFee();
+    m_total_fee -= it->GetFeeValue();
     cachedInnerUsage -= it->DynamicMemoryUsage();
     cachedInnerUsage -= memusage::DynamicUsage(it->GetMemPoolParentsConst()) + memusage::DynamicUsage(it->GetMemPoolChildrenConst());
     mapTx.erase(it);
@@ -812,7 +812,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
     LogPrint(BCLog::MEMPOOL, "Checking mempool with %u transactions and %u inputs\n", (unsigned int)mapTx.size(), (unsigned int)mapNextTx.size());
 
     uint64_t checkTotal = 0;
-    CAmount check_total_fee{0};
+    CValue check_total_fee{0};
     uint64_t innerUsage = 0;
     uint64_t prev_ancestor_count{0};
 
@@ -823,7 +823,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
 
     for (const auto& it : GetSortedDepthAndScore()) {
         checkTotal += it->GetTxSize();
-        check_total_fee += it->GetFee();
+        check_total_fee += it->GetFeeValue();
         innerUsage += it->DynamicMemoryUsage();
         const CTransaction& tx = it->GetTx();
         innerUsage += memusage::DynamicUsage(it->GetMemPoolParentsConst()) + memusage::DynamicUsage(it->GetMemPoolChildrenConst());
@@ -923,7 +923,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
     //
 
     assert(totalTxSize == checkTotal);
-    assert(m_total_fee == check_total_fee);
+    assert(m_total_fee.GetValue() == check_total_fee.GetValue());
     assert(innerUsage == cachedInnerUsage);
 }
 
