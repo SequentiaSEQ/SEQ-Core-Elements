@@ -12,6 +12,7 @@
 #include <core_io.h>
 #include <deploymentinfo.h>
 #include <deploymentstatus.h>
+#include <exchangerates.h>
 #include <key_io.h>
 #include <net.h>
 #include <node/context.h>
@@ -489,6 +490,10 @@ static RPCHelpMan prioritisetransaction()
             "                  Note, that this value is not a fee rate. It is a value to modify absolute fee of the TX.\n"
             "                  The fee is not actually paid, only the algorithm for selecting transactions into a block\n"
             "                  considers the transaction as it would have paid a higher (or lower) fee."},
+                    {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The asset that fee_delta is denominated in, used only\n"
+            "                  when any_asset_fees is enabled. If not set, fee_delta will be interpreted as already being in the node's RFU\n"
+            "                  (reference fee unit) and no conversions are necessary. If set, fee_delta will be converted to the node's RFU\n"
+            "                  using the node's current exchange rates."}
                 },
                 RPCResult{
                     RPCResult::Type::BOOL, "", "Returns true"},
@@ -502,6 +507,14 @@ static RPCHelpMan prioritisetransaction()
 
     uint256 hash(ParseHashV(request.params[0], "txid"));
     CAmount nAmount = request.params[2].get_int64();
+    if (g_con_any_asset_fees && !request.params[3].isNull()) {
+        std::string feeAssetString = request.params[3].get_str();
+        CAsset feeAsset = GetAssetFromString(feeAssetString);
+        if (feeAsset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+        }
+        nAmount = ExchangeRateMap::GetInstance().ConvertAmountToValue(nAmount, feeAsset).GetValue();
+    }
 
     if (!(request.params[1].isNull() || request.params[1].get_real() == 0)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Priority is no longer supported, dummy argument to prioritisetransaction must be 0.");
