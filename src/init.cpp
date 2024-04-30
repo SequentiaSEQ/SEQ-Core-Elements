@@ -1334,9 +1334,8 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
     g_con_any_asset_fees = gArgs.GetBoolArg("-con_any_asset_fees", false);
     if (g_con_any_asset_fees) {
-        // If fees can be paid in any asset, node operators need to be able to specify asset exchange 
+        // If fees can be paid in any asset, node operators need to be able to specify asset exchange
         // rates using either the static config file and/or the exchange rates RPCs.
-        RegisterExchangeRatesRPCCommands(tableRPC);
         ExchangeRateMap& exchangeRateMap = ExchangeRateMap::GetInstance();
         std::string file_path_string = gArgs.GetArg("-initialexchangeratesjsonfile", "");
         std::vector<std::string> errors;
@@ -1355,7 +1354,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             return InitError(strprintf(_("Unable to save exchange rates to JSON file %s: \n%s\n"), exchange_rates_config_file, MakeUnorderedList(errors)));
         };
     }
-    
+
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
      * that the server is there and will be ready later).  Warmup mode will

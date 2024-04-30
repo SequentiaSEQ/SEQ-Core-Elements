@@ -42,7 +42,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendtoaddress", 6 , "conf_target" },
     { "sendtoaddress", 8, "avoid_reuse" },
     { "sendtoaddress", 11, "fee_rate"},
-    { "sendtoaddress", 12, "verbose"},
+    { "sendtoaddress", 13, "verbose"},
     { "settxfee", 0, "amount" },
     { "sethdseed", 0, "newkeypool" },
     { "getreceivedbyaddress", 1, "minconf" },
@@ -205,6 +205,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "addpeeraddress", 2, "tried"},
     { "stop", 0, "wait" },
     //
+    // SEQUENTIA
+    { "setfeeexchangerates", 0, "rates"},
+    //
     // ELEMENTS:
     { "calcfastmerkleroot", 0, "leaves" },
     { "combineblocksigs", 1, "signatures" },
@@ -241,7 +244,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "calculateasset", 3, "blind_reissuance" },
     { "updatepsbtpegin", 1, "input" },
     { "updatepsbtpegin", 2, "value" },
-    { "setfeeexchangerates", 0, "rates"},
 
 };
 // clang-format on
