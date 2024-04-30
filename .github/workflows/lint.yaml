@@ -1,4 +1,4 @@
-name: Sequentia Core CI
+name: Lint
 
 on:
   workflow_dispatch:
@@ -20,4 +20,4 @@ jobs:
 
       - name: Run lint
         run: |
-          ./ci/lint_run_all.sh
+          sudo ./ci/lint_run_all.sh
