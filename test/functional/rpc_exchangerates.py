@@ -8,7 +8,6 @@ from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from decimal import Decimal
 from test_framework.util import (
-    assert_equal,
     assert_raises_rpc_error,
 )
 import json
@@ -34,7 +33,7 @@ class ExchangeRatesTest(BitcoinTestFramework):
     def run_test(self):
         node = self.nodes[0]
         self.generate(node, COINBASE_MATURITY + 1)
-        
+
         # Initial rates
         assert node.dumpassetlabels() == {'gasset': 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'}
         initial_rates = { 'gasset': 100000000 }
@@ -69,7 +68,7 @@ class ExchangeRatesTest(BitcoinTestFramework):
 
     def get_exchange_rates_from_database(self, node):
         database_file_path = Path(node.datadir, self.chain, "exchangerates.json")
-        database_file = open(database_file_path)
+        database_file = open(database_file_path, encoding='utf-8')
         data = json.load(database_file)
         database_file.close()
         return data
