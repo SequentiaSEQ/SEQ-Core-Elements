@@ -56,10 +56,8 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py --ci -j$(nproc) --ansi --combinedlogslen=4000 --failfast
+          ./test/functional/test_runner.py --ci -j$(nproc) --failfast
 
