@@ -322,7 +322,7 @@ CMutableTransaction ConstructTransaction(const UniValue& inputs_in, const UniVal
                 // ELEMENTS: explicit fee outputs
                 CAmount nAmount = AmountFromValue(output[name_]);
                 out.nValue = nAmount;
-                
+
                 if (g_con_any_asset_fees && output.exists("fee_asset")) {
                     // Override policy asset for fee payment
                     out.nAsset = CAsset(ParseHashO(output, "fee_asset"));
