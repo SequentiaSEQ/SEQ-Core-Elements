@@ -625,7 +625,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // error = _("Missing solving data for estimating transaction size"); // ELEMENTS
             return std::nullopt; // Not solvable, can't estimate size for fee
         }
-        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes);
+        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes, coin_selection_params.m_fee_asset);
         if (coin_selection_params.m_subtract_fee_outputs) {
             value_to_select[coin.asset] -= coin.value;
         } else {
@@ -1118,8 +1118,8 @@ static bool CreateTransactionInternal(
     // For creating the change output now, we use the effective feerate.
     // For spending the change output in the future, we use the discard feerate for now.
     // So cost of change = (change output size * effective feerate) + (size of spending change output * discard feerate)
-    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size);
-    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size) + coin_selection_params.m_change_fee;
+    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size, coin_selection_params.m_fee_asset);
+    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size, coin_selection_params.m_fee_asset) + coin_selection_params.m_change_fee;
 
     // vouts to the payees
     if (!coin_selection_params.m_subtract_fee_outputs) {
@@ -1462,7 +1462,7 @@ static bool CreateTransactionInternal(
         error = _("Missing solving data for estimating transaction size");
         return false;
     }
-    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes, coin_selection_params.m_fee_asset);
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
