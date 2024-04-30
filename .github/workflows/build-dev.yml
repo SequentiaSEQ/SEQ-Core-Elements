@@ -41,6 +41,12 @@ jobs:
           make clean
           make -j$(nproc)
 
+      - name: Run tests
+        run: |
+          echo "Running tests"
+          ./test/functional/test_runner.py --ci -j$(nproc) --failfast
+
+
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
         with:
@@ -51,13 +57,3 @@ jobs:
             src/elements-tx
             src/elements-util
             src/elements-wallet
-  tests:
-    needs: build
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Run tests
-        run: |
-          echo "Running tests"
-          ./test/functional/test_runner.py --ci -j$(nproc) --failfast
-
