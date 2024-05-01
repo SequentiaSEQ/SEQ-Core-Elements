@@ -660,8 +660,8 @@ private:
             return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
         }
 
-        if (package_fee < ::minRelayTxFee.GetFee(package_size)) {
-            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size)));
+        if (package_fee < ::minRelayTxFee.GetFee(package_size, package_fee_asset)) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size, package_fee_asset)));
         }
         return true;
     }
@@ -928,11 +928,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     // No transactions are allowed below minRelayTxFee except from disconnected
     // blocks
-    CAmount totalFees = ws.m_modified_fees;
-    if (g_con_any_asset_fees) {
-        totalFees = ExchangeRateMap::GetInstance().CalculateExchangeValue(totalFees, feeAsset);
-    }
-    if (!bypass_limits && !CheckFeeRate(ws.m_vsize, totalFees, feeAsset, state)) return false;
+    if (!bypass_limits && !CheckFeeRate(ws.m_vsize, ws.m_modified_fees, feeAsset, state)) return false;
 
     ws.m_iters_conflicting = m_pool.GetIterSet(ws.m_conflicts);
     // Calculate in-mempool ancestors, up to a limit.
