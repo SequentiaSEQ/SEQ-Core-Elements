@@ -5,6 +5,7 @@
 #include <blind.h> // ELEMENTS: for MAX_RANGEPROOF_SIZE
 #include <consensus/amount.h>
 #include <consensus/validation.h>
+#include <exchangerates.h>
 #include <interfaces/chain.h>
 #include <issuance.h> // ELEMENTS: for GenerateAssetEntropy and others
 #include <policy/policy.h>
@@ -1691,7 +1692,14 @@ static bool CreateTransactionInternal(
         return false;
     }
 
-    if (nFeeRet > wallet.m_default_max_tx_fee) {
+    if (g_con_any_asset_fees) {
+        ExchangeRateMap& exchangeRateMap = ExchangeRateMap::GetInstance();
+        CAmount nFeeRetValue = exchangeRateMap.CalculateExchangeValue(nFeeRet, coin_selection_params.m_fee_asset); 
+        if (nFeeRetValue > wallet.m_default_max_tx_fee) {
+            error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
+            return false;
+        }
+    } else if (nFeeRet > wallet.m_default_max_tx_fee) {
         error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
         return false;
     }

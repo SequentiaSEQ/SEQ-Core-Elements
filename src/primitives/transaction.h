@@ -580,6 +580,17 @@ public:
     {
         return !witness.IsNull();
     }
+
+    const CAsset& GetFeeAsset(CAsset& default_asset) const 
+    {
+        CAsset& feeAsset = default_asset;
+        for (size_t i = 0; i < vout.size(); i++) {
+            if (vout[i].IsFee()) { 
+                feeAsset = vout[i].nAsset.GetAsset();
+            }
+        }
+        return feeAsset;
+    }
 };
 
 /** A mutable version of CTransaction. */
