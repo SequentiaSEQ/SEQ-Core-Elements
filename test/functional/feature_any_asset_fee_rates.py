@@ -9,7 +9,6 @@ from test_framework.test_framework import BitcoinTestFramework
 from decimal import Decimal
 from test_framework.util import (
     assert_equal,
-    assert_raises_rpc_error,
 )
 
 class AnyAssetFeeRatesTest(BitcoinTestFramework):
@@ -66,7 +65,7 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         self.node = self.nodes[0]
         self.test_fund_fee(self.gasset, 0.1, Decimal('0.00124550'), options={'fee_rate':50})
         self.test_fund_fee(self.asset, 0.1, Decimal('0.00062275'), options={'fee_rate':50})
-        
+
         # Without fee rate parameter, it should fallback to the node's minimum tx fee
         self.test_fund_fee(self.gasset, 0.1, Decimal('0.00249100'))
         self.test_fund_fee(self.asset, 0.1, Decimal('0.00124550'))
