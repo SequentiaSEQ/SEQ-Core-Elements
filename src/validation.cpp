@@ -882,13 +882,13 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_WITNESS_MUTATED, "bad-witness-nonstandard");
 
     int64_t nSigOpsCost = GetTransactionSigOpCost(tx, m_view, STANDARD_SCRIPT_VERIFY_FLAGS);
-    
+
     CAsset feeAsset;
     if (g_con_any_asset_fees) {
         // ConstructTransaction() ensures that transactions can only have a single fee output
         // and therefore that there will be exactly one entry in fee_map.
-        // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate 
-        // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple 
+        // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate
+        // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple
         // fee assets.
         feeAsset = fee_map.begin()->first;
     } else {

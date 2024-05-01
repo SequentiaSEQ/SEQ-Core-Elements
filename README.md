@@ -10,7 +10,7 @@ Current code is based on Elements Version: 23.2.1
 Quick Ubuntu build instructions for development:
 -----
 
-Instal build tools
+Install build tools
 ```bash
 sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
 ```

@@ -1,4 +1,4 @@
-name: Sequentia Core CI
+name: Build
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
       - dev
 
 jobs:
-  build:
+  build_and_test:
     runs-on: ubuntu-20.04
 
     steps:

@@ -33,13 +33,13 @@ class MempoolFeesTest(BitcoinTestFramework):
         self.issuance = node.issueasset(self.issue_amount, 1)
         self.asset = self.issuance['asset']
         txid = self.issuance['txid']
-       
+
         assert node.getmempoolinfo()['minrelaytxfee'] == Decimal('0.00001')
 
         fees1 = node.getrawmempool(verbose=True)[txid]['fees']
         assert fees1['asset'] == gasset_hexid
         assert fees1['value'] == Decimal('0.00120320')
-        
+
         node.setfeeexchangerates({ 'gasset': 200000000 })
         fees2 = node.getrawmempool(verbose=True)[txid]['fees']
         assert fees2['asset'] == gasset_hexid

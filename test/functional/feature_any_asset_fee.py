@@ -2,14 +2,13 @@
 # Copyright (c) 2017-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Tests fees being paid in any asset featur"""
+"""Tests fees being paid in any asset feature"""
 
 from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from decimal import Decimal
 from test_framework.util import (
     assert_equal,
-    assert_raises_rpc_error,
 )
 
 class AnyAssetFeeTest(BitcoinTestFramework):
@@ -202,8 +201,6 @@ class AnyAssetFeeTest(BitcoinTestFramework):
     def raw_transfer_asset_to_node1(self):
         node0 = self.nodes[0]
         node1 = self.nodes[1]
-
-        node1_balance = node1.getbalances()['mine']
 
         raw_tx = node0.createrawtransaction(outputs=[{self.node1_address: 1.0, 'asset': self.asset }])
         funded_tx = node0.fundrawtransaction(raw_tx)['hex']

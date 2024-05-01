@@ -1082,7 +1082,7 @@ void CTxMemPool::RecomputeFees()
             CAmount feeValueDelta = newFeeValue - tx.GetFeeValue();
             if (feeValueDelta != 0) {
                 mapTx.modify(it, update_fee_value(newFeeValue));
-                
+
                 // Now update all ancestors' modified fees with descendants
                 setEntries setAncestors;
                 uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();

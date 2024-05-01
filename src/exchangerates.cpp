@@ -23,7 +23,7 @@ CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAs
 }
 
 bool ExchangeRateMap::LoadFromDefaultJSONFile(std::vector<std::string>& errors) {
-    fs::path file_path = AbsPathForConfigVal(fs::PathFromString(exchange_rates_config_file));    
+    fs::path file_path = AbsPathForConfigVal(fs::PathFromString(exchange_rates_config_file));
     if (fs::exists(file_path)) {
         return LoadFromJSONFile(file_path, errors);
     } else {
@@ -77,5 +77,5 @@ bool ExchangeRateMap::LoadFromJSON(std::map<std::string, UniValue> json, std::ve
     for (auto rate : parsedRates) {
         (*this)[rate.first] = rate.second;
     }
-    return true; 
+    return true;
 }
