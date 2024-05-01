@@ -305,6 +305,7 @@ RPCHelpMan sendmany()
                     },
                     {"ignoreblindfail", RPCArg::Type::BOOL, RPCArg::Default{true}, "Return a transaction even when a blinding attempt fails due to number of blinded inputs/outputs."},
                     {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
+                    {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::DefaultHint{"not set, fall back to asset being sent"}, "label or hex ID of asset used for fees"},                    
                     {"verbose", RPCArg::Type::BOOL, RPCArg::Default{false}, "If true, return extra information about the transaction."},
                 },
                 {
@@ -377,7 +378,18 @@ RPCHelpMan sendmany()
 
     std::vector<CRecipient> recipients;
     ParseRecipients(sendTo, assets, subtractFeeFromAmount, recipients);
-    bool verbose = request.params[11].isNull() ? false : request.params[11].get_bool();
+    if (g_con_any_asset_fees && !recipients.empty()) {
+        CAsset feeAsset = recipients[0].asset;
+        if (request.params.size() > 11) {
+            std::string strFeeAsset = request.params[11].get_str();
+            feeAsset = GetAssetFromString(strFeeAsset);
+            if (feeAsset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+            }
+        }
+        coin_control.m_fee_asset = feeAsset;
+    }
+    bool verbose = request.params[12].isNull() ? false : request.params[12].get_bool();
 
     return SendMoney(*pwallet, coin_control, recipients, std::move(mapValue), verbose, ignore_blind_fail);
 },
