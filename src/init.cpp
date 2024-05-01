@@ -641,7 +641,7 @@ void SetupServerArgs(ArgsManager& argsman)
     argsman.AddArg("-initialreissuancetokens=<n>", "The amount of reissuance tokens created in the genesis block. (default: 0)", ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_bits", strprintf("The default number of hiding bits in a rangeproof. Will be exceeded to cover amounts exceeding the maximum hiding value. (default: %d)", 52), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
     argsman.AddArg("-ct_exponent", strprintf("The hiding exponent. (default: %s)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::CHAINPARAMS);
-    argsman.AddArg("-con_any_asset_fees", "Enable transation sees to be paid with any asset (default: false)", ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
+    argsman.AddArg("-con_any_asset_fees", "Enable transaction fees to be paid with any asset (default: false)", ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
     argsman.AddArg("-initialexchangeratesjsonfile=<file>", strprintf("Specify path to read-only configuration file with asset valuations. Only used when con_any_asset_fees is enabled. Relative paths will be prefixed by datadir location. (default: %s)", "exchangerates.json"), ArgsManager::ALLOW_ANY, OptionsCategory::ELEMENTS);
 
 

@@ -2,8 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <rpc/server_util.h>
-
 #include <assetsdir.h>
 #include <exchangerates.h>
 #include <rpc/register.h>
