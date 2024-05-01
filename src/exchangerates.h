@@ -1,4 +1,3 @@
-
 #ifndef BITCOIN_EXCHANGERATES_H
 #define BITCOIN_EXCHANGERATES_H
 
@@ -49,7 +48,7 @@ public:
      * @return true on success
      */
     bool LoadFromDefaultJSONFile(std::vector<std::string>& errors);
-    
+
     /**
      * Load the exchange rate map from a JSON config file.
      *
