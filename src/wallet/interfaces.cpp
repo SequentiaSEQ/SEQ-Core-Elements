@@ -290,9 +290,10 @@ public:
         std::vector<bilingual_str>& errors,
         CAmount& old_fee,
         CAmount& new_fee,
+        CAsset& fee_asset,
         CMutableTransaction& mtx) override
     {
-        return feebumper::CreateRateBumpTransaction(*m_wallet.get(), txid, coin_control, errors, old_fee, new_fee, mtx) == feebumper::Result::OK;
+        return feebumper::CreateRateBumpTransaction(*m_wallet.get(), txid, coin_control, errors, old_fee, new_fee, fee_asset, mtx) == feebumper::Result::OK;
     }
     bool signBumpTransaction(CMutableTransaction& mtx) override { return feebumper::SignTransaction(*m_wallet.get(), mtx); }
     bool commitBumpTransaction(const uint256& txid,

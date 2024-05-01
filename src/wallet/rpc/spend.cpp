@@ -1052,6 +1052,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
             {
                 {RPCResult::Type::STR_AMOUNT, "origfee", "The fee of the replaced transaction."},
                 {RPCResult::Type::STR_AMOUNT, "fee", "The fee of the new transaction."},
+                {RPCResult::Type::STR_HEX, "fee_asset", "The asset being used to pay fees."},
                 {RPCResult::Type::ARR, "errors", "Errors encountered during processing (may be empty).",
                 {
                     {RPCResult::Type::STR, "", ""},
@@ -1115,10 +1116,11 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
     std::vector<bilingual_str> errors;
     CAmount old_fee;
     CAmount new_fee;
+    CAsset fee_asset = ::policyAsset;
     CMutableTransaction mtx;
     feebumper::Result res;
     // Targeting feerate bump.
-    res = feebumper::CreateRateBumpTransaction(*pwallet, hash, coin_control, errors, old_fee, new_fee, mtx);
+    res = feebumper::CreateRateBumpTransaction(*pwallet, hash, coin_control, errors, old_fee, new_fee, fee_asset, mtx);
     if (res != feebumper::Result::OK) {
         switch(res) {
             case feebumper::Result::INVALID_ADDRESS_OR_KEY:
@@ -1167,6 +1169,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
 
     result.pushKV("origfee", ValueFromAmount(old_fee));
     result.pushKV("fee", ValueFromAmount(new_fee));
+    result.pushKV("fee_asset", fee_asset.GetHex());
     UniValue result_errors(UniValue::VARR);
     for (const bilingual_str& error : errors) {
         result_errors.push_back(error.original);
