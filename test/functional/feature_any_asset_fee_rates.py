@@ -77,7 +77,7 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         self.test_fund_fee(self.gasset, 0.1, Decimal('0.00498200'))
         self.test_fund_fee(self.asset, 0.1, Decimal('0.00249100'))
 
-    def test_fund_fee(self, asset, amount, expected_fee, options={}):
+    def test_fund_fee(self, asset, amount, expected_fee, options=None):
         raw_tx = self.node.createrawtransaction(outputs=[
             {self.node0_address: amount, 'asset': asset},
             {'fee': 0,'fee_asset': asset}])

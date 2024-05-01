@@ -62,4 +62,4 @@ struct CValue
         }
 };
 
-#endif // BITCOIN_POLICY_VALUE
+#endif // BITCOIN_POLICY_VALUE_H
