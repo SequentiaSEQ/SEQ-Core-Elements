@@ -34,7 +34,7 @@ make -j$(nproc)
 ```
 To speed up the build if not necessary, disable bench and tests in configure:
 ```bash
-./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
+./configure --enable-any-asset-fees --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
 ```
 
 Modes
@@ -106,4 +106,3 @@ https://github.com/ElementsProject/elementsproject.github.io
 Secure Reporting
 ------------------
 See [our vulnerability reporting guide](SECURITY.md)
-
