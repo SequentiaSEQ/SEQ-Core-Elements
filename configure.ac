@@ -281,7 +281,7 @@ if test "$liquid_build" = "yes"; then
   AC_DEFINE(LIQUID, 1, [Define this symbol for Liquid builds])
 fi
 
-if test "$any_asset_fees_build" = "yes"; then
+if test "$any_asset_fees" = "yes"; then
   AC_DEFINE(ANY_ASSET_FEES, 1, [Define this symbol to modify constants for any asset fees feature])
 fi
 
