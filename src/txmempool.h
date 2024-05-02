@@ -16,6 +16,7 @@
 
 #include <coins.h>
 #include <consensus/amount.h>
+#include <exchangerates.h>
 #include <indirectmap.h>
 #include <policy/feerate.h>
 #include <policy/packages.h>
@@ -98,7 +99,6 @@ private:
     mutable Children m_children;
     const CAmount nFee;             //!< Cached to avoid expensive parent-transaction lookups
     const CAsset nFeeAsset;         //!< ELEMENTS: The asset used for fee payment. Always equal to policyAsset unless con_any_asset_fees is enabled.
-    CValue nFeeValue;               //!< ELEMENTS: Value in reference unit, computed using configured exchange rates. It is not a `const` because it needs to be updated whenever exchange rates change.
     const size_t nTxWeight;         //!< ... and avoid recomputing tx weight (also used for GetTxSize())
     const size_t nUsageSize;        //!< ... and total memory usage
     const int64_t nTime;            //!< Local time when entering the mempool
@@ -132,13 +132,13 @@ public:
     CTransactionRef GetSharedTx() const { return this->tx; }
     const CAmount& GetFee() const { return nFee; }
     const CAsset& GetFeeAsset() const { return nFeeAsset; }
-    const CValue& GetFeeValue() const { return nFeeValue; }
+    const CValue GetFeeValue() const { return ExchangeRateMap::GetInstance().ConvertAmountToValue(nFee, nFeeAsset); }
     size_t GetTxSize() const;
     size_t GetTxWeight() const { return nTxWeight; }
     std::chrono::seconds GetTime() const { return std::chrono::seconds{nTime}; }
     unsigned int GetHeight() const { return entryHeight; }
     int64_t GetSigOpCost() const { return sigOpCost; }
-    int64_t GetModifiedFee() const { return nFeeValue.GetValue() + feeDelta; }
+    int64_t GetModifiedFee() const { return this->GetFeeValue().GetValue() + feeDelta; }
     size_t DynamicMemoryUsage() const { return nUsageSize; }
     const LockPoints& GetLockPoints() const { return lockPoints; }
 
