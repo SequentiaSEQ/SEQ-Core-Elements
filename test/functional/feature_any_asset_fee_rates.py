@@ -14,7 +14,7 @@ from test_framework.util import (
 class AnyAssetFeeRatesTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
-        self.num_nodes = 4
+        self.num_nodes = 6
         self.base_args = [
             "-blindedaddresses=1",
             "-initialfreecoins=100000000000",
@@ -28,7 +28,9 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
             self.base_args + ["-mintxfee=0.001"],
             self.base_args + ["-mintxfee=0.002"],
             self.base_args + ["-paytxfee=0.003"],
-            self.base_args + ["-paytxfee=0.004"]]
+            self.base_args + ["-paytxfee=0.004"],
+            self.base_args + ["-blockmintxfee=0.001"],
+            self.base_args + ["-blockmintxfee=0.001"]]
         self.extra_args[0].append("-anyonecanspendaremine=1")
 
     def skip_test_if_missing_module(self):
@@ -90,6 +92,23 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         self.test_fund_fee(node3, self.gasset, 0.1, Decimal('0.00996400'))
         self.test_fund_fee(node3, self.asset, 0.1, Decimal('0.00498200'))
 
+        # Now test that transactions don't get included in a block if fees don't satisfy blockmintxfee
+        node4 = self.nodes[4]
+        self.fund_node(node4)
+        self.test_send_fee(node4, self.asset, 0.1, Decimal('0.00024910'))
+        block_hashes = node4.generatetoaddress(1, node4.address, invalid_call=False)
+        block = node4.getblock(block_hashes[0])
+        assert_equal(block['nTx'], 1)
+
+        # ... and that this scales correctly with higher valuations of the same asset
+        node5 = self.nodes[5]
+        self.fund_node(node5)
+        node5.setfeeexchangerates({ self.asset: 200000 })
+        self.test_send_fee(node5, self.asset, 0.1, Decimal('0.249100'))
+        block_hashes = node5.generatetoaddress(1, node5.address, invalid_call=False)
+        block = node5.getblock(block_hashes[0])
+        assert_equal(block['nTx'], 1)
+
     def test_fund_fee(self, node, asset, amount, expected_fee, options=None):
         raw_tx = node.createrawtransaction(outputs=[
             {self.nodes[0].address: amount, 'asset': asset},
@@ -105,6 +124,9 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         funded_tx = node.fundrawtransaction(hexstring=raw_tx, options=options)['hex']
         tx = node.decoderawtransaction(funded_tx)
         assert_equal(tx['fee'], {asset: expected_fee})
+        blinded_tx = node.blindrawtransaction(funded_tx)
+        signed_tx = node.signrawtransactionwithwallet(blinded_tx)['hex']
+        node.sendrawtransaction(signed_tx)
 
     def fund_node(self, node):
         self.nodes[0].sendtoaddress(
