@@ -51,7 +51,7 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         self.nodes[0].generatetoaddress(1, self.nodes[0].getnewaddress(), invalid_call=False)  # confirm the tx
 
         self.issuance_addr = self.nodes[0].gettransaction(self.issuance_txid)['details'][0]['address']
-        issuance_key = self.nodes[0].dumpissuanceblindingkey(self.issuance_txid, self.issuance_vin)        
+        issuance_key = self.nodes[0].dumpissuanceblindingkey(self.issuance_txid, self.issuance_vin)
 
         new_rates = { "gasset": 100000000, self.asset: 200000000 }
         for node in self.nodes:
@@ -59,41 +59,51 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
             node.importaddress(self.issuance_addr)
             node.importissuanceblindingkey(self.issuance_txid, self.issuance_vin, issuance_key)
             node.setfeeexchangerates(new_rates)
-            
+
     def test_fee_rates(self):
         # Fee rate parameter
-        self.node = self.nodes[0]
-        self.test_fund_fee(self.gasset, 0.1, Decimal('0.00124550'), options={'fee_rate':50})
-        self.test_fund_fee(self.asset, 0.1, Decimal('0.00062275'), options={'fee_rate':50})
+
+        # First, test fee_rate parameter for fundrawtransaction
+        node0 = self.nodes[0]
+        self.test_fund_fee(node0, self.gasset, 0.1, Decimal('0.00124550'), options={'fee_rate':50})
+        self.test_fund_fee(node0, self.asset, 0.1, Decimal('0.00062275'), options={'fee_rate':50})
 
         # Without fee rate parameter, it should fallback to the node's minimum tx fee
-        self.test_fund_fee(self.gasset, 0.1, Decimal('0.00249100'))
-        self.test_fund_fee(self.asset, 0.1, Decimal('0.00124550'))
+        self.test_fund_fee(node0, self.gasset, 0.1, Decimal('0.00249100'))
+        self.test_fund_fee(node0, self.asset, 0.1, Decimal('0.00124550'))
 
         # Now test node1, which has a higher minimum tx fee
-        self.node = self.nodes[1]
-        self.fund_node(self.node)
-        self.test_fund_fee(self.gasset, 0.1, Decimal('0.00498200'))
-        self.test_fund_fee(self.asset, 0.1, Decimal('0.00249100'))
+        node1 = self.nodes[1]
+        self.fund_node(node1)
+        self.test_fund_fee(node1, self.gasset, 0.1, Decimal('0.00498200'))
+        self.test_fund_fee(node1, self.asset, 0.1, Decimal('0.00249100'))
 
         # Now test node2, which has a higher paytxfee
-        self.node = self.nodes[2]
-        self.fund_node(self.node)
-        self.test_fund_fee(self.gasset, 0.1, Decimal('0.00747300'))
-        self.test_fund_fee(self.asset, 0.1, Decimal('0.00373650'))
+        node2 = self.nodes[2]
+        self.fund_node(node2)
+        self.test_fund_fee(node2, self.gasset, 0.1, Decimal('0.00747300'))
+        self.test_fund_fee(node2, self.asset, 0.1, Decimal('0.00373650'))
 
         # Now test node3, which has a (still) higher paytxfee
-        self.node = self.nodes[3]
-        self.fund_node(self.node)
-        self.test_fund_fee(self.gasset, 0.1, Decimal('0.00996400'))
-        self.test_fund_fee(self.asset, 0.1, Decimal('0.00498200'))
+        node3 = self.nodes[3]
+        self.fund_node(node3)
+        self.test_fund_fee(node3, self.gasset, 0.1, Decimal('0.00996400'))
+        self.test_fund_fee(node3, self.asset, 0.1, Decimal('0.00498200'))
 
-    def test_fund_fee(self, asset, amount, expected_fee, options=None):
-        raw_tx = self.node.createrawtransaction(outputs=[
+    def test_fund_fee(self, node, asset, amount, expected_fee, options=None):
+        raw_tx = node.createrawtransaction(outputs=[
             {self.nodes[0].address: amount, 'asset': asset},
             {'fee': 0,'fee_asset': asset}])
-        funded_tx = self.node.fundrawtransaction(hexstring=raw_tx, options=options)['hex']
-        tx = self.node.decoderawtransaction(funded_tx)
+        funded_tx = node.fundrawtransaction(hexstring=raw_tx, options=options)['hex']
+        tx = node.decoderawtransaction(funded_tx)
+        assert_equal(tx['fee'], {asset: expected_fee})
+
+    def test_send_fee(self, node, asset, amount, expected_fee, options=None):
+        raw_tx = node.createrawtransaction(outputs=[
+            {self.nodes[0].address: amount, 'asset': asset},
+            {'fee': 0,'fee_asset': asset}])
+        funded_tx = node.fundrawtransaction(hexstring=raw_tx, options=options)['hex']
+        tx = node.decoderawtransaction(funded_tx)
         assert_equal(tx['fee'], {asset: expected_fee})
 
     def fund_node(self, node):
