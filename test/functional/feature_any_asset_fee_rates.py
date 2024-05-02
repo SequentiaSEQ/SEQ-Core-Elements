@@ -100,7 +100,15 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         block = node4.getblock(block_hashes[0])
         assert_equal(block['nTx'], 1)
 
-        # ... and that this scales correctly with higher valuations of the same asset
+        # Force a higher fee rate to demonstrate a transaction that does get included
+        self.test_send_fee(node4, self.asset, 0.1, Decimal('0.01245500'), options={'fee_rate': 1000})
+        block_hashes = node4.generatetoaddress(1, node4.address, invalid_call=False)
+        block = node4.getblock(block_hashes[0])
+        assert_equal(block['nTx'], 3)
+
+        # Demonstrate that blockmintxfee scales correctly with higher valuations of the same asset,
+        # since a transaction with a higher fee amount than the previous transaction is not accepted
+        # into a block
         node5 = self.nodes[5]
         self.fund_node(node5)
         node5.setfeeexchangerates({ self.asset: 200000 })
