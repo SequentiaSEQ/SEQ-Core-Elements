@@ -12,7 +12,7 @@
 
 #include <string>
 
-#ifdef ANY_ASSET_FEES 
+#ifdef ANY_ASSET_FEES
 const std::string CURRENCY_UNIT = "RFU"; // One formatted unit (reference fee unit)
 const std::string CURRENCY_ATOM = "rfa"; // One indivisible minimum value unit (reference fee atom)
 #else
