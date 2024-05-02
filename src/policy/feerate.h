@@ -12,8 +12,13 @@
 
 #include <string>
 
+#ifdef ANY_ASSET_FEES 
+const std::string CURRENCY_UNIT = "RFU"; // One formatted unit (reference fee unit)
+const std::string CURRENCY_ATOM = "rfa"; // One indivisible minimum value unit (reference fee atom)
+#else
 const std::string CURRENCY_UNIT = "BTC"; // One formatted unit
 const std::string CURRENCY_ATOM = "sat"; // One indivisible minimum value unit
+#endif
 
 /* Used to determine type of fee estimation requested */
 enum class FeeEstimateMode {
