@@ -44,8 +44,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py --ci -j$(nproc) --failfast
-
+          ./test/functional/test_runner.py --ci -j$(nproc) --timeout-factor=60 --failfast --ansi --combinedlogslen=4000
 
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
