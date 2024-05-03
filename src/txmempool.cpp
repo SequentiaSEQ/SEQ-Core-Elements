@@ -103,6 +103,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset 
     : tx{tx},
       nFee{fee},
       nFeeAsset{feeAsset},
+      nFeeValue{feeValue},
       nTxWeight(GetTransactionWeight(*tx)),
       nUsageSize{RecursiveDynamicUsage(tx)},
       nTime{time},
@@ -111,9 +112,9 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset 
       sigOpCost{sigops_cost},
       lockPoints{lp},
       nSizeWithDescendants{GetTxSize()},
-      nModFeesWithDescendants{feeValue},
+      nModFeesWithDescendants{nFeeValue},
       nSizeWithAncestors{GetTxSize()},
-      nModFeesWithAncestors{feeValue},
+      nModFeesWithAncestors{nFeeValue},
       nSigOpCostWithAncestors{sigOpCost},
       setPeginsSpent(_setPeginsSpent) {}
 
@@ -126,9 +127,9 @@ void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
 
 void CTxMemPoolEntry::UpdateFeeValue(CValue newFeeValue)
 {
-    CValue currentFeeValue = this->GetFeeValue();
-    nModFeesWithDescendants += newFeeValue - currentFeeValue;
-    nModFeesWithAncestors += newFeeValue - currentFeeValue;
+    nModFeesWithDescendants += newFeeValue - nFeeValue;
+    nModFeesWithAncestors += newFeeValue - nFeeValue;
+    nFeeValue = newFeeValue;
 }
 
 void CTxMemPoolEntry::UpdateLockPoints(const LockPoints& lp)
