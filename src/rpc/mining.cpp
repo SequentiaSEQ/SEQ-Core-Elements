@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assetsdir.h>
 #include <chain.h>
 #include <chainparams.h>
 #include <consensus/amount.h>
@@ -12,6 +13,7 @@
 #include <core_io.h>
 #include <deploymentinfo.h>
 #include <deploymentstatus.h>
+#include <exchangerates.h>
 #include <key_io.h>
 #include <net.h>
 #include <node/context.h>
@@ -489,6 +491,10 @@ static RPCHelpMan prioritisetransaction()
             "                  Note, that this value is not a fee rate. It is a value to modify absolute fee of the TX.\n"
             "                  The fee is not actually paid, only the algorithm for selecting transactions into a block\n"
             "                  considers the transaction as it would have paid a higher (or lower) fee."},
+                    {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The asset that fee_delta is denominated in, used only\n"
+            "                  when any_asset_fees is enabled. If not set, fee_delta will be interpreted as already being in the node's RFU\n"
+            "                  (reference fee unit) and no conversions are necessary. If set, fee_delta will be converted to the node's RFU\n"
+            "                  using the node's current exchange rates."}
                 },
                 RPCResult{
                     RPCResult::Type::BOOL, "", "Returns true"},
@@ -502,6 +508,14 @@ static RPCHelpMan prioritisetransaction()
 
     uint256 hash(ParseHashV(request.params[0], "txid"));
     CAmount nAmount = request.params[2].get_int64();
+    if (g_con_any_asset_fees && !request.params[3].isNull()) {
+        std::string feeAssetString = request.params[3].get_str();
+        CAsset feeAsset = GetAssetFromString(feeAssetString);
+        if (feeAsset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+        }
+        nAmount = ExchangeRateMap::GetInstance().ConvertAmountToValue(nAmount, feeAsset).GetValue();
+    }
 
     if (!(request.params[1].isNull() || request.params[1].get_real() == 0)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Priority is no longer supported, dummy argument to prioritisetransaction must be 0.");
@@ -600,6 +614,7 @@ static RPCHelpMan getblocktemplate()
                             {RPCResult::Type::NUM, "", "transactions before this one (by 1-based index in 'transactions' list) that must be present in the final block if this one is"},
                         }},
                         {RPCResult::Type::NUM, "fee", "difference in value between transaction inputs and outputs (in satoshis); for coinbase transactions, this is a negative Number of the total collected block fees (ie, not including the block subsidy); if key is not present, fee is unknown and clients MUST NOT assume there isn't one"},
+                        {RPCResult::Type::STR_HEX, "fee_asset", "the asset being used to pay transaction fees, which the \"fee\" field is denominated in"},
                         {RPCResult::Type::NUM, "sigops", "total SigOps cost, as counted for purposes of block limits; if key is not present, sigop cost is unknown and clients MUST NOT assume it is zero"},
                         {RPCResult::Type::NUM, "weight", "total transaction weight, as counted for purposes of block limits"},
                     }},
@@ -840,6 +855,7 @@ static RPCHelpMan getblocktemplate()
 
         int index_in_template = i - 1;
         entry.pushKV("fee", pblocktemplate->vTxFees[index_in_template]);
+        entry.pushKV("fee_asset", tx.GetFeeAsset(::policyAsset).GetHex());
         int64_t nTxSigOps = pblocktemplate->vTxSigOpsCost[index_in_template];
         if (fPreSegWit) {
             CHECK_NONFATAL(nTxSigOps % WITNESS_SCALE_FACTOR == 0);
