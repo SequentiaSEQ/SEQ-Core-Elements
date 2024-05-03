@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+          sudo apt-get install ccache build-essential libstdc++-12-dev libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
           wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 18
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
@@ -30,7 +30,7 @@ jobs:
       - name: Build
         env:
           CONFIG_SITE: ${GITHUB_WORKSPACE}/depends/x86_64-pc-linux-gnu/share/config.site
-          CXXFLAGS: -Wno-deprecated
+          CXXFLAGS: -Wno-deprecated -Wno-unused-result
           CC: clang-18
           CXX: clang++-18
         run: |
