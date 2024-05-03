@@ -209,6 +209,7 @@ BITCOIN_CORE_H = \
   policy/policy.h \
   policy/rbf.h \
   policy/settings.h \
+  policy/value.h \
   pow.h \
   primitives/pak.h \
   protocol.h \

@@ -560,23 +560,23 @@ static void entryToJSON(const CTxMemPool& pool, UniValue& info, const CTxMemPool
     info.pushKV("descendantcount", e.GetCountWithDescendants());
     info.pushKV("descendantsize", e.GetSizeWithDescendants());
     if (deprecated_fee_fields_enabled) {
-        info.pushKV("descendantfees", e.GetModFeesWithDescendants());
+        info.pushKV("descendantfees", e.GetModFeesWithDescendants().GetValue());
     }
     info.pushKV("ancestorcount", e.GetCountWithAncestors());
     info.pushKV("ancestorsize", e.GetSizeWithAncestors());
     if (deprecated_fee_fields_enabled) {
-        info.pushKV("ancestorfees", e.GetModFeesWithAncestors());
+        info.pushKV("ancestorfees", e.GetModFeesWithAncestors().GetValue());
     }
     info.pushKV("wtxid", pool.vTxHashes[e.vTxHashesIdx].first.ToString());
 
     UniValue fees(UniValue::VOBJ);
     fees.pushKV("base", ValueFromAmount(e.GetFee()));
     fees.pushKV("modified", ValueFromAmount(e.GetModifiedFee()));
-    fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors()));
-    fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants()));
+    fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors().GetValue()));
+    fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants().GetValue()));
     if (g_con_any_asset_fees) {
         fees.pushKV("asset", e.GetFeeAsset().GetHex());
-        fees.pushKV("value", ValueFromAmount(e.GetFeeValue()));
+        fees.pushKV("value", ValueFromAmount(e.GetFeeValue().GetValue()));
     }
     info.pushKV("fees", fees);
 
@@ -2308,7 +2308,7 @@ static constexpr size_t PER_UTXO_OVERHEAD = sizeof(COutPoint) + sizeof(uint32_t)
 static RPCHelpMan getblockstats()
 {
     return RPCHelpMan{"getblockstats",
-                "\nCompute per block statistics for a given window. All amounts are in satoshis.\n"
+                "\nCompute per block statistics for a given window. All amounts are in " + CURRENCY_ATOM_FULL + "s.\n"
                 "It won't work for some heights with pruning.\n",
                 {
                     {"hash_or_height", RPCArg::Type::NUM, RPCArg::Optional::NO, "The block hash or height of the target block", "", {"", "string or numeric"}},
@@ -2323,10 +2323,10 @@ static RPCHelpMan getblockstats()
             RPCResult::Type::OBJ, "", "",
             {
                 {RPCResult::Type::NUM, "avgfee", /*optional=*/true, "Average fee in the block"},
-                {RPCResult::Type::NUM, "avgfeerate", /*optional=*/true, "Average feerate (in satoshis per virtual byte)"},
+                {RPCResult::Type::NUM, "avgfeerate", /*optional=*/true, "Average feerate (in " + CURRENCY_ATOM_FULL + "s per virtual byte)"},
                 {RPCResult::Type::NUM, "avgtxsize", /*optional=*/true, "Average transaction size"},
                 {RPCResult::Type::STR_HEX, "blockhash", /*optional=*/true, "The block hash (to check for potential reorgs)"},
-                {RPCResult::Type::ARR_FIXED, "feerate_percentiles", /*optional=*/true, "Feerates at the 10th, 25th, 50th, 75th, and 90th percentile weight unit (in satoshis per virtual byte)",
+                {RPCResult::Type::ARR_FIXED, "feerate_percentiles", /*optional=*/true, "Feerates at the 10th, 25th, 50th, 75th, and 90th percentile weight unit (in " + CURRENCY_ATOM_FULL + " per virtual byte)",
                 {
                     {RPCResult::Type::NUM, "10th_percentile_feerate", "The 10th percentile feerate"},
                     {RPCResult::Type::NUM, "25th_percentile_feerate", "The 25th percentile feerate"},
@@ -2337,13 +2337,13 @@ static RPCHelpMan getblockstats()
                 {RPCResult::Type::NUM, "height", /*optional=*/true, "The height of the block"},
                 {RPCResult::Type::NUM, "ins", /*optional=*/true, "The number of inputs (excluding coinbase)"},
                 {RPCResult::Type::NUM, "maxfee", /*optional=*/true, "Maximum fee in the block"},
-                {RPCResult::Type::NUM, "maxfeerate", /*optional=*/true, "Maximum feerate (in satoshis per virtual byte)"},
+                {RPCResult::Type::NUM, "maxfeerate", /*optional=*/true, "Maximum feerate (in " + CURRENCY_ATOM_FULL + "s per virtual byte)"},
                 {RPCResult::Type::NUM, "maxtxsize", /*optional=*/true, "Maximum transaction size"},
                 {RPCResult::Type::NUM, "medianfee", /*optional=*/true, "Truncated median fee in the block"},
                 {RPCResult::Type::NUM, "mediantime", /*optional=*/true, "The block median time past"},
                 {RPCResult::Type::NUM, "mediantxsize", /*optional=*/true, "Truncated median transaction size"},
                 {RPCResult::Type::NUM, "minfee", /*optional=*/true, "Minimum fee in the block"},
-                {RPCResult::Type::NUM, "minfeerate", /*optional=*/true, "Minimum feerate (in satoshis per virtual byte)"},
+                {RPCResult::Type::NUM, "minfeerate", /*optional=*/true, "Minimum feerate (in " + CURRENCY_ATOM_FULL + "s per virtual byte)"},
                 {RPCResult::Type::NUM, "mintxsize", /*optional=*/true, "Minimum transaction size"},
                 {RPCResult::Type::NUM, "outs", /*optional=*/true, "The number of outputs"},
                 {RPCResult::Type::NUM, "subsidy", /*optional=*/true, "The block subsidy"},

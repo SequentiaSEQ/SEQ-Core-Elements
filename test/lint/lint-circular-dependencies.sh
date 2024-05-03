@@ -29,6 +29,10 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     # multi-asset transaction or not. Probably this check should be done in
     # CreateTransaction instead.
     "wallet/coinselection -> wallet/wallet -> wallet/coinselection"
+    # ELEMENTS: This enables convenience functions for dealing with fees
+    # being denominated in different assets when g_con_any_asset_fees is
+    # enabled  
+    "exchangerates -> policy/policy -> policy/feerate -> exchangerates"
 )
 
 EXIT_CODE=0

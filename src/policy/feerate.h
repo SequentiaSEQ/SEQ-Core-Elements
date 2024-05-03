@@ -6,13 +6,21 @@
 #ifndef BITCOIN_POLICY_FEERATE_H
 #define BITCOIN_POLICY_FEERATE_H
 
+#include <asset.h>
 #include <consensus/amount.h>
 #include <serialize.h>
 
 #include <string>
 
+#ifdef ANY_ASSET_FEES
+const std::string CURRENCY_UNIT = "RFU"; // One formatted unit (reference fee unit)
+const std::string CURRENCY_ATOM = "rfa"; // One indivisible minimum value unit (reference fee atom)
+const std::string CURRENCY_ATOM_FULL = "reference fee atom";
+#else
 const std::string CURRENCY_UNIT = "BTC"; // One formatted unit
 const std::string CURRENCY_ATOM = "sat"; // One indivisible minimum value unit
+const std::string CURRENCY_ATOM_FULL = "satoshi";
+#endif
 
 /* Used to determine type of fee estimation requested */
 enum class FeeEstimateMode {
@@ -55,6 +63,12 @@ public:
      * returned fee will always be rounded up to the nearest satoshi.
      */
     CAmount GetFee(uint32_t num_bytes) const;
+
+    /**
+     * Return the fee in denominations of the fee asset for the given
+     * vsize in vbytes.
+     */
+    CAmount GetFee(uint32_t num_bytes, const CAsset& asset) const;
 
     /**
      * Return the fee in satoshis for a vsize of 1000 vbytes

@@ -17,6 +17,7 @@
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/settings.h>
+#include <policy/value.h>
 #include <reverse_iterator.h>
 #include <util/moneystr.h>
 #include <util/system.h>
@@ -29,7 +30,7 @@
 // Helpers for modifying CTxMemPool::mapTx, which is a boost multi_index.
 struct update_descendant_state
 {
-    update_descendant_state(int64_t _modifySize, CAmount _modifyFee, int64_t _modifyCount) :
+    update_descendant_state(int64_t _modifySize, CValue _modifyFee, int64_t _modifyCount) :
         modifySize(_modifySize), modifyFee(_modifyFee), modifyCount(_modifyCount)
     {}
 
@@ -38,13 +39,13 @@ struct update_descendant_state
 
     private:
         int64_t modifySize;
-        CAmount modifyFee;
+        CValue modifyFee;
         int64_t modifyCount;
 };
 
 struct update_ancestor_state
 {
-    update_ancestor_state(int64_t _modifySize, CAmount _modifyFee, int64_t _modifyCount, int64_t _modifySigOpsCost) :
+    update_ancestor_state(int64_t _modifySize, CValue _modifyFee, int64_t _modifyCount, int64_t _modifySigOpsCost) :
         modifySize(_modifySize), modifyFee(_modifyFee), modifyCount(_modifyCount), modifySigOpsCost(_modifySigOpsCost)
     {}
 
@@ -53,7 +54,7 @@ struct update_ancestor_state
 
     private:
         int64_t modifySize;
-        CAmount modifyFee;
+        CValue modifyFee;
         int64_t modifyCount;
         int64_t modifySigOpsCost;
 };
@@ -70,12 +71,12 @@ private:
 
 struct update_fee_value
 {
-    explicit update_fee_value(int64_t _feeValue) : feeValue(_feeValue) { }
+    explicit update_fee_value(CValue _feeValue) : feeValue(_feeValue) { }
 
     void operator() (CTxMemPoolEntry &e) { e.UpdateFeeValue(feeValue); }
 
 private:
-    int64_t feeValue;
+    CValue feeValue;
 };
 
 bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
@@ -95,7 +96,7 @@ bool TestLockPointValidity(CChain& active_chain, const LockPoints& lp)
     return true;
 }
 
-CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CAmount feeValue,
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee, CAsset feeAsset, CValue feeValue,
                                  int64_t time, unsigned int entry_height,
                                  bool spends_coinbase, int64_t sigops_cost, LockPoints lp,
                                  const std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent)
@@ -124,7 +125,7 @@ void CTxMemPoolEntry::UpdateFeeDelta(int64_t newFeeDelta)
     feeDelta = newFeeDelta;
 }
 
-void CTxMemPoolEntry::UpdateFeeValue(const CAmount newFeeValue)
+void CTxMemPoolEntry::UpdateFeeValue(CValue newFeeValue)
 {
     nModFeesWithDescendants += newFeeValue - nFeeValue;
     nModFeesWithAncestors += newFeeValue - nFeeValue;
@@ -466,7 +467,7 @@ void CTxMemPool::UpdateForRemoveFromMempool(const setEntries &entriesToRemove, b
     }
 }
 
-void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount)
+void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CValue modifyFee, int64_t modifyCount)
 {
     nSizeWithDescendants += modifySize;
     assert(int64_t(nSizeWithDescendants) > 0);
@@ -475,7 +476,7 @@ void CTxMemPoolEntry::UpdateDescendantState(int64_t modifySize, CAmount modifyFe
     assert(int64_t(nCountWithDescendants) > 0);
 }
 
-void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount, int64_t modifySigOps)
+void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize, CValue modifyFee, int64_t modifyCount, int64_t modifySigOps)
 {
     nSizeWithAncestors += modifySize;
     assert(int64_t(nSizeWithAncestors) > 0);
@@ -870,7 +871,7 @@ void CTxMemPool::check(const CBlockIndex* active_chain_tip, const CCoinsViewCach
         assert(it->GetCountWithAncestors() == nCountCheck);
         assert(it->GetSizeWithAncestors() == nSizeCheck);
         assert(it->GetSigOpCostWithAncestors() == nSigOpCheck);
-        assert(it->GetModFeesWithAncestors() == nFeesCheck);
+        assert(it->GetModFeesWithAncestors().GetValue() == nFeesCheck);
         // Sanity check: we are walking in ascending ancestor count order.
         assert(prev_ancestor_count <= it->GetCountWithAncestors());
         prev_ancestor_count = it->GetCountWithAncestors();
@@ -1078,8 +1079,8 @@ void CTxMemPool::RecomputeFees()
         ExchangeRateMap exchangeRateMap = ExchangeRateMap::GetInstance();
         for (CTxMemPoolEntry tx : mapTx) {
             txiter it = mapTx.find(tx.GetTx().GetHash());
-            CAmount newFeeValue = exchangeRateMap.CalculateExchangeValue(tx.GetFee(), tx.GetFeeAsset());
-            CAmount feeValueDelta = newFeeValue - tx.GetFeeValue();
+            CValue newFeeValue = exchangeRateMap.ConvertAmountToValue(tx.GetFee(), tx.GetFeeAsset());
+            CValue feeValueDelta = newFeeValue - tx.GetFeeValue();
             if (feeValueDelta != 0) {
                 mapTx.modify(it, update_fee_value(newFeeValue));
 
@@ -1287,7 +1288,7 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint>* pvNoSpends
         // "minimum reasonable fee rate" (ie some value under which we consider txn
         // to have 0 fee). This way, we don't allow txn to enter mempool with feerate
         // equal to txn which were removed with no block in between.
-        CFeeRate removed(it->GetModFeesWithDescendants(), it->GetSizeWithDescendants());
+        CFeeRate removed(it->GetModFeesWithDescendants().GetValue(), it->GetSizeWithDescendants());
         removed += incrementalRelayFee;
         trackPackageRemoved(removed);
         maxFeeRateRemoved = std::max(maxFeeRateRemoved, removed);
@@ -1347,7 +1348,7 @@ void CTxMemPool::GetTransactionAncestry(const uint256& txid, size_t& ancestors, 
     if (it != mapTx.end()) {
         ancestors = it->GetCountWithAncestors();
         if (ancestorsize) *ancestorsize = it->GetSizeWithAncestors();
-        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors();
+        if (ancestorfees) *ancestorfees = it->GetModFeesWithAncestors().GetValue();
         descendants = CalculateDescendantMaximum(it);
     }
 }

@@ -3,9 +3,10 @@
 
 #include <fs.h>
 #include <policy/policy.h>
+#include <policy/value.h>
 #include <univalue.h>
 
-constexpr const CAmount exchange_rate_scale = COIN;
+constexpr const CAmount exchange_rate_scale = COIN; // 100,000,000
 const std::string exchange_rates_config_file = "exchangerates.json";
 
 class CAssetExchangeRate
@@ -33,15 +34,24 @@ public:
     }
 
     /**
-     * Calculate the exchange value
+     * Convert an amount denominated in some asset to the node's RFU (reference fee unit)
      *
-     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFeeAmount
+     * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFee
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
-     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
+     * @return the value at current exchange rate. Corresponds to CTxMemPoolEntry.nFeeValue
      */
-    CAmount CalculateExchangeValue(const CAmount& amount, const CAsset& asset);
+    CValue ConvertAmountToValue(const CAmount& amount, const CAsset& asset);
 
-/**
+    /**
+     * Convert an amount denominated in the node's RFU (reference fee unit) into some asset
+     *
+     * @param[in]   value        Corresponds to CTxMemPoolEntry.nFeeValue
+     * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
+     * @return the amount at current exchange rate. Corresponds to CTxMemPoolEntry.nFee
+     */
+    CAmount ConvertValueToAmount(const CValue& value, const CAsset& asset);
+
+    /**
      * Load the exchange rate map from the default JSON config file in <datadir>/exchangerates.json.
      *
      * @param[in]   errors        Vector for storing error messages, if there are any.

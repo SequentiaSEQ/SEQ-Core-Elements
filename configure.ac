@@ -266,6 +266,12 @@ AC_ARG_ENABLE([liquid],
   [liquid_build=yes],
   [liquid_build=no])
 
+AC_ARG_ENABLE([any_asset_fees],
+  [AS_HELP_STRING([--enable-any-asset-fees],
+  [Enable build that uses constants for any asset fees feature])],
+  [any_asset_fees=yes],
+  [any_asset_fees=no])
+
 if test "$use_asm" = "yes"; then
   AC_DEFINE([USE_ASM], [1], [Define this symbol to build in assembly routines])
 fi
@@ -273,6 +279,11 @@ fi
 if test "$liquid_build" = "yes"; then
   AC_DEFINE(LIQUID, 1, [Define this symbol for Liquid builds])
 fi
+
+if test "$any_asset_fees" = "yes"; then
+  AC_DEFINE(ANY_ASSET_FEES, 1, [Define this symbol to modify constants for any asset fees feature])
+fi
+
 AC_ARG_ENABLE([zmq],
   [AS_HELP_STRING([--disable-zmq],
   [disable ZMQ notifications])],
@@ -1833,6 +1844,7 @@ AM_CONDITIONAL([WORDS_BIGENDIAN], [test "$ac_cv_c_bigendian" = "yes"])
 AM_CONDITIONAL([USE_NATPMP], [test "$use_natpmp" = "yes"])
 AM_CONDITIONAL([USE_UPNP], [test "$use_upnp" = "yes"])
 AM_CONDITIONAL([LIQUID], [test "$liquid_build" = "yes"])
+AM_CONDITIONAL([ANY_ASSET_FEES], [test "$any_asset_fees" = "yes"])
 
 dnl for minisketch
 AM_CONDITIONAL([ENABLE_CLMUL], [test "$enable_clmul" = "yes"])
@@ -1986,6 +1998,7 @@ echo "  with upnp       = $use_upnp"
 echo "  with natpmp     = $use_natpmp"
 echo "  use asm         = $use_asm"
 echo "  liquid_build    = $liquid_build"
+echo "  any_asset_fees  = $any_asset_fees"
 echo "  USDT tracing    = $use_usdt"
 echo "  sanitizers      = $use_sanitizers"
 echo "  debug enabled   = $enable_debug"

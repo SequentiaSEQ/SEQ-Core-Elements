@@ -36,6 +36,10 @@ To speed up the build if not necessary, disable bench and tests in configure:
 ```bash
 ./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
 ```
+To configure RPC documentation to denominate fee rates using RFU and rfa instead of BTC and sat:
+```bash
+./configure --enable-any-asset-fees
+```
 
 Modes
 -----
@@ -106,4 +110,3 @@ https://github.com/ElementsProject/elementsproject.github.io
 Secure Reporting
 ------------------
 See [our vulnerability reporting guide](SECURITY.md)
-
