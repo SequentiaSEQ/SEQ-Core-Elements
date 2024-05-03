@@ -5,6 +5,7 @@
 
 #include <rpc/blockchain.h>
 
+#include <assetsdir.h>
 #include <blockfilter.h>
 #include <chain.h>
 #include <chainparams.h>
@@ -2010,7 +2011,7 @@ UniValue MempoolInfoToJSON(const CTxMemPool& pool)
     ret.pushKV("size", (int64_t)pool.size());
     ret.pushKV("bytes", (int64_t)pool.GetTotalTxSize());
     ret.pushKV("usage", (int64_t)pool.DynamicMemoryUsage());
-    ret.pushKV("total_fee", ValueFromAmount(pool.GetTotalFee()));
+    ret.pushKV("total_fee", ValueFromAmount(pool.GetTotalFee().GetValue()));
     size_t maxmempool = gArgs.GetIntArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
     ret.pushKV("maxmempool", (int64_t) maxmempool);
     ret.pushKV("mempoolminfee", ValueFromAmount(std::max(pool.GetMinFee(maxmempool), ::minRelayTxFee).GetFeePerK()));
@@ -2318,10 +2319,12 @@ static RPCHelpMan getblockstats()
                             {"time", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Selected statistic"},
                         },
                         "stats"},
+                   {"asset", RPCArg::Type::STR, RPCArg::DefaultHint{"policy asset"}, "asset for which the statistics will be computed"},
                 },
                 RPCResult{
             RPCResult::Type::OBJ, "", "",
             {
+                {RPCResult::Type::STR_HEX, "asset", /*optional=*/true, "Asset for which the statistics are computed"},
                 {RPCResult::Type::NUM, "avgfee", /*optional=*/true, "Average fee in the block"},
                 {RPCResult::Type::NUM, "avgfeerate", /*optional=*/true, "Average feerate (in " + CURRENCY_ATOM_FULL + "s per virtual byte)"},
                 {RPCResult::Type::NUM, "avgtxsize", /*optional=*/true, "Average transaction size"},
@@ -2382,7 +2385,14 @@ static RPCHelpMan getblockstats()
     }
 
     // ELEMENTS:
-    const CAsset asset = policyAsset; // TODO Make configurable
+    CAsset asset = policyAsset;
+    if (g_con_elementsmode && !request.params[2].isNull()) {
+        std::string assetString = request.params[2].get_str();
+        asset = GetAssetFromString(assetString);
+        if (asset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex: %s", assetString));
+        }
+    }
 
     const CBlock block = GetBlockChecked(pindex);
     const CBlockUndo blockUndo = GetUndoChecked(pindex);
@@ -2516,6 +2526,7 @@ static RPCHelpMan getblockstats()
     }
 
     UniValue ret_all(UniValue::VOBJ);
+    ret_all.pushKV("asset", asset.GetHex());
     ret_all.pushKV("avgfee", (block.vtx.size() > 1) ? totalfee / (block.vtx.size() - 1) : 0);
     ret_all.pushKV("avgfeerate", total_weight ? (totalfee * WITNESS_SCALE_FACTOR) / total_weight : 0); // Unit: sat/vbyte
     ret_all.pushKV("avgtxsize", (block.vtx.size() > 1) ? total_size / (block.vtx.size() - 1) : 0);

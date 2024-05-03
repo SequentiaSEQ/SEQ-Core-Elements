@@ -11,6 +11,7 @@
 #include <consensus/amount.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <exchangerates.h>
 #include <index/txindex.h>
 #include <key_io.h>
 #include <merkleblock.h>
@@ -1026,7 +1027,9 @@ static RPCHelpMan testmempoolaccept()
                             {RPCResult::Type::NUM, "vsize", /*optional=*/true, "Virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted (only present when 'allowed' is true)"},
                             {RPCResult::Type::OBJ, "fees", /*optional=*/true, "Transaction fees (only present if 'allowed' is true)",
                             {
-                                {RPCResult::Type::STR_AMOUNT, "base", "transaction fee in " + CURRENCY_UNIT},
+                                {RPCResult::Type::STR_AMOUNT, "base", "transaction fee in " + CURRENCY_UNIT + " unless specified otherwise in 'asset' field"},
+                                {RPCResult::Type::STR_HEX, "asset", "asset used to pay transaction fee"},
+                                {RPCResult::Type::STR_AMOUNT, "value", "transaction fee denominated in node's RFU (reference fee unit)"},
                             }},
                             {RPCResult::Type::STR, "reject-reason", /*optional=*/true, "Rejection string (only present when 'allowed' is false)"},
                         }},
@@ -1118,6 +1121,11 @@ static RPCHelpMan testmempoolaccept()
                 result_inner.pushKV("vsize", virtual_size);
                 UniValue fees(UniValue::VOBJ);
                 fees.pushKV("base", ValueFromAmount(fee));
+                if (g_con_any_asset_fees) {
+                    const CAsset& feeAsset = tx->GetFeeAsset(::policyAsset);
+                    fees.pushKV("asset", feeAsset.GetHex());
+                    fees.pushKV("value", ValueFromAmount(ExchangeRateMap::GetInstance().ConvertAmountToValue(fee, feeAsset).GetValue()));
+                }
                 result_inner.pushKV("fees", fees);
             }
         } else {
@@ -2585,6 +2593,7 @@ static RPCHelpMan analyzepsbt()
                     {RPCResult::Type::NUM, "estimated_vsize", /*optional=*/true, "Estimated vsize of the final signed transaction"},
                     {RPCResult::Type::STR_AMOUNT, "estimated_feerate", /*optional=*/true, "Estimated feerate of the final signed transaction in " + CURRENCY_UNIT + "/kvB. Shown only if all UTXO slots in the PSBT have been filled"},
                     {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The transaction fee paid. Shown only if all UTXO slots in the PSBT have been filled"},
+                    {RPCResult::Type::STR_AMOUNT, "fee_asset", /*optional=*/true, "The asset used to pay the transaction fee. Shown only if all UTXO slots in the PSBT have been filled"},
                     {RPCResult::Type::STR, "next", "Role of the next person that this psbt needs to go to"},
                     {RPCResult::Type::STR, "error", /*optional=*/true, "Error message (if there is one)"},
                 }
@@ -2680,6 +2689,9 @@ static RPCHelpMan analyzepsbt()
     }
     if (psbta.fee != std::nullopt) {
         result.pushKV("fee", ValueFromAmount(*psbta.fee));
+    }
+    if (psbta.fee_asset != std::nullopt) {
+        result.pushKV("fee_asset", (*psbta.fee_asset).GetHex());
     }
     result.pushKV("next", PSBTRoleName(psbta.next));
     if (!psbta.error.empty()) {

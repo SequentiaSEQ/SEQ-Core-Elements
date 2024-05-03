@@ -111,6 +111,7 @@ PSBTAnalysis AnalyzePSBT(PartiallySignedTransaction psbtx)
                     return result;
                 }
                 result.fee = output.amount;
+                result.fee_asset = CAsset(output.m_asset);
             }
         }
         if (txout.nValue.IsExplicit() && !MoneyRange(txout.nValue.GetAmount())) {

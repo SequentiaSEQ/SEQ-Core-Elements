@@ -1090,6 +1090,8 @@ class PSBTTest(BitcoinTestFramework):
         signed = self.nodes[1].walletprocesspsbt(updated)['psbt']
         analyzed = self.nodes[0].analyzepsbt(signed)
         assert analyzed['inputs'][0]['has_utxo'] and analyzed['inputs'][0]['is_final'] and analyzed['next'] == 'extractor'
+        assert_equal(analyzed['fee'], Decimal('0.00100000'))
+        assert_equal(analyzed['fee_asset'], "b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23")
 
         self.log.info("PSBT spending unspendable outputs should have error message and Creator as next")
         analysis = self.nodes[0].analyzepsbt("cHNldP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEDAfsEAgAAAAABAUMBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAvrwgAAF2oUt/X69ELjeX2nTof+fZ10l+OyAokDAQ4gWOh6IbVtrwwjvo5wcEVsM298uqXIdXkk9UWIe7Kr3XUBDwQAAAAAARAE/////wABAUMBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAvrwgAAF2oUt/X69ELjeX2nTof+fZ10l+OyAokDAQ4gg40EJ9DsZQpoqka7CwmK6kQiwHGyyng1Kgd5WdB86h0BDwQBAAAAARAE/////wABAwgA4fUFAAAAAAEEAwAAAAf8BHBzZXQCICMPT11LfG+oRYBu5PZ3E0WeG2no5g/O4uSUDHoNXeGyAAEDCADh9QUAAAAAAQQD/1EAB/wEcHNldAIgIw9PXUt8b6hFgG7k9ncTRZ4baejmD87i5JQMeg1d4bIAAQMIAOH1BQAAAAABBAAH/ARwc2V0AiAjD09dS3xvqEWAbuT2dxNFnhtp6OYPzuLklAx6DV3hsgA=")
