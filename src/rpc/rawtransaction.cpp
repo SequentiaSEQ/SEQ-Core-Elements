@@ -1122,7 +1122,7 @@ static RPCHelpMan testmempoolaccept()
                 UniValue fees(UniValue::VOBJ);
                 fees.pushKV("base", ValueFromAmount(fee));
                 if (g_con_any_asset_fees) {
-                    CAsset& feeAsset = tx->GetFeeAsset(::policyAsset);
+                    const CAsset& feeAsset = tx->GetFeeAsset(::policyAsset);
                     fees.pushKV("asset", feeAsset.GetHex());
                     fees.pushKV("value", ValueFromAmount(ExchangeRateMap::GetInstance().ConvertAmountToValue(fee, feeAsset).GetValue()));
                 }

@@ -159,7 +159,7 @@ FUZZ_TARGET_INIT(tx_pool_standard, initialize_tx_pool)
     {
         {
             // Total supply is the mempool fee + all outpoints
-            CAmount supply_now{WITH_LOCK(tx_pool.cs, return tx_pool.GetTotalFee())};
+            CAmount supply_now{WITH_LOCK(tx_pool.cs, return tx_pool.GetTotalFee().GetValue())};
             for (const auto& op : outpoints_supply) {
                 supply_now += GetAmount(op);
             }
