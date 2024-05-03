@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <asset.h>
 #include <wallet/fees.h>
 
 #include <wallet/coincontrol.h>
@@ -15,10 +16,9 @@ CAmount GetRequiredFee(const CWallet& wallet, unsigned int nTxBytes)
     return GetRequiredFeeRate(wallet).GetFee(nTxBytes);
 }
 
-
 CAmount GetMinimumFee(const CWallet& wallet, unsigned int nTxBytes, const CCoinControl& coin_control, FeeCalculation* feeCalc)
 {
-    return GetMinimumFeeRate(wallet, coin_control, feeCalc).GetFee(nTxBytes);
+    return GetMinimumFeeRate(wallet, coin_control, feeCalc).GetFee(nTxBytes, coin_control.m_fee_asset.value_or(::policyAsset));
 }
 
 CFeeRate GetRequiredFeeRate(const CWallet& wallet)

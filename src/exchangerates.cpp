@@ -1,24 +1,40 @@
 #include <assetsdir.h>
 #include <exchangerates.h>
 #include <policy/policy.h>
+#include <policy/value.h>
 #include <util/settings.h>
 #include <util/system.h>
 #include <univalue.h>
 
 #include <fstream>
 
-CAmount ExchangeRateMap::CalculateExchangeValue(const CAmount& amount, const CAsset& asset) {
+CValue ExchangeRateMap::ConvertAmountToValue(const CAmount& amount, const CAsset& asset) {
+    int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {
-        return 0;
+        return CValue(0);
     }
     auto scaled_value = it->second.m_scaled_value;
-    __uint128_t value = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
+    __uint128_t result = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
+    if (result > int64_max) {
+        return CValue(int64_max);
+    } else {
+        return CValue((int64_t) result);
+    }
+}
+
+CAmount ExchangeRateMap::ConvertValueToAmount(const CValue& value, const CAsset& asset) {
     int64_t int64_max = std::numeric_limits<int64_t>::max();
-    if (value > int64_max) {
+    auto it = this->find(asset);
+    if (it == this->end()) {
+        return int64_max;
+    }
+    auto scaled_value = it->second.m_scaled_value;
+    __uint128_t result = ((__uint128_t)value.GetValue() * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
+    if (result > int64_max) {
         return int64_max;
     } else {
-        return (int64_t) value;
+        return (int64_t) result;
     }
 }
 
