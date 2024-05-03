@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install ccache build-essential libstdc++-12-dev libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
           wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
