@@ -24,17 +24,13 @@ sudo /usr/sbin/update-ccache-symlinks
 echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
 source ~/.bashrc
 ```
-Build:
+Quick Build:
 ```bash
 ./autogen.sh
-./contrib/install_db4.sh .
-export CC=clang-15 CXX=clang++-15 BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include"
-./configure --without-gui --without-natpmp --without-miniupnpc
+export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site CC=clang-18 CXX=clang++-18 NOWARN_CXXFLAGS='-Wno-unused-result'
+make -j$(nproc) -C depends NO_QT=1 NO_SQLITE=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+./configure --disable-bench --disable-tests --disable-fuzz-binar
 make -j$(nproc)
-```
-To speed up the build if not necessary, disable bench and tests in configure:
-```bash
-./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
 ```
 To configure RPC documentation to denominate fee rates using RFU and rfa instead of BTC and sat:
 ```bash
