@@ -58,6 +58,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure
+        env:
+          CXXFLAGS: -Wno-deprecated -Wno-unused-result
+          CC: clang-15
+          CXX: clang++-15
+        run: |
+          ./autogen.sh
+          ./configure
+
       - name: Run functional tests
         run: |
           ./test/functional/test_runner.py -j$(nproc) --timeout-factor=60 --failfast --ansi --combinedlogslen=4000
