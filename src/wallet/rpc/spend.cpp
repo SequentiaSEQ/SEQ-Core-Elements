@@ -5,6 +5,7 @@
 #include <assetsdir.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <exchangerates.h>
 #include <issuance.h>
 #include <key_io.h>
 #include <policy/policy.h>
@@ -1600,7 +1601,13 @@ RPCHelpMan walletcreatefundedpsbt()
                     RPCResult::Type::OBJ, "", "",
                     {
                         {RPCResult::Type::STR, "psbt", "The resulting raw transaction (base64-encoded string)"},
+#ifdef ANY_ASSET_FEES
+                        {RPCResult::Type::STR_AMOUNT, "fee", "Fee that the resulting transaction pays, denominated in the asset specified by 'fee_asset'"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_asset", "Asset that the fee is paid with"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_value", "Fee that the resulting transaction pays, denominated in " + CURRENCY_UNIT},
+#else
                         {RPCResult::Type::STR_AMOUNT, "fee", "Fee in " + CURRENCY_UNIT + " the resulting transaction pays"},
+#endif
                         {RPCResult::Type::NUM, "changepos", "The position of the added change output, or -1"},
                     }
                                 },
@@ -1773,6 +1780,12 @@ RPCHelpMan walletcreatefundedpsbt()
     UniValue result(UniValue::VOBJ);
     result.pushKV("psbt", EncodeBase64(ssTx.str()));
     result.pushKV("fee", ValueFromAmount(fee));
+    if (g_con_any_asset_fees) {
+        CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
+        CValue fee_value = ExchangeRateMap::GetInstance().ConvertAmountToValue(fee, fee_asset);
+        result.pushKV("fee_asset", fee_asset.GetHex());
+        result.pushKV("fee_value", ValueFromAmount(fee_value.GetValue()));
+    }
     result.pushKV("changepos", change_position);
     return result;
 },
