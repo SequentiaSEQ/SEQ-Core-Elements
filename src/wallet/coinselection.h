@@ -202,10 +202,10 @@ struct OutputGroup
 
     OutputGroup() {}
     OutputGroup(const CoinSelectionParams& params) :
+        fee_asset(params.m_fee_asset),
         m_effective_feerate(params.m_effective_feerate),
         m_long_term_feerate(params.m_long_term_feerate),
-        m_subtract_fee_outputs(params.m_subtract_fee_outputs),
-        fee_asset(params.m_fee_asset)
+        m_subtract_fee_outputs(params.m_subtract_fee_outputs)
     {}
 
     void Insert(const CInputCoin& output, int depth, bool from_me, size_t ancestors, size_t descendants, bool positive_only);
