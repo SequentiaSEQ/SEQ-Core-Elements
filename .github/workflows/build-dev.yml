@@ -41,7 +41,7 @@ jobs:
           NOWARN_CXXFLAGS: -Wno-deprecated -Wno-deprecated-non-prototype -Wno-unused-result
         run: |
           ./autogen.sh
-          make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+          make -j$(nproc) -C depends NO_QT=1 NO_SQLITE=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
           ./configure --disable-tests
           make clean
           make -j$(nproc)
@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py -j$(nproc) --timeout-factor=40 --failfast
+          ./test/functional/test_runner.py --timeout-factor=40 --failfast
 
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
