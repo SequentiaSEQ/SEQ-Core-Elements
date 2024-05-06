@@ -58,6 +58,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+
       - name: Configure
         env:
           CXXFLAGS: -Wno-deprecated -Wno-unused-result
