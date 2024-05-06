@@ -73,6 +73,11 @@ jobs:
           ./autogen.sh
           ./configure
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sequentia-linux
+
       - name: Run functional tests
         run: |
           ./test/functional/test_runner.py -j$(nproc) --timeout-factor=60 --failfast --ansi --combinedlogslen=4000
