@@ -1053,7 +1053,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
             {
                 {RPCResult::Type::STR_AMOUNT, "origfee", "The fee of the replaced transaction."},
                 {RPCResult::Type::STR_AMOUNT, "fee", "The fee of the new transaction."},
-                {RPCResult::Type::STR_HEX, "fee_asset", "The asset being used to pay fees."},
+                {RPCResult::Type::STR_HEX, "fee_asset", /* optional */ g_con_any_asset_fees, "The asset being used to pay fees."},
                 {RPCResult::Type::ARR, "errors", "Errors encountered during processing (may be empty).",
                 {
                     {RPCResult::Type::STR, "", ""},
@@ -1601,13 +1601,9 @@ RPCHelpMan walletcreatefundedpsbt()
                     RPCResult::Type::OBJ, "", "",
                     {
                         {RPCResult::Type::STR, "psbt", "The resulting raw transaction (base64-encoded string)"},
-#ifdef ANY_ASSET_FEES
-                        {RPCResult::Type::STR_AMOUNT, "fee", "Fee that the resulting transaction pays, denominated in the asset specified by 'fee_asset'"},
-                        {RPCResult::Type::STR_AMOUNT, "fee_asset", "Asset that the fee is paid with"},
-                        {RPCResult::Type::STR_AMOUNT, "fee_value", "Fee that the resulting transaction pays, denominated in " + CURRENCY_UNIT},
-#else
-                        {RPCResult::Type::STR_AMOUNT, "fee", "Fee in " + CURRENCY_UNIT + " the resulting transaction pays"},
-#endif
+                        {RPCResult::Type::STR_AMOUNT, "fee", g_con_any_asset_fees ? "Fee that the resulting transaction pays, denominated in the asset specified by 'fee_asset'" : "Fee in " + CURRENCY_UNIT + " the resulting transaction pays"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_asset", /* optional */ g_con_any_asset_fees, "Asset that the fee is paid with"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_value", /* optional */ g_con_any_asset_fees, "Fee that the resulting transaction pays, denominated in " + CURRENCY_UNIT},
                         {RPCResult::Type::NUM, "changepos", "The position of the added change output, or -1"},
                     }
                                 },
