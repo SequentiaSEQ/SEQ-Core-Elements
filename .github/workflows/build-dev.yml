@@ -32,6 +32,7 @@ jobs:
           CONFIG_SITE: ${GITHUB_WORKSPACE}/depends/x86_64-pc-linux-gnu/share/config.site
           CC: clang-18
           CXX: clang++-18
+          NOWARN_CXXFLAGS: -Wno-unused-result
         run: |
           ./autogen.sh
           make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
