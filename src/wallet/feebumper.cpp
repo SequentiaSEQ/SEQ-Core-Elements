@@ -79,24 +79,25 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CWalletTx& wt
         return feebumper::Result::WALLET_ERROR;
     }
 
-    CAmount new_total_fee = newFeerate.GetFee(maxTxSize);
+    const CAsset& fee_asset = g_con_any_asset_fees ? wtx.tx->GetFeeAsset(::policyAsset) : ::policyAsset;
+    CAmount new_total_fee = newFeerate.GetFee(maxTxSize, fee_asset);
 
     CFeeRate incrementalRelayFee = std::max(wallet.chain().relayIncrementalFee(), CFeeRate(WALLET_INCREMENTAL_RELAY_FEE));
 
     // Given old total fee and transaction size, calculate the old feeRate
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    CAmount old_fee = CachedTxGetDebit(wallet, wtx, filter)[::policyAsset] - wtx.tx->GetValueOutMap()[::policyAsset];
+    CAmount old_fee = CachedTxGetDebit(wallet, wtx, filter)[fee_asset] - wtx.tx->GetValueOutMap()[fee_asset];
     if (g_con_elementsmode) {
-        old_fee = GetFeeMap(*wtx.tx)[::policyAsset];
+        old_fee = GetFeeMap(*wtx.tx)[fee_asset];
     }
     const int64_t txSize = GetVirtualTransactionSize(*(wtx.tx));
     CFeeRate nOldFeeRate(old_fee, txSize);
     // Min total fee is old fee + relay fee
-    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize) + incrementalRelayFee.GetFee(maxTxSize);
+    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize, fee_asset) + incrementalRelayFee.GetFee(maxTxSize, fee_asset);
 
     if (new_total_fee < minTotalFee) {
         errors.push_back(strprintf(Untranslated("Insufficient total fee %s, must be at least %s (oldFee %s + incrementalFee %s)"),
-            FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(nOldFeeRate.GetFee(maxTxSize)), FormatMoney(incrementalRelayFee.GetFee(maxTxSize))));
+            FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(nOldFeeRate.GetFee(maxTxSize, fee_asset)), FormatMoney(incrementalRelayFee.GetFee(maxTxSize, fee_asset))));
         return feebumper::Result::INVALID_PARAMETER;
     }
 
@@ -159,7 +160,7 @@ bool TransactionCanBeBumped(const CWallet& wallet, const uint256& txid)
 }
 
 Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCoinControl& coin_control, std::vector<bilingual_str>& errors,
-                                 CAmount& old_fee, CAmount& new_fee, CAsset& fee_asset, CMutableTransaction& mtx)
+                                 CAmount& old_fee, CAmount& new_fee, CMutableTransaction& mtx)
 {
     // We are going to modify coin control later, copy to re-use
     CCoinControl new_coin_control(coin_control);
@@ -202,10 +203,9 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     new_coin_control.destChange = destinations;
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
-    old_fee = CachedTxGetDebit(wallet, wtx, filter)[fee_asset] - wtx.tx->GetValueOutMap()[fee_asset];
+    old_fee = CachedTxGetDebit(wallet, wtx, filter)[::policyAsset] - wtx.tx->GetValueOutMap()[::policyAsset];
     if (g_con_elementsmode) {
-        old_fee = GetFeeMap(*wtx.tx)[fee_asset];
+        old_fee = GetFeeMap(*wtx.tx)[::policyAsset];
     }
 
     if (coin_control.m_feerate) {
