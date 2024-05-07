@@ -38,7 +38,7 @@ jobs:
           CONFIG_SITE: ${GITHUB_WORKSPACE}/depends/x86_64-pc-linux-gnu/share/config.site
           CC: clang-18
           CXX: clang++-18
-          NOWARN_CXXFLAGS: -Wno-deprecated -Wno-deprecated-non-prototype -Wno-unused-result
+          NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
         run: |
           ./autogen.sh
           make -j$(nproc) -C depends NO_QT=1
@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py --timeout-factor=40 --failfast --ci --ansi --jobs=$(nproc)
+          ./test/functional/test_runner.py --failfast --ansi --jobs=$(nproc)
 
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
