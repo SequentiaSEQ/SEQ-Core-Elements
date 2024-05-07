@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          ./test/functional/test_runner.py --timeout-factor=40 --failfast
+          ./test/functional/test_runner.py --timeout-factor=40 --failfast --ci --ansi --jobs=$(nproc)
 
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
