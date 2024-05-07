@@ -16,7 +16,7 @@ CValue ExchangeRateMap::ConvertAmountToValue(const CAmount& amount, const CAsset
     }
     auto scaled_value = it->second.m_scaled_value;
     __uint128_t result = ((__uint128_t)amount * (__uint128_t)scaled_value) / (__uint128_t)exchange_rate_scale;
-    if (result > int64_max) {
+    if (result > static_cast<uint64_t>(int64_max)) {
         return CValue(int64_max);
     } else {
         return CValue((int64_t) result);
@@ -31,7 +31,7 @@ CAmount ExchangeRateMap::ConvertValueToAmount(const CValue& value, const CAsset&
     }
     auto scaled_value = it->second.m_scaled_value;
     __uint128_t result = ((__uint128_t)value.GetValue() * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
-    if (result > int64_max) {
+    if (result > static_cast<__uint128_t>(int64_max)) {
         return int64_max;
     } else {
         return (int64_t) result;
