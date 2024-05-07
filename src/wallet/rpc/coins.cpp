@@ -98,7 +98,10 @@ RPCHelpMan getreceivedbyaddress()
                     {"include_immature_coinbase", RPCArg::Type::BOOL, RPCArg::Default{false}, "Include immature coinbase transactions."},
                 },
                 {
-                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.",
+                    {
+                        {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                    }},
                     RPCResult{RPCResult::Type::NUM, "amount", "the total amount for the asset, if one is specified"},
                     RPCResult{RPCResult::Type::NONE, "", ""}, // in case the wallet is disabled
                 },
@@ -147,7 +150,10 @@ RPCHelpMan getreceivedbylabel()
                     {"include_immature_coinbase", RPCArg::Type::BOOL, RPCArg::Default{false}, "Include immature coinbase transactions."},
                 },
                 {
-                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.",
+                    {
+                        {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                    }},
                     RPCResult{RPCResult::Type::NUM, "amount", "the total amount for the asset, if one is specified"},
                     RPCResult{RPCResult::Type::NONE, "", ""}, // in case the wallet is disabled
                 },
@@ -258,7 +264,10 @@ RPCHelpMan getunconfirmedbalance()
                 "DEPRECATED\nIdentical to getbalances().mine.untrusted_pending\n",
                 {},
                 {
-                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.",
+                    {
+                        {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                    }},
                     RPCResult{RPCResult::Type::NUM, "amount", "the total amount for the asset, if one is specified"},
                     RPCResult{RPCResult::Type::NONE, "", ""}, // in case the wallet is disabled
                 },
