@@ -169,7 +169,6 @@ public:
         std::vector<bilingual_str>& errors,
         CAmount& old_fee,
         CAmount& new_fee,
-        CAsset& fee_asset,
         CMutableTransaction& mtx) = 0;
 
     //! Sign bump transaction.

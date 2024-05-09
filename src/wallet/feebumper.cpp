@@ -160,7 +160,7 @@ bool TransactionCanBeBumped(const CWallet& wallet, const uint256& txid)
 }
 
 Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCoinControl& coin_control, std::vector<bilingual_str>& errors,
-                                 CAmount& old_fee, CAmount& new_fee, CAsset& fee_asset, CMutableTransaction& mtx)
+                                 CAmount& old_fee, CAmount& new_fee, CMutableTransaction& mtx)
 {
     // We are going to modify coin control later, copy to re-use
     CCoinControl new_coin_control(coin_control);
@@ -203,7 +203,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     new_coin_control.destChange = destinations;
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
+    CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
     old_fee = CachedTxGetDebit(wallet, wtx, filter)[fee_asset] - wtx.tx->GetValueOutMap()[fee_asset];
     if (g_con_elementsmode) {
         old_fee = GetFeeMap(*wtx.tx)[fee_asset];

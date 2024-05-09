@@ -38,7 +38,6 @@ Result CreateRateBumpTransaction(CWallet& wallet,
     std::vector<bilingual_str>& errors,
     CAmount& old_fee,
     CAmount& new_fee,
-    CAsset& fee_asset,
     CMutableTransaction& mtx);
 
 //! Sign the new transaction,
