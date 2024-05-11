@@ -898,6 +898,9 @@ RPCHelpMan fundrawtransaction()
     UniValue result(UniValue::VOBJ);
     result.pushKV("hex", EncodeHexTx(CTransaction(tx)));
     result.pushKV("fee", ValueFromAmount(fee));
+    if (g_con_any_asset_fees) {
+        result.pushKV("fee_asset", coin_control.m_fee_asset.value_or(::policyAsset).GetHex());
+    }
     result.pushKV("changepos", change_position);
 
     return result;
