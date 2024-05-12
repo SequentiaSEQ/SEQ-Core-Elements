@@ -76,7 +76,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             address=self.node1_address,
             amount=2.0,
             assetlabel=self.asset,
-            fee_assetlabel=self.asset)
+            fee_asset_label=self.asset)
 
         self.generatetoaddress(self.nodes[0], 1, self.node0_address)
         self.sync_all()
@@ -95,7 +95,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             address=self.node0_address,
             amount=1.0,
             assetlabel=self.asset,
-            fee_assetlabel=self.asset)
+            fee_asset_label=self.asset)
 
         self.generatetoaddress(self.nodes[1], 1, self.node1_address)
         self.sync_all()
@@ -115,25 +115,25 @@ class AnyAssetFeeTest(BitcoinTestFramework):
             address=self.node1_address,
             amount=1.0,
             assetlabel=self.asset,
-            fee_assetlabel=self.asset)
+            fee_asset_label=self.asset)
 
         self.nodes[0].sendtoaddress(
             address=self.node1_address,
             amount=2.0,
             assetlabel=self.asset,
-            fee_assetlabel="gasset")
+            fee_asset_label="gasset")
 
         self.nodes[0].sendtoaddress(
             address=self.node1_address,
             amount=3.0,
             assetlabel="gasset",
-            fee_assetlabel=self.asset)
+            fee_asset_label=self.asset)
 
         self.nodes[0].sendtoaddress(
             address=self.node1_address,
             amount=4.0,
             assetlabel="gasset",
-            fee_assetlabel="gasset")
+            fee_asset_label="gasset")
 
         self.generatetoaddress(self.nodes[0], 1, self.node0_address)
         self.sync_all()
