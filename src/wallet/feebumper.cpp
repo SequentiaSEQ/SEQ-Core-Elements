@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <exchangerates.h>
 #include <interfaces/chain.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -202,14 +203,13 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     }
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    CAsset original_fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
-    old_fee = CachedTxGetDebit(wallet, wtx, filter)[original_fee_asset] - wtx.tx->GetValueOutMap()[original_fee_asset];
+    CAsset old_fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
+    old_fee = CachedTxGetDebit(wallet, wtx, filter)[old_fee_asset] - wtx.tx->GetValueOutMap()[old_fee_asset];
     if (g_con_elementsmode || g_con_any_asset_fees) {
-        old_fee = GetFeeMap(*wtx.tx)[original_fee_asset];
+        old_fee = GetFeeMap(*wtx.tx)[old_fee_asset];
     }
-    // Ensure that the fee asset has a change destination in case the fee asset
-    // is being modified and therefore doesn't have an output in the original
-    // transaction.
+    // ELEMENTS: Ensure that the fee asset has a change destination in case the user wants
+    // to switch to paying with a fee asset that isn't used in the original transaction.
     CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
     if (g_con_any_asset_fees && !destinations.count(fee_asset)) {
         CTxDestination change_dest;
@@ -234,7 +234,12 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
         }
     } else {
         // The user did not provide a feeRate argument
-        new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee, new_coin_control);
+        if (g_con_any_asset_fees) {
+            CValue old_fee_value = ExchangeRateMap::GetInstance().ConvertAmountToValue(old_fee, old_fee_asset);
+            new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee_value.GetValue(), new_coin_control);
+        } else {
+            new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee, new_coin_control);
+        }
     }
 
     // Fill in required inputs we are double-spending(all of them)
