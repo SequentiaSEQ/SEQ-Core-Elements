@@ -53,7 +53,6 @@ class AnyAssetFeeTest(BitcoinTestFramework):
 
         issuance_key = self.nodes[0].dumpissuanceblindingkey(self.issuance_txid, self.issuance_vin)
         self.nodes[1].importissuanceblindingkey(self.issuance_txid, self.issuance_vin, issuance_key)
-        issuances = self.nodes[1].listissuances()
 
         self.node0_address = self.nodes[0].getnewaddress()
         self.node1_address = self.nodes[1].getnewaddress()
