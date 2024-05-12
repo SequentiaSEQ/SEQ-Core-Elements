@@ -200,7 +200,6 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             destinations[output.nAsset.GetAsset()] = change_dest;
         }
     }
-    new_coin_control.destChange = destinations;
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
     CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
@@ -208,6 +207,21 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     if (g_con_elementsmode) {
         old_fee = GetFeeMap(*wtx.tx)[fee_asset];
     }
+    // Ensure that the fee asset has a change destination in case the fee asset
+    // is being modified and therefore doesn't have an output in the original
+    // transaction.
+    if (g_con_any_asset_fees && !destinations.count(fee_asset)) {
+        CTxDestination change_dest;
+        OutputType output_type = wallet.m_default_change_type.value_or(wallet.m_default_address_type);
+        bilingual_str error;
+        bool add_blinding_key = false;
+        if (!wallet.GetNewChangeDestination(output_type, change_dest, error, add_blinding_key)) {
+            errors.push_back(error);
+            return Result::WALLET_ERROR;
+        }
+        destinations[fee_asset] = change_dest;
+    }
+    new_coin_control.destChange = destinations;
 
     if (coin_control.m_feerate) {
         // The user provided a feeRate argument.
