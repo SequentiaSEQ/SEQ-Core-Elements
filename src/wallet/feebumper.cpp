@@ -202,14 +202,15 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     }
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
-    old_fee = CachedTxGetDebit(wallet, wtx, filter)[fee_asset] - wtx.tx->GetValueOutMap()[fee_asset];
-    if (g_con_elementsmode) {
-        old_fee = GetFeeMap(*wtx.tx)[fee_asset];
+    CAsset original_fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
+    old_fee = CachedTxGetDebit(wallet, wtx, filter)[original_fee_asset] - wtx.tx->GetValueOutMap()[original_fee_asset];
+    if (g_con_elementsmode || g_con_any_asset_fees) {
+        old_fee = GetFeeMap(*wtx.tx)[original_fee_asset];
     }
     // Ensure that the fee asset has a change destination in case the fee asset
     // is being modified and therefore doesn't have an output in the original
     // transaction.
+    CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
     if (g_con_any_asset_fees && !destinations.count(fee_asset)) {
         CTxDestination change_dest;
         OutputType output_type = wallet.m_default_change_type.value_or(wallet.m_default_address_type);
