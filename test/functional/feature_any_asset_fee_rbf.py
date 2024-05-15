@@ -99,7 +99,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         new_tx_id = bumped_tx['txid']
         new_tx = node1.gettransaction(new_tx_id)
         node1.sendrawtransaction(new_tx['hex'])
-        
+
         # Verify that the old transaction is gone and has been replaced by the new one in the mempool
         assert_equal(node1.getrawmempool(), [new_tx_id])
 
