@@ -890,12 +890,14 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate
     // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple
     // fee assets.
-    CAsset feeAsset = g_con_any_asset_fees ? fee_map.begin()->first : ::policyAsset;
+    CAsset feeAsset = g_con_any_asset_fees ? 
+        fee_map.begin()->first : 
+        ::policyAsset;
     ws.m_base_fees = fee_map[feeAsset];
 
     // ws.m_modified_fees includes any fee deltas from PrioritiseTransaction
     ws.m_modified_fees = g_con_any_asset_fees ? 
-        ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue : 
+        ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() : 
         ws.m_base_fees;
     m_pool.ApplyDelta(hash, ws.m_modified_fees);
 
