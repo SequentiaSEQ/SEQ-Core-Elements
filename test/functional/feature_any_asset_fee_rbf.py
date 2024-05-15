@@ -79,6 +79,8 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         [node0, node1] = self.nodes
         tx_id = self.spend_one_input(node1, self.node0_address, self.asset)
         tx = node1.gettransaction(tx_id, True)
+        assert_equal(node1.getrawmempool(), [tx_id])
+
         assert_equal(tx['details'][0]['fee_asset'], self.asset)
         bumped_tx = node1.bumpfee(tx_id, {'fee_asset': 'gasset'})
         old_fee = -tx['fee'][self.asset]
@@ -92,6 +94,14 @@ class AnyAssetFeeTest(BitcoinTestFramework):
 
         # And finally, that the new fee is LESS than the old fee, since it is a more highly valued asset
         assert new_fee < old_fee
+
+        # Actually send transaction
+        new_tx_id = bumped_tx['txid']
+        new_tx = node1.gettransaction(new_tx_id)
+        node1.sendrawtransaction(new_tx['hex'])
+        
+        # Verify that the old transaction is gone and has been replaced by the new one in the mempool
+        assert_equal(node1.getrawmempool(), [new_tx_id])
 
     def spend_one_input(self, node, dest_address, asset):
         unspent_input = next(u for u in node.listunspent() if u['asset'] == asset)
