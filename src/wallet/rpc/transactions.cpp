@@ -401,7 +401,7 @@ static void ListTransactions(const CWallet& wallet, const CWalletTx& wtx, int nM
             }
             entry.pushKV("vout", s.vout);
             entry.pushKV("fee", ValueFromAmount(-nFee));
-            entry.pushKV("feeasset", nFeeAsset.GetHex());
+            entry.pushKV("fee_asset", nFeeAsset.GetHex());
             if (fLong)
                 WalletTxToJSON(wallet, wtx, entry);
             entry.pushKV("abandoned", wtx.isAbandoned());
@@ -515,7 +515,7 @@ RPCHelpMan listtransactions()
                             {RPCResult::Type::NUM, "vout", "the vout value"},
                             {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the\n"
                                  "'send' category of transactions."},
-                            {RPCResult::Type::STR_AMOUNT, "feeasset", /*optional=*/true, "The label or hex id of the asset used for fee payment. This is only available in the 'send' category of transactions."},
+                            {RPCResult::Type::STR_AMOUNT, "fee_asset", /*optional=*/true, "The label or hex id of the asset used for fee payment. This is only available in the 'send' category of transactions."},
                         },
                         TransactionDescriptionString()),
                         {
@@ -773,7 +773,7 @@ RPCHelpMan gettransaction()
                                 {RPCResult::Type::NUM, "vout", "the vout value"},
                                 {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the \n"
                                     "'send' category of transactions."},
-                                {RPCResult::Type::STR_AMOUNT, "feeasset", /*optional=*/true, "The label or hex id of the asset used for fee payment. This is only available in the 'send' category of transactions."},
+                                {RPCResult::Type::STR_AMOUNT, "fee_asset", /*optional=*/true, "The label or hex id of the asset used for fee payment. This is only available in the 'send' category of transactions."},
                                 {RPCResult::Type::BOOL, "abandoned", /*optional=*/true, "'true' if the transaction has been abandoned (inputs are respendable). Only available for the \n"
                                      "'send' category of transactions."},
                             }},

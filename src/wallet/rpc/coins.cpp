@@ -205,10 +205,7 @@ RPCHelpMan getbalance()
                     {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 {
-                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.",
-                    {
-                        {RPCResult::Type::ELISION, "", "the amount for each asset"},
-                    }},
+                    RPCResult{RPCResult::Type::OBJ, "amount_map", "The total amount, per asset if none is specified, in " + CURRENCY_UNIT + " received for this wallet.", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
                     RPCResult{RPCResult::Type::NUM, "amount", "the total amount for the asset, if one is specified"},
                     RPCResult{RPCResult::Type::NONE, "", ""}, // in case the wallet is disabled
                 },
@@ -495,16 +492,16 @@ RPCHelpMan getbalances()
             {
                 {RPCResult::Type::OBJ, "mine", "balances from outputs that the wallet can sign",
                 {
-                    {RPCResult::Type::STR_AMOUNT, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)"},
-                    {RPCResult::Type::STR_AMOUNT, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)"},
-                    {RPCResult::Type::STR_AMOUNT, "immature", "balance from immature coinbase outputs"},
-                    {RPCResult::Type::STR_AMOUNT, "used", /*optional=*/true, "(only present if avoid_reuse is set) balance from coins sent to addresses that were previously spent from (potentially privacy violating)"},
+                    {RPCResult::Type::OBJ, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    {RPCResult::Type::OBJ, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    {RPCResult::Type::OBJ, "immature", "balance from immature coinbase outputs", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    {RPCResult::Type::OBJ, "used", /*optional=*/true, "(only present if avoid_reuse is set) balance from coins sent to addresses that were previously spent from (potentially privacy violating)", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}}
                 }},
                 {RPCResult::Type::OBJ, "watchonly", /*optional=*/true, "watchonly balances (not present if wallet does not watch anything)",
                 {
-                    {RPCResult::Type::STR_AMOUNT, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)"},
-                    {RPCResult::Type::STR_AMOUNT, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)"},
-                    {RPCResult::Type::STR_AMOUNT, "immature", "balance from immature coinbase outputs"},
+                    {RPCResult::Type::OBJ, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    {RPCResult::Type::OBJ, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}},
+                    {RPCResult::Type::OBJ, "immature", "balance from immature coinbase outputs", {{RPCResult::Type::ELISION, "", "the amount for each asset"}}}
                 }},
             }
             },

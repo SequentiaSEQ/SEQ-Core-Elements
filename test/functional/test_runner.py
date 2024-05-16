@@ -167,6 +167,7 @@ BASE_SCRIPTS = [
     # Sequentia tests
     'feature_any_asset_fee.py',
     'feature_any_asset_fee_rates.py',
+    "feature_any_asset_fee_rbf.py",
     # -------------------
     'wallet_keypool_topup.py --legacy-wallet',
     'wallet_keypool_topup.py --descriptors',
