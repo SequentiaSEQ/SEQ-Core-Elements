@@ -492,8 +492,8 @@ static RPCHelpMan prioritisetransaction()
             "                  The fee is not actually paid, only the algorithm for selecting transactions into a block\n"
             "                  considers the transaction as it would have paid a higher (or lower) fee."},
                     {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The asset that fee_delta is denominated in, used only\n"
-            "                  when any_asset_fees is enabled. If not set, fee_delta will be interpreted as already being in the node's RFU\n"
-            "                  (reference fee unit) and no conversions are necessary. If set, fee_delta will be converted to the node's RFU\n"
+            "                  when any_asset_fees is enabled. If not set, fee_delta will be interpreted as already being in the node's rfa\n"
+            "                  (reference fee atom) and no conversions are necessary. If set, fee_delta will be converted to the node's rfa\n"
             "                  using the node's current exchange rates."}
                 },
                 RPCResult{
