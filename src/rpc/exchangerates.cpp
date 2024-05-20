@@ -12,6 +12,10 @@
 
 using node::NodeContext;
 
+static std::string CreateExchangeRatesDescription() {
+    return "The key is the asset hex, the value is an integer representing how many atoms of the asset are equal to " + strprintf("1 %s or %d %ss", CURRENCY_UNIT, COIN, CURRENCY_ATOM_FULL);
+}
+
 static RPCHelpMan getfeeexchangerates()
 {
     return RPCHelpMan{"getfeeexchangerates",
@@ -20,7 +24,7 @@ static RPCHelpMan getfeeexchangerates()
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
                     {
-                        {RPCResult::Type::STR_HEX, "rates", "A table mapping asset tag to rate of exchange for one unit of the asset in terms of the reference fee asset."},
+                        {RPCResult::Type::STR_HEX, "rates", CreateExchangeRatesDescription()},
                     }},
                 RPCExamples{
                     HelpExampleCli("getfeeexchangerates", "")
@@ -40,7 +44,7 @@ static RPCHelpMan setfeeexchangerates()
                 {
                     {"rates", RPCArg::Type::OBJ, RPCArg::Optional::NO, "Exchange rates for assets",
                         {
-                            {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
+                            {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, CreateExchangeRatesDescription()},
                         },
                     },
                 },
