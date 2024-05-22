@@ -13,18 +13,21 @@
 using node::NodeContext;
 
 static std::string CreateExchangeRatesDescription() {
-    return "A key-value pair. The key (string) is the asset hex, the value (integer) represents how many atoms"
-           "of the asset are equal to " + strprintf("1 %s or %d %ss", CURRENCY_UNIT, COIN, CURRENCY_ATOM_FULL);
+    return "A key-value pair. The key (string) is the asset hex, the value (integer) represents how many atoms of "
+           "the asset are equal to " + strprintf("1 %s or %d %ss", CURRENCY_UNIT, COIN, CURRENCY_ATOM_FULL) + ".";
 }
 
 static RPCHelpMan getfeeexchangerates()
 {
     return RPCHelpMan{"getfeeexchangerates",
-                "\nReturns a map of assets with their current exchange rates, for use in valuating fee payments.\n",
+                "\nGet the whitelist of assets and their current exchange rates, for use by the mempool when valuating fee payments.\n",
                 {},
                 {
                     RPCResult{"rates", RPCResult::Type::OBJ, "", "",
-                        {RPCResult{RPCResult::Type::NUM, "asset", CreateExchangeRatesDescription()}}
+                        {
+                            RPCResult{RPCResult::Type::NUM, "asset", CreateExchangeRatesDescription()},
+                            RPCResult{RPCResult::Type::ELISION, "", ""}
+                        }
                     }
                 },
                 RPCExamples{
@@ -41,7 +44,7 @@ static RPCHelpMan getfeeexchangerates()
 static RPCHelpMan setfeeexchangerates()
 {
     return RPCHelpMan{"setfeeexchangerates",
-                "\nPrivileged call to set the set of accepted assets for paying fees, and the exchange rate for each of these assets.\n",
+                "\nSet the whitelist of assets and their exchange rates, for use by the mempool when valuating fee payments.\n",
                 {
                     {"rates", RPCArg::Type::OBJ_USER_KEYS, RPCArg::Optional::OMITTED, "",
                         {
