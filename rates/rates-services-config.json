@@ -1,0 +1,63 @@
+{"blockchain.info":
+ {"WARNING_0": ">>>> KEEP YOUR API KEYS SECRET. <<<<",
+  "WARNING_1": ">>>> DO NOT PUBLISH YOUR rates-services-config.json FILE ANYWHERE <<<<",
+  "WARNING_2": ">>>> NOR SHARE IT WITH ANYONE BUT CO-ADMINISTRATORS OF YOUR SERVER! <<<<",
+  "WARNING_4": "",
+  "WARNING_5": ">>> EDIT THIS FILE BEFORE USING IT <<<",
+
+  "USAGE_0": "This file is a template for a services configuration file for the rates server.",
+  "USAGE_1": "Put it in ~/.config/sequentia/rates-services-config.json",
+  "USAGE_2": "or ${XDG_CONFIG_HOME}/sequentia/rates-services-config.json",
+  "USAGE_3": "And don't forget to replace each API keys by yours, etc.",
+  "USAGE_4": "",
+  "USAGE_5": "You may remove or edit warnings and comments in your private file.",
+  "USAGE_6": "Make sure they have different numbers, and are not at the top level.",
+  "USAGE_7": "If you purchase service plans, you may change the refractory periods accordingly",
+
+  "comment_0": "Wait 5min between queries",
+  "refractory_period": 300},
+
+ "cex.io":
+ {"comment_0": "Wait 2min between queries",
+  "refractory_period": 120},
+
+ "coinapi.io":
+ {">>>> GET_KEY_FROM <<<<": "https://www.coinapi.io/get-free-api-key?email=xxx",
+
+  "comment_0": "Wait 2min between queries",
+  "key": "1234ABCD-56EF-7890-F00D-1DEADBEEF666",
+  "refractory_period": 120},
+
+ "coinlayer.com":
+ {"comment_0": "A Coinlayer Free API key only has 100 calls/month, and no https.",
+  "comment_1": "So wait 8h between queries",
+  ">>>> GET_KEY_FROM <<<<": "https://coinlayer.com/product",
+
+  "protocol": "http",
+  "key": "1234567890abcdef1234567890abcdef",
+  "refractory_period": 28800},
+
+ "coinmarketcap.com":
+ {"comment_0": "Leave the refractory_period at 7200 (7200 seconds = 2h) for a free API key",
+  "comment_1": "Make it 30 (30 seconds, half a minute) for a $40/mo key",
+  ">>>> GET_KEY_FROM <<<<": "https://coinmarketcap.com/api/pricing/",
+
+  "key": "1234abcd-56ef-7890-f00d-1deadbeef666",
+  "refractory_period": 7200},
+
+ "financialmodelingprep.com":
+ {"comment_0": "A free API key has only 250 calls/day",
+  "comment_1": "Wait 10min between queries",
+  ">>>> GET_KEY_FROM <<<<": "https://site.financialmodelingprep.com/developer/docs/pricing",
+
+  "key": "abcdefghijklmNOPQRSTUVWXYZ012345",
+  "asset_pairs": "BTCUSD,ETHUSD",
+  "refractory_period": 600},
+
+ "polygon.io":
+ {"comment": "Dunno what rate limit to use, use 60 minutes",
+  ">>>> GET_KEYS_FROM <<<<": "https://polygon.io/dashboard/stocks",
+
+  "key": "abcdefghijklmNOPQRSTUVWXYZ012345",
+  "tickers": ["AAPL", "TSLA"],
+  "refractory_period": 3600}}
