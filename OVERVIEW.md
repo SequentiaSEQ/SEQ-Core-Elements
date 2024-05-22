@@ -178,6 +178,22 @@ Bitcoin and after it Elements uses a CAmount (uint64_t) for adding up fees (in s
 
 When issuing a USD-indexed token, you'll probably want fewer than 10⁸ subdivisions as with BTC and satoshis, or you'll be limited to 21 million dollars total. Maybe only 10² subdivisions (cents) and then the limit is a relatively comfortable 21 trillion (which should last a few decades despite the current exponential inflation). Similarly for all currencies (for VES and similar shitcoins, have 10^-4 "subdivisions" or such). That gives them all assets a common range of utility so the exchange rates should stay within range of what makes sense with a divisor of 10^9 (and actually, with three extra decimals of precision possible considering the MAX_MONEY constraint).
 
+### Replace-By-Fee (RBF)
+
+In BIP125, Bitcoin introduced the ability to replace a transaction already in the mempool with a new transaction that has a higher fee rate. We will extend this to support changing not only the fee amount, but also the fee asset. This will help not only with network congestion but also the volatility of assets and the subjectivity of their valuation. Since each mempool in the Sequentia network will maintain its own exchange rates map, network participants will need to be able to adapt to what block producers are actually willing to accept for fee payments.
+
+The changes to the wallet's existing RBF algorithm will be minimal, and all the rules outlined in [Element's RBF Policy](https://github.com/ElementsProject/elements/blob/master/doc/policy/mempool-replacements.md) will be enforced.
+
+The wallet's rules on RBFs are not ideal, however. Currently, Bitcoin and Elements' wallet both require that all the inputs are shared across the entire chain of replaced transactions. This introduces some inefficiences, since if an asset is no longer needed in a replaced transaction, it still needs to be carried over, even if only by sending the same amount to a change address.
+
+For example, take the case where a user sends X with fees paid in Y then wants to use RBF to change to fees paid in Z. The asset Y is no longer needed, but since the inputs must be carried into the replacement transaction, they still need to send them, therefore increasing the size of transaction and consequently its fees.
+
+A less problematic case would be when a user sends X with fees paid in X, then wants to use RBF to change to fees paid in Y. In this case, the wallet will simply add a Y input and either create or modify the change output for X. And since this will be the far more common case, it should be more than sufficient for the initial needs of the network.
+
+In the future, we plan to eliminate this inefficiency entirely by changing the wallet rules such that only one input must be shared across the entire chain of replaced transactions, rather than all of them. This would allow inputs from unused assets to be simply dropped and avoid the monotonically increasing transaction size.
+
+Another future development would be to support RBF on blinded transactions. This has currently been disabled in Elements due to the instability of the wallet implementation in upstream Bitcoin during the time when blinded transactions were implemented. But there are no cryptographic or philosophical reasons preventing it. The transaction needs to be re-blinded from scratch, and the wallet needs to be re-architected to make this possible. Multiple large refactorings of the wallet have landed in Bitcoin since then, however, so we will be revisiting the feasibility of enabling RBF on blinded transactions if it proves beneficial to the network.
+
 [^1]: See section on [overflow protections](#overflow-protection) for how this interacts with max total number of coins enforced by consensus code.
 
 [^2]: In Elements, the reason that the transaction fees must have an explicit output rather than be implicit as in Bitcoin is due to its Confidential Transactions feature. Confidential Transactions enable network participates are able to "blind" the amounts and assets involved in a transaction to anyone who doesn't have a blinding key. The transaction fees must still be exposed to mempools, however, so the fee output must be made explicit and unblinded. See https://elementsproject.org/features/confidential-transactions for more information about this feature.
