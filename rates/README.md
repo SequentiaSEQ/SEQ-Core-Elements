@@ -2,8 +2,35 @@
 
 ## Setup
 
-To enter a development shell with all the dependencies necessary to build and run the project:
-```bash
+### Installing Nix
+
+If you aren't using Nix yet, install it from the
+[Nix download page](https://nixos.org/download/).
+
+On Linux (or Windows using WSL), this is typically as follows
+(on macOS, omit the `--daemon`):
+```
+sh <(curl -L https://nixos.org/nix/install) --daemon
+```
+
+Another option is the
+[Determinate Nix Installer](https://determinate.systems/posts/determinate-nix-installer/).
+
+### Configuring Nix
+
+Once you installed Nix, you can configure it to use our pre-compiled packages
+instead of recompiling everything from source,
+by creating or editing your `~/.config/nix/nix.conf` and adding these lines:
+```
+substituters = https://cache.nixos.org https://cache.nixos.org/ https://mukn.cachix.org
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= mukn.cachix.org-1:ujoZLZMpGNQMeZbLBxmOcO7aj+7E5XSnZxwFpuhhsqs=
+```
+
+### Using a Nix shell
+
+You may now enter a nix shell, which will provide all the build tools and dependencies
+for building the rates server written in [Gerbil Scheme](https://cons.io/):
+```shell
 nix-shell
 ```
 
