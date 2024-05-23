@@ -15,17 +15,38 @@ jobs:
   build_and_test:
     runs-on: ubuntu-22.04
 
+    strategy:
+      matrix:
+        target: [x86_64-pc-linux-gnu, x86_64-w64-mingw32, x86_64-apple-darwin]
+    env:
+      TARGET: ${{matrix.target}}
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
-          wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 18
+          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
           source ~/.bashrc
+        
+      - name: Install Windows dependencies
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
+        run: sudo apt-get install g++-mingw-w64-x86-64-posix
+        
+      - name: Install OSX dependencies
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        run: |
+          sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
+          cd depends && mkdir SDKs && cd SDKs
+          wget https://archive.org/download/xcode-12.2/Xcode_12.2.xip
+          git clone https://github.com/bitcoin-core/apple-sdk-tools.git
+          python3 apple-sdk-tools/extract_xcode.py -f Xcode_12.2.xip | cpio -d -i
+          ../../contrib/macdeploy/gen-sdk './Xcode.app'
+          tar -xzf Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz
+          rm -rf Xcode_12.2.xip
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -33,16 +54,16 @@ jobs:
           key: ${{ github.job }}-${{ runner.os }}
           max-size: 2G
 
+      - name: Build depends
+        run: make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+
       - name: Build
         env:
-          BDB_PREFIX: '/home/runner/work/SEQ-Core-Elements/SEQ-Core-Elements/db4'
+          CONFIG_SITE: ${{github.workspace}}/depends/${{env.TARGET}}/share/config.site
           NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
-          CC: clang-18
-          CXX: clang++-18
         run: |
           ./autogen.sh
-          CFLAGS='-Wno-error=implicit-function-declaration -Wno-deprecated-non-prototype' ./contrib/install_db4.sh .
-          BDB_CFLAGS='-I${BDB_PREFIX}/include' BDB_LIBS='-L${BDB_PREFIX}/lib -ldb_cxx-4.8' ./configure --without-gui --without-natpmp --without-miniupnpc --disable-tests
+          ./configure --enable-any-asset-fees --disable-tests
           make clean
           make -j$(nproc)
 
@@ -54,10 +75,10 @@ jobs:
       - name: Publish artifact - linux
         uses: actions/upload-artifact@v4
         with:
-          name: sequentia-linux
+          name: sequentia-${{ env.TARGET }}
           path: |
-            src/elementsd
-            src/elements-cli
-            src/elements-tx
-            src/elements-util
-            src/elements-wallet
+            src/elementsd*
+            src/elements-cli*
+            src/elements-tx*
+            src/elements-util*
+            src/elements-wallet*
