@@ -1,4 +1,4 @@
-name: Build
+name: Build-dev
 
 on:
   workflow_dispatch:
@@ -43,15 +43,15 @@ jobs:
           key: ${{ github.job }}-${{ env.TARGET }}
           max-size: 2G
 
-      - name: Restore deps cache
-        id: deps-cache-restore
+      - name: Depends cache
+        id: deps-cache
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/depends/${{ env.TARGET }}
           key: ${{ env.TARGET }}-deps
           
       - name: Install OSX dependencies
-        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.deps-cache-restore.cache-hit != 'true' }}
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.deps-cache.cache-hit != 'true' }}
         run: |
           sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
@@ -59,16 +59,8 @@ jobs:
           tar -xzf Xcode-12.2.tar.gz
 
       - name: Build depends
-        if: ${{ steps.deps-cache-restore.cache-hit != 'true' }}
+        if: ${{ steps.deps-cache.cache-hit != 'true' }}
         run: make -j$(nproc) -C depends HOST=${{env.TARGET}} NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
-
-      - name: Save deps cache
-        id: deps-cache-save
-        if: ${{ steps.deps-cache-restore.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ github.workspace }}/depends/${{ env.TARGET }}
-          key: ${{ env.TARGET }}-deps
 
       - name: Build
         env:
@@ -76,17 +68,19 @@ jobs:
           NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
         run: |
           ./autogen.sh
-          ./configure --enable-any-asset-fees
+          ./configure --enable-debug --enable-any-asset-fees
           make clean
           make -j$(nproc)
 
       - name: Run tests
+        id: tests
         if: ${{ env.TARGET == 'x86_64-pc-linux-gnu' }}
         run: |
           echo "Running tests"
           ./test/functional/test_runner.py
 
       - name: Publish artifact - linux
+        if: ${{ success() || ( failure() && steps.tests.conclusion == 'failure' ) }}
         uses: actions/upload-artifact@v4
         with:
           name: sequentia-${{ env.TARGET }}
