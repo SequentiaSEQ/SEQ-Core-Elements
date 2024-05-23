@@ -8,10 +8,10 @@
 
 #include <cstdint>
 
-/** ELEMENTS: Amount denominated in the node's RFU (reference fee unit). Used only
- *  when con_any_asset_fees is enabled in order to distinguish from amounts in an 
- *  actual asset. RFU is needed to make amounts comparable when sorting transactions 
- *  in the mempool, as well as for fee estimation and subsequent validation of those 
+/** ELEMENTS: Amount denominated in rfas (reference fee atoms). Used only when
+ *  con_any_asset_fees is enabled in order to distinguish from amounts in an actual
+ *  asset. rfa is needed to make amounts comparable when sorting transactions in
+ *  the mempool, as well as for fee estimation and subsequent validation of those 
  *  fees according to various limits (e.g., mintxfee, paytsxfee, blockmintxfee, 
  *  incrementalrelaytxfee, etc.).
  */

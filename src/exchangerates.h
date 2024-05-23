@@ -34,7 +34,7 @@ public:
     }
 
     /**
-     * Convert an amount denominated in some asset to the node's RFU (reference fee unit)
+     * Convert an amount denominated in some asset to reference fee atoms
      *
      * @param[in]   amount       Corresponds to CTxMemPoolEntry.nFee
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset
@@ -43,7 +43,7 @@ public:
     CValue ConvertAmountToValue(const CAmount& amount, const CAsset& asset);
 
     /**
-     * Convert an amount denominated in the node's RFU (reference fee unit) into some asset
+     * Convert an amount denominated in reference fee atoms into some asset
      *
      * @param[in]   value        Corresponds to CTxMemPoolEntry.nFeeValue
      * @param[in]   asset        Corresponds to CTxMemPoolEntry.nFeeAsset

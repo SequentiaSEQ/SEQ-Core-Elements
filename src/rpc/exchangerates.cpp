@@ -12,16 +12,24 @@
 
 using node::NodeContext;
 
+static std::string CreateExchangeRatesDescription() {
+    return "A key-value pair. The key (string) is the asset hex, the value (integer) represents how many atoms of "
+           "the asset are equal to " + strprintf("1 %s or %d %ss", CURRENCY_UNIT, COIN, CURRENCY_ATOM_FULL) + ".";
+}
+
 static RPCHelpMan getfeeexchangerates()
 {
     return RPCHelpMan{"getfeeexchangerates",
-                "\nReturns a map of assets with their current exchange rates, for use in valuating fee payments.\n",
+                "\nGet the whitelist of assets and their current exchange rates, for use by the mempool when valuating fee payments.\n",
                 {},
-                RPCResult{
-                    RPCResult::Type::OBJ, "", "",
-                    {
-                        {RPCResult::Type::STR_HEX, "rates", "A table mapping asset tag to rate of exchange for one unit of the asset in terms of the reference fee asset."},
-                    }},
+                {
+                    RPCResult{"rates", RPCResult::Type::OBJ, "", "",
+                        {
+                            RPCResult{RPCResult::Type::NUM, "asset", CreateExchangeRatesDescription()},
+                            RPCResult{RPCResult::Type::ELISION, "", ""}
+                        }
+                    }
+                },
                 RPCExamples{
                     HelpExampleCli("getfeeexchangerates", "")
                   + HelpExampleRpc("getfeeexchangerates", "")
@@ -36,18 +44,18 @@ static RPCHelpMan getfeeexchangerates()
 static RPCHelpMan setfeeexchangerates()
 {
     return RPCHelpMan{"setfeeexchangerates",
-                "\nPrivileged call to set the set of accepted assets for paying fees, and the exchange rate for each of these assets.\n",
+                "\nSet the whitelist of assets and their exchange rates, for use by the mempool when valuating fee payments.\n",
                 {
-                    {"rates", RPCArg::Type::OBJ, RPCArg::Optional::NO, "Exchange rates for assets",
+                    {"rates", RPCArg::Type::OBJ_USER_KEYS, RPCArg::Optional::OMITTED, "",
                         {
-                            {"asset", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The asset hex is the key, the numeric amount (can be string) is the value"},
+                            {"asset", RPCArg::Type::NUM, RPCArg::Optional::NO, CreateExchangeRatesDescription()}
                         },
                     },
                 },
                 RPCResult{RPCResult::Type::NONE, "", ""},
                 RPCExamples{
-                    HelpExampleCli("setfeeexchangerates", "")
-                  + HelpExampleRpc("setfeeexchangerates", "")
+                    HelpExampleCli("setfeeexchangerates", "{\"b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23\": 100000000}")
+                  + HelpExampleRpc("setfeeexchangerates", "{\"b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23\": 100000000}")
                 },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -64,7 +72,7 @@ static RPCHelpMan setfeeexchangerates()
     };
     EnsureAnyMemPool(request.context).RecomputeFees();
     return NullUniValue;
-},
+}
     };
 }
 
