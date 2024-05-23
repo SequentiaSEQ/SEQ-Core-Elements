@@ -38,18 +38,34 @@ jobs:
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
         run: sudo apt-get install g++-mingw-w64-x86-64-posix
         
-      - name: Install OSX dependencies
+      - name: Restore OSX deps cache
+        id: osx-deps-cache-restore
         if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/depends/SDKs
+          key: ${{ env.TRAGET }}-osx-deps
+          
+      - name: Install OSX dependencies
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-deps-cache-restore.cache-hit != 'true'}}
         run: |
           sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
-          wget https://archive.org/download/xcode-12.2/Xcode_12.2.xip
+          wget https://download.developer.apple.com/Developer_Tools/Xcode_12.2/Xcode_12.2.xip
           git clone https://github.com/bitcoin-core/apple-sdk-tools.git
           python3 apple-sdk-tools/extract_xcode.py -f Xcode_12.2.xip | cpio -d -i
           ../../contrib/macdeploy/gen-sdk './Xcode.app'
           tar -xzf Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz
-          rm -rf Xcode_12.2.xip
+          rm -rf Xcode_12.2.xip Xcode-12.2-12B45b-extracted-SDK-with-libcxx-headers.tar.gz Xcode.app
 
+      - name: Save OSX deps cache
+        id: osx-deps-cache-save
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-deps-cache-restore.cache-hit != 'true'}}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{github.workspace}}/depends/SDKs
+          key: ${{ env.TRAGET }}-osx-deps
+      
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
