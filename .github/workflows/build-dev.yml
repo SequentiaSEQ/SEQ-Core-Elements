@@ -15,7 +15,9 @@ jobs:
   build_and_test:
     runs-on: ubuntu-22.04
 
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      max-parallel: 2
       matrix:
         target: [x86_64-pc-linux-gnu, x86_64-w64-mingw32, x86_64-apple-darwin]
     env:
@@ -55,7 +57,7 @@ jobs:
           max-size: 2G
 
       - name: Build depends
-        run: make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+        run: make -j$(nproc) -C depends HOST=${{env.TARGET}} NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
 
       - name: Build
         env:
@@ -68,6 +70,7 @@ jobs:
           make -j$(nproc)
 
       - name: Run tests
+        if: ${{ env.TARGET == 'x86_64-pc-linux-gnu' }}
         run: |
           echo "Running tests"
           ./test/functional/test_runner.py
