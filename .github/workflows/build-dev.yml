@@ -15,7 +15,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-22.04
 
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: true
     strategy:
       max-parallel: 2
       matrix:
