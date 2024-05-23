@@ -371,7 +371,7 @@ class WalletSendTest(BitcoinTestFramework):
 
         # Test setting explicit fee rate just below the minimum of 1 sat/vB.
         self.log.info("Explicit fee rate raises RPC error 'fee rate too low' if fee_rate of 0.99999999 is passed")
-        msg = "Fee rate (0.999 sat/vB) is lower than the minimum fee rate setting (1.000 sat/vB)"
+        msg = "Fee rate (0.999 rfa/vB) is lower than the minimum fee rate setting (1.000 rfa/vB)"
         self.test_send(from_wallet=w0, to_wallet=w1, amount=1, fee_rate=0.999, expect_error=(-4, msg))
         self.test_send(from_wallet=w0, to_wallet=w1, amount=1, arg_fee_rate=0.999, expect_error=(-4, msg))
 

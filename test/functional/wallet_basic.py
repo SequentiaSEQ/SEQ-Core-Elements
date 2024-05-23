@@ -297,7 +297,7 @@ class WalletTest(BitcoinTestFramework):
 
         self.log.info("Test sendmany raises if an invalid fee_rate is passed")
         # Test fee_rate with zero values.
-        msg = "Fee rate (0.000 sat/vB) is lower than the minimum fee rate setting (1.000 sat/vB)"
+        msg = "Fee rate (0.000 rfa/vB) is lower than the minimum fee rate setting (1.000 rfa/vB)"
         for zero_value in [0, 0.000, 0.00000000, "0", "0.000", "0.00000000"]:
             assert_raises_rpc_error(-6, msg, self.nodes[2].sendmany, amounts={address: 1}, fee_rate=zero_value)
         msg = "Invalid amount"
@@ -494,7 +494,7 @@ class WalletTest(BitcoinTestFramework):
 
             self.log.info("Test sendtoaddress raises if an invalid fee_rate is passed")
             # Test fee_rate with zero values.
-            msg = "Fee rate (0.000 sat/vB) is lower than the minimum fee rate setting (1.000 sat/vB)"
+            msg = "Fee rate (0.000 rfa/vB) is lower than the minimum fee rate setting (1.000 rfa/vB)"
             for zero_value in [0, 0.000, 0.00000000, "0", "0.000", "0.00000000"]:
                 assert_raises_rpc_error(-6, msg, self.nodes[2].sendtoaddress, address=address, amount=1, fee_rate=zero_value)
             msg = "Invalid amount"

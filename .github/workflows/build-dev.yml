@@ -53,7 +53,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ github.job }}-${{ runner.os }}
+          key: ${{ github.job }}-${{ env.TARGET }}
           max-size: 2G
 
       - name: Build depends
@@ -65,7 +65,7 @@ jobs:
           NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
         run: |
           ./autogen.sh
-          ./configure --enable-any-asset-fees --disable-tests
+          ./configure --enable-any-asset-fees
           make clean
           make -j$(nproc)
 
