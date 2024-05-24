@@ -49,9 +49,17 @@ jobs:
         with:
           path: ${{ github.workspace }}/depends/${{ env.TARGET }}
           key: ${{ env.TARGET }}-deps
-          
+
+      - name: OSX Depends cache
+        id: osx-deps-cache
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/depends/SDKs
+          key: ${{ env.TARGET }}-osx-deps
+
       - name: Install OSX dependencies
-        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.deps-cache.outputs.cache-hit != 'true' }}
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-deps-cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
