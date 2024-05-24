@@ -35,7 +35,7 @@ jobs:
         
       - name: Install Windows dependencies
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
-        run: sudo apt-get install g++-mingw-w64-x86-64-posix
+        run: sudo apt-get install zip g++-mingw-w64-x86-64-posix
       
       - name: Install OSX dependencies
         if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
@@ -81,7 +81,7 @@ jobs:
           NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
         run: |
           ./autogen.sh
-          ./configure --enable-debug --enable-any-asset-fees
+          ./configure --enable-any-asset-fees
           make clean
           make -j$(nproc)
 
@@ -92,14 +92,43 @@ jobs:
           echo "Running tests"
           ./test/functional/test_runner.py
 
-      - name: Publish artifact - linux
-        if: ${{ success() || ( failure() && steps.tests.conclusion == 'failure' ) }}
+      - name: Prepare artifacts - Linux
+        if: ${{ env.TARGET == 'x86_64-pc-linux-gnu' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
+        run: |
+          mkdir -p sequentia-dev-linux/bin sequentia-dev-linux/lib
+          cp src/elementsd src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-linux/bin/
+          cp src/.libs/libelementsconsensus.so* sequentia-dev-linux/lib/
+          tar -cvf sequentia-dev-linux.tar --owner=0 --group=0 --numeric-owner sequentia-dev-linux
+      
+      - name: Prepare artifacts - Windows
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
+        run: |
+          mkdir -p sequentia-dev-win64/bin sequentia-dev-win64/lib
+          cp src/elementsd.exe src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-win64/bin/
+          cp src/.libs/libelementsconsensus-0.dll sequentia-dev-win64/lib/
+          zip -r sequentia-dev-win64.zip sequentia-dev-win64
+      
+      - name: Prepare artifacts - OSX
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        run: |
+          mkdir -p sequentia-dev-osx/bin sequentia-dev-osx/lib
+          cp src/elementsd src/elements-cli src/elements-tx src/elements-util src/elements-wallet sequentia-dev-osx/bin/
+          cp src/.libs/*.dylib sequentia-dev-osx/lib/
+          tar -cvf sequentia-dev-osx.tar --owner=0 --group=0 --numeric-owner sequentia-dev-osx
+
+      - name: Publish artifact
+        if: ${{ env.TARGET != 'x86_64-w64-mingw32' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
         uses: actions/upload-artifact@v4
         with:
-          name: sequentia-${{ env.TARGET }}
+          name: sequentia-dev-${{ env.TARGET }}
           path: |
-            src/elementsd
-            src/elements-cli*
-            src/elements-tx*
-            src/elements-util*
-            src/elements-wallet*
+            *.tar
+      
+      - name: Publish artifact Windows
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sequentia-dev-${{ env.TARGET }}
+          path: |
+            *.zip
+
