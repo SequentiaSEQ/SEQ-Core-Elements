@@ -36,7 +36,12 @@ jobs:
       - name: Install Windows dependencies
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
         run: sudo apt-get install g++-mingw-w64-x86-64-posix
-        
+      
+      - name: Install OSX dependencies
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        run: |
+          sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -51,18 +56,17 @@ jobs:
           path: ${{ github.workspace }}/depends/${{ env.TARGET }}
           key: ${{ env.TARGET }}-deps
 
-      - name: OSX Depends cache
-        id: osx-deps-cache
+      - name: OSX SDK cache
+        id: osx-sdk-cache
         if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/depends/SDKs
-          key: ${{ env.TARGET }}-osx-deps
+          key: ${{ env.TARGET }}-osx-sdk
 
-      - name: Install OSX dependencies
-        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-deps-cache.outputs.cache-hit != 'true' }}
+      - name: Extract XCode SDK
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-sdk-cache.outputs.cache-hit != 'true' }}
         run: |
-          sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
           wget http://mixakuca.ddns.net:8000/Xcode-12.2.tar.gz
           tar -xzf Xcode-12.2.tar.gz
