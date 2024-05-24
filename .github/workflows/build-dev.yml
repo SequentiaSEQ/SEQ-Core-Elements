@@ -51,7 +51,7 @@ jobs:
           key: ${{ env.TARGET }}-deps
           
       - name: Install OSX dependencies
-        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.deps-cache.cache-hit != 'true' }}
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.deps-cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
           cd depends && mkdir SDKs && cd SDKs
@@ -59,7 +59,7 @@ jobs:
           tar -xzf Xcode-12.2.tar.gz
 
       - name: Build depends
-        if: ${{ steps.deps-cache.cache-hit != 'true' }}
+        if: ${{ steps.deps-cache.outputs.cache-hit != 'true' }}
         run: make -j$(nproc) -C depends HOST=${{env.TARGET}} NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
 
       - name: Build
