@@ -6,9 +6,22 @@ let
     rev = "0deaf4d5d224fac3cb2ae9c92a4e349c277be982";
     sha256 = "sha256-uERpVxRrCUB7ySkGb3NtDmzEkPDn23VfkCtT2hJZty8=";
   };
-  pkgs = import nixpkgs-repo { inherit config; };
-  config = {
-    packageOverrides = superPkgs: { inherit sequentia; } // superPkgs;
+  nixpkgs-gerbil = systemPkgs.fetchFromGitHub {
+    owner = "MuKnIO";
+    repo = "nixpkgs";
+    rev = "b34dfaf64b324157ee3bed43b319f947ca4e93f1";
+    sha256 = "sha256-sY1OtbCe4bYA8/izsR+wMCP+25QvGeeHe6H9eJ3FF0U=";
+  };
+  pg = import nixpkgs-gerbil {};
+  pkgs = import nixpkgs-repo {
+    config = {
+      packageOverrides = superPkgs: {
+        inherit sequentia;
+        gerbil-support = pg.gerbil-support;
+        gerbil-unstable = pg.gerbil-unstable;
+        gerbilPackages-unstable = pg.gerbilPackages-unstable;
+      } // superPkgs;
+    };
   };
   sequentia = pkgs.callPackage pkg {};
   pkg = { lib
@@ -34,7 +47,6 @@ let
 , withGui ? false
 , withWallet ? true
 }:
-
 stdenv.mkDerivation rec {
   pname = if withGui then "sequentia" else "sequentiad";
   version = "23.2.1";

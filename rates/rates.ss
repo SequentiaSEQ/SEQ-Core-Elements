@@ -1,9 +1,10 @@
 #!/usr/bin/env gxi
+;; -*- Gerbil -*-
 ;;;;; Rates server
 
 ;; BEWARE: >>>> CONFIGURATION <<<<
 ;; copy the sample rates-assets-config.json and rates-services-config.json
-;; from data/ to ~/.config/sequentia/ and edit rates-services-config.json to use your keys,
+;; from ./ to ~/.config/sequentia/ and edit rates-services-config.json to use your keys,
 ;; as gotten from:
 ;; https://www.coinapi.io/get-free-api-key?email=xxx
 ;; https://coinlayer.com/product (choose the free plan, still need a credit card)
@@ -258,29 +259,33 @@
               services-config: services-config)
    median<-rates))
 
+(def (normalize-rate x)
+  (integer-part (round x)))
+
 ;; COIN = 1e8 (as integer).
 ;; We assume 1 RFU = COIN atoms of RFU just like 1 BTC = COIN satoshi
 (def COIN-decimals 8)
 (def COIN (expt 10 COIN-decimals))
-
-(def (normalize-rate x)
-  (integer-part (* x COIN)))
 
 (def (get-fee-exchange-rates
       assets-config: (assets-config (*rates-assets-config*))
       services-config: (services-config (*rates-services-config*)))
   (def rates (get-median-rates assets-config: assets-config
                                services-config: services-config))
-  (def reference-asset (hash-ref* assets-config "USD"))
+  (def reference-asset (hash-ref assets-config "RFU" (hash)))
+  (def reference-decimals (hash-ref reference-asset "decimals" COIN-decimals))
+  (def reference-fudge-factor (hash-ref reference-asset "fudge_factor" 1))
   (def h (hash))
   (for (((values asset config) (in-hash assets-config)))
-    (alet (rate (hash-get rates asset))
-      (hash-put! h (hash-ref config "nAsset")
+    (alet ((rate (hash-get rates asset))
+           (nAsset (hash-get config "nAsset")))
+      (hash-put! h nAsset
                  (normalize-rate
-                  (* rate
-                     (hash-ref config "fudge_factor" 1)
-                     (expt 10 (- COIN-decimals
-                                 (hash-ref config "decimals" COIN-decimals))))))))
+                  (/ (* rate
+                        (hash-ref config "fudge_factor" 1)
+                        (expt 10 (- reference-decimals
+                                    (hash-ref config "decimals" COIN-decimals))))
+                     reference-fudge-factor)))))
   h)
 
 ;;; The access methods

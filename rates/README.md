@@ -28,8 +28,9 @@ trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDS
 
 ### Using a Nix shell
 
-You may now enter a nix shell, which will provide all the build tools and dependencies
-for building the rates server written in [Gerbil Scheme](https://cons.io/):
+You may now enter a nix shell from the top SEQ-Core-Elements source directory,
+which will provide all the build tools and dependencies for building the rates server
+written in [Gerbil Scheme](https://cons.io/) as well as the sequentia daemon written in C++:
 ```shell
 nix-shell
 ```
@@ -45,10 +46,17 @@ Copy the sample rates-assets-config.json and rates-services-config.json to `~/.c
 
 ## Running
 
+Assuming you used `nix-shell` from the parent directory,
+enter the rates directory with:
+```
+cd rates
+```
+
 Build with:
 ```bash
 ./build.ss
 ```
+
 Run the server with
 ```bash
 ./rates.ss
@@ -57,7 +65,9 @@ or the compiled version with
 ```bash
 ${GERBIL_PATH}/bin/rates
 ```
-Be sure to hide behind a firewall, with a SSL reverse proxy... or configure the httpd as SSL (to be documented)
+
+Be sure to hide behind a firewall, with a SSL reverse proxy...
+or configure the httpd as SSL (to be documented)
 
 ## Using
 
