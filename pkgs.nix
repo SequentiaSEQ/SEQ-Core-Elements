@@ -18,8 +18,9 @@ let
       packageOverrides = superPkgs: {
         inherit sequentia;
         gerbil-support = pg.gerbil-support;
-        gerbil-unstable = pg.gerbil-unstable;
-        gerbilPackages-unstable = pg.gerbilPackages-unstable;
+        gerbil = pg.gerbil-unstable;
+        gerbilPackages = pg.gerbilPackages-unstable;
+        gerbilDeps = with pg.gerbilPackages-unstable; [ gerbil-utils ];
       } // superPkgs;
     };
   };
@@ -46,6 +47,8 @@ let
 , python3
 , withGui ? false
 , withWallet ? true
+, gerbil
+, gerbilDeps
 }:
 stdenv.mkDerivation rec {
   pname = if withGui then "sequentia" else "sequentiad";
@@ -62,7 +65,8 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ boost libevent miniupnpc zeromq zlib ]
     ++ lib.optionals withWallet [ db48 sqlite ]
-    ++ lib.optionals withGui [ qrencode qtbase qttools ];
+    ++ lib.optionals withGui [ qrencode qtbase qttools ]
+    ++ [ gerbil ] ++ gerbilDeps;
 
   configureFlags = [
     "--with-boost-libdir=${boost.out}/lib"

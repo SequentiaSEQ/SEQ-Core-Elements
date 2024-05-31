@@ -1,8 +1,6 @@
 let
   pkgs = import ./pkgs.nix;
-  gerbilPackages = (with pkgs.gerbilPackages-unstable; [
-    gerbil-utils
-  ]);
+  gerbilDeps = pkgs.gerbilDeps;
 in pkgs.mkShell {
   inputsFrom = with pkgs; [
     sequentia
@@ -11,7 +9,7 @@ in pkgs.mkShell {
     python3
     clang-tools
     gerbil-unstable
-  ]) ++ gerbilPackages;
+  ]);
 
   # Until gerbil-support includes static compilation objects,
   # let's not use gerbilLoadPath and instead copy the sources into the writable GERBIL_PATH.
@@ -19,8 +17,8 @@ in pkgs.mkShell {
     export GERBIL_PATH=$PWD/.gerbil
     mkdir -p $GERBIL_PATH
     chmod -R u+w .gerbil
-    #export GERBIL_LOADPATH=${pkgs.gerbil-support.gerbilLoadPath (["$out"] ++ gerbilPackages)}
-    for i in ${pkgs.lib.concatStringsSep " " gerbilPackages} ; do
+    #export GERBIL_LOADPATH=${pkgs.gerbil-support.gerbilLoadPath (["$out"] ++ gerbilDeps)}
+    for i in ${pkgs.lib.concatStringsSep " " gerbilDeps} ; do
       cp -af $i/gerbil/lib $GERBIL_PATH/
       chmod -R u+w .gerbil
     done
