@@ -60,6 +60,7 @@ src/qt/bitcoin-qt.includes
 .deps
 .dirstamp
 .libs
+.gerbil
 .*.swp
 *~
 *.bak

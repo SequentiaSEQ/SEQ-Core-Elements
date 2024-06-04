@@ -6,9 +6,23 @@ let
     rev = "0deaf4d5d224fac3cb2ae9c92a4e349c277be982";
     sha256 = "sha256-uERpVxRrCUB7ySkGb3NtDmzEkPDn23VfkCtT2hJZty8=";
   };
-  pkgs = import nixpkgs-repo { inherit config; };
-  config = {
-    packageOverrides = superPkgs: { inherit sequentia; } // superPkgs;
+  nixpkgs-gerbil = systemPkgs.fetchFromGitHub {
+    owner = "MuKnIO";
+    repo = "nixpkgs";
+    rev = "b34dfaf64b324157ee3bed43b319f947ca4e93f1";
+    sha256 = "sha256-sY1OtbCe4bYA8/izsR+wMCP+25QvGeeHe6H9eJ3FF0U=";
+  };
+  pg = import nixpkgs-gerbil {};
+  pkgs = import nixpkgs-repo {
+    config = {
+      packageOverrides = superPkgs: {
+        inherit sequentia;
+        gerbil-support = pg.gerbil-support;
+        gerbil = pg.gerbil-unstable;
+        gerbilPackages = pg.gerbilPackages-unstable;
+        gerbilDeps = with pg.gerbilPackages-unstable; [ gerbil-utils ];
+      } // superPkgs;
+    };
   };
   sequentia = pkgs.callPackage pkg {};
   pkg = { lib
@@ -33,8 +47,9 @@ let
 , python3
 , withGui ? false
 , withWallet ? true
+, gerbil
+, gerbilDeps
 }:
-
 stdenv.mkDerivation rec {
   pname = if withGui then "sequentia" else "sequentiad";
   version = "23.2.1";
@@ -50,7 +65,8 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ boost libevent miniupnpc zeromq zlib ]
     ++ lib.optionals withWallet [ db48 sqlite ]
-    ++ lib.optionals withGui [ qrencode qtbase qttools ];
+    ++ lib.optionals withGui [ qrencode qtbase qttools ]
+    ++ [ gerbil ] ++ gerbilDeps;
 
   configureFlags = [
     "--with-boost-libdir=${boost.out}/lib"
