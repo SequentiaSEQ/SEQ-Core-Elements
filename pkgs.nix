@@ -66,7 +66,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ boost libevent miniupnpc zeromq zlib ]
     ++ lib.optionals withWallet [ db48 sqlite ]
     ++ lib.optionals withGui [ qrencode qtbase qttools ]
-    ++ [ pg.gerbil-unstable ] ++ gerbilDeps;
+    ++ [ gerbil-unstable ] ++ gerbilDeps;
 
   configureFlags = [
     "--with-boost-libdir=${boost.out}/lib"
