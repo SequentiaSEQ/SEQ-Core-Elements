@@ -15,13 +15,13 @@ let
   pg = import nixpkgs-gerbil {};
   pkgs = import nixpkgs-repo {
     config = {
-      packageOverrides = superPkgs: {
-        inherit sequentia;
+      packageOverrides = superPkgs: superPkgs // {
+        inherit sequentia pg;
         gerbil-support = pg.gerbil-support;
-        gerbil = pg.gerbil-unstable;
-        gerbilPackages = pg.gerbilPackages-unstable;
+        gerbil-unstable = pg.gerbil-unstable;
+        gerbilPackages-unstable = pg.gerbilPackages-unstable;
         gerbilDeps = with pg.gerbilPackages-unstable; [ gerbil-utils ];
-      } // superPkgs;
+      };
     };
   };
   sequentia = pkgs.callPackage pkg {};
@@ -47,7 +47,7 @@ let
 , python3
 , withGui ? false
 , withWallet ? true
-, gerbil
+, gerbil-unstable
 , gerbilDeps
 }:
 stdenv.mkDerivation rec {
@@ -66,7 +66,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ boost libevent miniupnpc zeromq zlib ]
     ++ lib.optionals withWallet [ db48 sqlite ]
     ++ lib.optionals withGui [ qrencode qtbase qttools ]
-    ++ [ gerbil ] ++ gerbilDeps;
+    ++ [ gerbil-unstable ] ++ gerbilDeps;
 
   configureFlags = [
     "--with-boost-libdir=${boost.out}/lib"
