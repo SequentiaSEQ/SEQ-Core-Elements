@@ -100,9 +100,9 @@
 
  "AAPL":
  {"__comments__":
-  ["We'll use decimals: 0 so we don't have fractional shares"],
+  ["We'll use decimals: 6 so we have 1/1000000th fractional shares"],
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000101",
-  "decimals": 0,
+  "decimals": 6,
   "oracles":
   {"polygon.io": "AAPL"}},
 

@@ -262,17 +262,21 @@
 (def (normalize-rate x)
   (integer-part (round x)))
 
-;; COIN = 1e8 (as integer).
+;; COIN = 1e8 (as integer, not floating point).
 ;; We assume 1 RFU = COIN atoms of RFU just like 1 BTC = COIN satoshi
 (def COIN-decimals 8)
 (def COIN (expt 10 COIN-decimals))
 
+;; Return an associative array mapping nAsset (as hex string) to 1e8 times
+;; the value of one atom of the asset (minimal integer value, 1, as in 1 satoshi)
+;; in atom of the RFU (i.e. minimal integer value, 1)
 (def (get-fee-exchange-rates
       assets-config: (assets-config (*rates-assets-config*))
       services-config: (services-config (*rates-services-config*)))
   (def rates (get-median-rates assets-config: assets-config
                                services-config: services-config))
 
+  ;; How much is 1 atom (10^-decimals) of a
   (def (semi-rate asset (default #f))
     (def config (hash-ref assets-config asset (hash)))
     (alet ((rate (hash-ref rates asset default)))
@@ -284,10 +288,10 @@
 
   (def h (hash))
   (for (((values asset config) (in-hash assets-config)))
-    (alet ((asset-rate (if (equal? asset "RFU") 1 (semi-rate asset)))
+    (alet ((asset-rate (semi-rate asset))
            (nAsset (hash-get config "nAsset")))
       (hash-put! h nAsset
-                 (normalize-rate (/ asset-rate RFU-rate)))))
+                 (normalize-rate (* COIN (/ asset-rate RFU-rate))))))
   h)
 
 ;;; The access methods
@@ -509,16 +513,6 @@
    getopt: [])
   (rates-environment)
   (pj (get-fee-exchange-rates)))
-
-(define-entry-point (selfcheck)
-  (help: "Entry-Point to debug the binary"
-   getopt: [])
-  (displayln "foo")
-  (clobber-file "/tmp/foo"
-                (lambda (p)
-                  (display "barbaz\n" p)
-                  (write (current-output-port) p)
-                  )))
 
 (set-default-entry-point! 'server)
 ;(dump-stack-trace? #f)
