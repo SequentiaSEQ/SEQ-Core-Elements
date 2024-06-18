@@ -27,7 +27,7 @@ CAmount ExchangeRateMap::ConvertValueToAmount(const CValue& value, const CAsset&
     int64_t int64_max = std::numeric_limits<int64_t>::max();
     auto it = this->find(asset);
     if (it == this->end()) {
-        return int64_max;
+        return 0;
     }
     auto scaled_value = it->second.m_scaled_value;
     __uint128_t result = ((__uint128_t)value.GetValue() * (__uint128_t)exchange_rate_scale) / (__uint128_t)scaled_value;
