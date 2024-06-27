@@ -1343,7 +1343,7 @@ RPCHelpMan unblindrawtransaction()
     };
 }
 
-static CTransactionRef SendGenerationTransaction(const CScript& asset_script, const CPubKey &asset_pubkey, const CScript& token_script, const CPubKey &token_pubkey, CAmount asset_amount, CAmount token_amount, IssuanceDetails* issuance_details, CWallet* pwallet)
+static CTransactionRef SendGenerationTransaction(const CScript& asset_script, const CPubKey &asset_pubkey, const CScript& token_script, const CPubKey &token_pubkey, CAmount asset_amount, CAmount token_amount, IssuanceDetails* issuance_details, CCoinControl& coin_control, CWallet* pwallet)
 {
     CAsset reissue_token = issuance_details->reissuance_token;
     CAmount curBalance = GetBalance(*pwallet).m_mine_trusted[reissue_token];
@@ -1376,10 +1376,9 @@ static CTransactionRef SendGenerationTransaction(const CScript& asset_script, co
     int nChangePosRet = -1;
     bilingual_str error;
     FeeCalculation fee_calc_out;
-    CCoinControl dummy_control;
     BlindDetails blind_details;
     CTransactionRef tx_ref;
-    if (!CreateTransaction(*pwallet, vecSend, tx_ref, nFeeRequired, nChangePosRet, error, dummy_control, fee_calc_out, true, &blind_details, issuance_details)) {
+    if (!CreateTransaction(*pwallet, vecSend, tx_ref, nFeeRequired, nChangePosRet, error, coin_control, fee_calc_out, true, &blind_details, issuance_details)) {
         throw JSONRPCError(RPC_WALLET_ERROR, error.original);
     }
 
@@ -1399,6 +1398,7 @@ RPCHelpMan issueasset()
                     {"tokenamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of reissuance tokens to generate. Note that the amount is BTC-like, with 8 decimal places. These will allow you to reissue the asset if in wallet using `reissueasset`. These tokens are not consumed during reissuance."},
                     {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to blind the issuances."},
                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
+                    {"fee_asset", RPCArg::Type::STR, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay fees\n"},
                 },
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
@@ -1468,7 +1468,18 @@ RPCHelpMan issueasset()
     IssuanceDetails issuance_details;
     issuance_details.blind_issuance = blind_issuances;
     issuance_details.contract_hash = contract_hash;
-    CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, nTokens, &issuance_details, pwallet);
+    CCoinControl coin_control;
+    if (g_con_any_asset_fees && request.params.size() > 4) {
+        CAsset fee_asset = ::policyAsset;
+        std::string feeAssetString = request.params[4].get_str();
+        fee_asset = GetAssetFromString(feeAssetString);
+        if (fee_asset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAssetString));
+        }
+        coin_control.m_fee_asset = fee_asset;
+    }
+
+    CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, nTokens, &issuance_details, coin_control, pwallet);
 
     // Calculate asset type, assumes first vin is used for issuance
     CAsset asset;
@@ -1497,6 +1508,7 @@ RPCHelpMan reissueasset()
                 {
                     {"asset", RPCArg::Type::STR, RPCArg::Optional::NO, "The asset you want to re-issue. The corresponding token must be in your wallet."},
                     {"assetamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of additional asset to generate. Note that the amount is BTC-like, with 8 decimal places."},
+                    {"fee_asset", RPCArg::Type::STR, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay fees\n"},
                 },
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
@@ -1565,8 +1577,18 @@ RPCHelpMan reissueasset()
     }
     CPubKey token_dest_blindpub = pwallet->GetBlindingPubKey(GetScriptForDestination(token_dest));
 
+    CCoinControl coin_control;
+    if (g_con_any_asset_fees && request.params.size() > 2) {
+        CAsset fee_asset = ::policyAsset;
+        std::string feeAssetString = request.params[2].get_str();
+        fee_asset = GetAssetFromString(feeAssetString);
+        if (fee_asset.IsNull()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAssetString));
+        }
+        coin_control.m_fee_asset = fee_asset;
+    }
     // Attempt a send.
-    CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, -1, &issuance_details, pwallet);
+    CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, -1, &issuance_details, coin_control, pwallet);
     CHECK_NONFATAL(!tx_ref->vin.empty());
 
     UniValue obj(UniValue::VOBJ);
