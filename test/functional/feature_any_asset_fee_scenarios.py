@@ -8,7 +8,6 @@ from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from decimal import Decimal
 from test_framework.util import (
-    assert_equal,
     assert_raises_rpc_error,
 )
 
@@ -57,7 +56,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
         self.nodes[1].setfeeexchangerates(new_rates)
         assert self.nodes[1].getfeeexchangerates() == new_rates
 
-        self.nodes[0].sendtoaddress(address=self.node0_address, amount=100.0, assetlabel=self.asset1, subtractfeefromamount=True) 
+        self.nodes[0].sendtoaddress(address=self.node0_address, amount=100.0, assetlabel=self.asset1, subtractfeefromamount=True)
 
         self.nodes[0].generatetoaddress(1, self.node0_address, invalid_call=False)  # confirm the tx
 
@@ -73,7 +72,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
         self.issue_amount2 = Decimal('10')
         self.issuance2 = self.nodes[0].issueasset(
                 assetamount=self.issue_amount2,
-                tokenamount=1, 
+                tokenamount=1,
                 blind=False,
                 contract_hash=self.asset1,
                 fee_asset = self.asset1)
@@ -88,10 +87,10 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
 
         assert self.nodes[0].getfeeexchangerates() == new_rates
         assert self.nodes[1].getfeeexchangerates() != new_rates
-        
+
         asset1amount = self.nodes[0].getbalance()[self.asset1]
-        self.nodes[0].sendtoaddress(address=self.node0_address, amount=asset1amount, assetlabel=self.asset1, subtractfeefromamount=True) 
-        self.nodes[0].sendtoaddress(address=self.node0_address, amount=10.0, assetlabel=self.asset2, subtractfeefromamount=True) 
+        self.nodes[0].sendtoaddress(address=self.node0_address, amount=asset1amount, assetlabel=self.asset1, subtractfeefromamount=True)
+        self.nodes[0].sendtoaddress(address=self.node0_address, amount=10.0, assetlabel=self.asset2, subtractfeefromamount=True)
 
         self.nodes[0].generatetoaddress(1, self.node0_address, invalid_call=False)
 
@@ -101,7 +100,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
             amount=2.0,
             assetlabel=self.asset1,
             fee_asset_label=self.asset1)
-        
+
         self.sync_all()
 
         self.nodes[1].generatetoaddress(1, self.node1_address, invalid_call=False)
@@ -118,7 +117,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
             amount=1.0,
             assetlabel=self.asset2,
             fee_asset_label=self.asset2)
-        
+
         assert len(self.nodes[0].getrawmempool()) == 1
 
         assert_raises_rpc_error(-26, "min relay fee not met,", self.nodes[1].sendrawtransaction, self.nodes[0].getrawtransaction(tx))
@@ -137,7 +136,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
             amount=1.0,
             assetlabel=self.asset2,
             fee_asset_label=self.asset2)
-        
+
         assert len(self.nodes[0].getrawmempool()) == 1
 
         assert_raises_rpc_error(-26, "min relay fee not met,", self.nodes[1].sendrawtransaction, self.nodes[0].getrawtransaction(tx))
@@ -156,9 +155,9 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
             amount=1.0,
             assetlabel=self.asset2,
             fee_asset_label=self.asset2)
-        
+
         self.sync_all()
-        
+
         assert self.nodes[0].getrawmempool(True)[tx]['fees']['base'] == Decimal('0.00002570')
         assert self.nodes[1].getrawmempool(True)[tx]['fees']['base'] == Decimal('0.00002570')
 
@@ -180,7 +179,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
             amount=1.0,
             assetlabel=self.asset2,
             fee_asset_label=self.asset2)
-        
+
         assert self.nodes[0].getrawmempool(True)[tx]['fees']['base'] == Decimal('0.00002570')
         assert_raises_rpc_error(-26, "min relay fee not met,", self.nodes[1].sendrawtransaction, self.nodes[0].getrawtransaction(tx))
 
