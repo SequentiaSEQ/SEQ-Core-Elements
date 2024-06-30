@@ -58,3 +58,24 @@ that would be used by Nix, you may enter a nix shell as follows:
 ```shell
 nix-shell
 ```
+
+You may then configure with the following command:
+```bash
+configurePhase
+```
+
+And build with this one:
+```bash
+buildPhase
+```
+
+Finally, you can run the tests with:
+```bash
+checkPhase
+```
+
+The `./src/` directory will have been added to your `PATH`
+so you can run commands simply with:
+```bash
+elements-cli -?
+```
