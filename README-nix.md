@@ -59,22 +59,17 @@ that would be used by Nix, you may enter a nix shell as follows:
 nix-shell
 ```
 
-You may then configure with the following command:
+As with many nix packages, you may then respectively
+configure, build or run tests with the following respective commands,
+or all of them combined with `&&`:
 ```bash
-configurePhase
-```
-
-And build with this one:
-```bash
-buildPhase
-```
-
-Finally, you can run the tests with:
-```bash
+configurePhase &&
+buildPhase &&
 checkPhase
 ```
 
 The `./src/` directory will have been added to your `PATH`
+by the `shell.nix` configuration file,
 so you can run commands simply with:
 ```bash
 elements-cli -?
