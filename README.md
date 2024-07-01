@@ -12,11 +12,7 @@ Quick Ubuntu build instructions for development:
 
 Install build tools
 ```bash
-sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
-```
-Install clang 15:
-```bash
-wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
+sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3
 ```
 Setup ccache:
 ```bash
@@ -27,18 +23,10 @@ source ~/.bashrc
 Build:
 ```bash
 ./autogen.sh
-./contrib/install_db4.sh .
-export CC=clang-15 CXX=clang++-15 BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include"
-./configure --without-gui --without-natpmp --without-miniupnpc
+make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site NOWARN_CXXFLAGS='-Wno-deprecated -Wno-unused-result'
+./configure --enable-any-asset-fees -–enable-debug --disable-bench --disable-tests --disable-fuzz-binary
 make -j$(nproc)
-```
-To speed up the build if not necessary, disable bench and tests in configure:
-```bash
-./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
-```
-To configure RPC documentation to denominate fee rates using RFU and rfa instead of BTC and sat:
-```bash
-./configure --enable-any-asset-fees
 ```
 
 Modes

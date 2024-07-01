@@ -168,6 +168,7 @@ BASE_SCRIPTS = [
     'feature_any_asset_fee.py',
     'feature_any_asset_fee_rates.py',
     "feature_any_asset_fee_rbf.py",
+    "feature_any_asset_fee_scenarios.py",
     # -------------------
     'wallet_keypool_topup.py --legacy-wallet',
     'wallet_keypool_topup.py --descriptors',
