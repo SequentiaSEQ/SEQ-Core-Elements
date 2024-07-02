@@ -25,7 +25,7 @@ Build:
 ./autogen.sh
 make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
 export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site NOWARN_CXXFLAGS='-Wno-deprecated -Wno-unused-result'
-./configure --enable-any-asset-fees -–enable-debug --disable-bench --disable-tests --disable-fuzz-binary
+./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-tests --disable-fuzz-binary
 make -j$(nproc)
 ```
 
