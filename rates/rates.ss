@@ -30,7 +30,7 @@
 ;;; Imports
 
 (import
-  (group-in :std format iter sort sugar)
+  (group-in :std format iter sort sugar values)
   (group-in :std/cli getopt multicall)
   (group-in :std/misc hash path number)
   (group-in :std/net httpd request uri)
@@ -104,13 +104,13 @@
 
 ;;; Configuration
 
-;; (Parameter (Table HashTable <- String))
+;; (Parameter (Vector (OrFalse Integer) (OrFalse (Table HashTable <- String)) Boolean))
 (def *rates-services-config*
-  (make-parameter (hash)))
+  (make-parameter #(#f #f #f)))
 
-;; (Parameter (Table HashTable <- String))
+;; (Parameter (Vector (OrFalse Integer) (OrFalse (Table HashTable <- String)) Boolean))
 (def *rates-assets-config*
-  (make-parameter (hash)))
+  (make-parameter #(#f #f #f)))
 
 ;; JSON <- JSON
 (def (validate-services-config j)
@@ -120,15 +120,54 @@
 (def (validate-assets-config j)
   j)
 
-;; <-
-(def (read-rates-config)
-  (*rates-services-config*
-   (validate-services-config
-    (read-json-config (xdg-config-home "sequentia/rates-services-config.json"))))
-  (*rates-assets-config*
-   (validate-assets-config
-    (read-json-config (xdg-config-home "sequentia/rates-assets-config.json")))))
 
+;; (From latest clan/filsystem)
+(def (modification-time file)
+  (with-catch false
+    (cut time->seconds (file-info-last-modification-time (file-info file #t)))))
+
+;; <-
+(def (make-get-config file validate parameter)
+  (lambda ()
+    (defvalues (cached-time cached-value already-bad?)
+      (vector->values (or (parameter) #(#f #f #f))))
+    (def file-time (modification-time file))
+    (cond
+     ((not (or file-time cached-time))
+      (error "Configuration file does not exist" file))
+     ((not file-time)
+      (unless already-bad?
+        (eprintf "File ~a missing, using cached value\n" file)
+        (parameter (vector cached-time cached-value #t)))
+      cached-value)
+     ((and cached-time (= cached-time file-time))
+      cached-value)
+     (else
+      (with-catch
+       (lambda (e)
+         (if cached-time
+           (begin
+             (eprintf "Error while trying to refresh file ~a -- ~a\n"
+                      file (with-catch (lambda () e) (cut error-message e)))
+             (parameter (vector file-time cached-value #t))
+             cached-value)
+           (error "Error while trying to read config file" file e)))
+       (lambda ()
+         (let (config (validate (read-json-config file)))
+           (parameter (vector file-time config #f))
+           config)))))))
+
+(def rates-services-config
+  (make-get-config
+   (xdg-config-home "sequentia/rates-services-config.json")
+   validate-services-config
+   *rates-services-config*))
+
+(def rates-assets-config
+  (make-get-config
+   (xdg-config-home "sequentia/rates-assets-config.json")
+   validate-assets-config
+   *rates-assets-config*))
 
 ;;; Cached prices from oracles
 
@@ -162,7 +201,6 @@
 (def (rates-environment)
   (read-json-key-as-symbol? #f)
   (write-json-sort-keys? #t)
-  (read-rates-config)
   (load-oracle-prices-cache))
 
 ;;; Getting rates from lazily-updated cache of oracles
@@ -170,7 +208,7 @@
 ;; Given an oracle, return a list of the timestamp of last query attempt,
 ;; timestamp of data, and raw data as JSON object (#f if none)
 ;; (List TAI TAI JSON) <- String
-(def (get-oracle-data oracle services-config: (services-config (*rates-services-config*)))
+(def (get-oracle-data oracle services-config: (services-config (rates-services-config)))
   (let/cc k
     (def (return x)
       (unless (equal? x (hash-get oracle-prices oracle))
@@ -217,7 +255,7 @@
 ;; Real <- String Any services-config: ?JSON
 (def (get-rate/oracle-path
       oracle path
-      services-config: (services-config (*rates-services-config*)))
+      services-config: (services-config (rates-services-config)))
   (let (data (void))
     (try
      (set! data (third (get-oracle-data oracle services-config: services-config)))
@@ -234,8 +272,8 @@
 ;; to conversion rate (Real) from the currency to RFU (aka USD).
 ;; (Table (Table Real <- String) <- String) <- assets-config: ?JSON services-config: ?JSON
 (def (get-rates
-      assets-config: (assets-config (*rates-assets-config*))
-      services-config: (services-config (*rates-services-config*)))
+      assets-config: (assets-config (rates-assets-config))
+      services-config: (services-config (rates-services-config)))
   (hash-value-map
    assets-config
    (lambda (asset)
@@ -252,8 +290,8 @@
 ;; Get the median rates for the configured currencies
 ;; (Table Real <- String) <- assets-config: ?JSON services-config: ?JSON
 (def (get-median-rates
-      assets-config: (assets-config (*rates-assets-config*))
-      services-config: (services-config (*rates-services-config*)))
+      assets-config: (assets-config (rates-assets-config))
+      services-config: (services-config (rates-services-config)))
   (hash-value-map
    (get-rates assets-config: assets-config
               services-config: services-config)
@@ -271,8 +309,8 @@
 ;; the value of one atom of the asset (minimal integer value, 1, as in 1 satoshi)
 ;; in atom of the RFU (i.e. minimal integer value, 1)
 (def (get-fee-exchange-rates
-      assets-config: (assets-config (*rates-assets-config*))
-      services-config: (services-config (*rates-services-config*)))
+      assets-config: (assets-config (rates-assets-config))
+      services-config: (services-config (rates-services-config)))
   (def rates (get-median-rates assets-config: assets-config
                                services-config: services-config))
 
@@ -321,7 +359,7 @@
   (with-id defprice-oracle ((get-quote 'get- #'name '-quote)
                             (get-rate 'get- #'name '-rate))
     (begin
-      (def (get-quote (config (hash-ref (*rates-services-config*) (as-string 'name)))) body1 ...)
+      (def (get-quote (config (hash-ref (rates-services-config) (as-string 'name)))) body1 ...)
       (def (get-rate quote-json path) body2 ...)
       (register-price-oracle (as-string 'name) get-quote get-rate))))
 
