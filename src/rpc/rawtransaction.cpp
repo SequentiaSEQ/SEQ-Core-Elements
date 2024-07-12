@@ -2886,12 +2886,13 @@ struct RawIssuanceDetails
     uint256 entropy;
     CAsset asset;
     CAsset token;
+    uint8_t denomination = 8;
 };
 
 // Appends a single issuance to the first input that doesn't have one, and includes
 // a single output per asset type in shuffled positions. Requires at least one output
 // to exist (the fee output, which must be last).
-void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_details, const CAmount asset_amount, const CAmount token_amount, const CTxDestination& asset_dest, const CTxDestination& token_dest, const bool blind_issuance, const uint256& contract_hash)
+void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_details, const CAmount asset_amount, const CAmount token_amount, const CTxDestination& asset_dest, const CTxDestination& token_dest, const bool blind_issuance, const uint256& contract_hash, const uint8_t denomination)
 {
     CHECK_NONFATAL(asset_amount > 0 || token_amount > 0);
     CHECK_NONFATAL(mtx.vout.size() > 0);
@@ -2923,6 +2924,8 @@ void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_deta
     issuance_details.entropy = entropy;
     issuance_details.asset = asset;
     issuance_details.token = token;
+    if (denomination)
+        issuance_details.denomination = denomination;
 
     mtx.vin[issuance_input_index].assetIssuance.assetEntropy = contract_hash;
 
@@ -3007,6 +3010,7 @@ static RPCHelpMan rawissueasset()
                                     {"token_address", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Destination address of generated reissuance tokens. Required if `token_amount` given."},
                                     {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to mark the issuance input for blinding or not. Only affects issuances with re-issuance tokens."},
                                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
+                                    {"denomination", RPCArg::Type::NUM, RPCArg::Default{8}, "Number of decimals to denominate the asset - default: 8\n"},
                                 }
                             }
                         }
@@ -3108,9 +3112,14 @@ static RPCHelpMan rawissueasset()
             contract_hash = ParseHashV(issuance_o["contract_hash"], "contract_hash");
         }
 
+        uint8_t denomination = 0;
+        if (!issuance_o["denomination"].isNull()) {
+            denomination = issuance_o["denomination"].get_int();
+        }
+
         RawIssuanceDetails details;
 
-        issueasset_base(mtx, details, asset_amount, token_amount, asset_dest, token_dest, blind_issuance, contract_hash);
+        issueasset_base(mtx, details, asset_amount, token_amount, asset_dest, token_dest, blind_issuance, contract_hash, denomination);
         if (details.input_index == -1) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Failed to find enough blank inputs for listed issuances.");
         }

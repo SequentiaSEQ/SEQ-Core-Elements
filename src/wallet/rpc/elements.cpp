@@ -1398,7 +1398,8 @@ RPCHelpMan issueasset()
                     {"tokenamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of reissuance tokens to generate. Note that the amount is BTC-like, with 8 decimal places. These will allow you to reissue the asset if in wallet using `reissueasset`. These tokens are not consumed during reissuance."},
                     {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to blind the issuances."},
                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
-                    {"fee_asset", RPCArg::Type::STR, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay fees\n"},
+                    {"fee_asset", RPCArg::Type::STR, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay the fees"},
+                    {"denomination", RPCArg::Type::NUM, RPCArg::Default{8}, "Number of decimals to denominate the asset - default: 8\n"},
                 },
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
@@ -1469,14 +1470,19 @@ RPCHelpMan issueasset()
     issuance_details.blind_issuance = blind_issuances;
     issuance_details.contract_hash = contract_hash;
     CCoinControl coin_control;
-    if (g_con_any_asset_fees && request.params.size() > 4) {
-        CAsset fee_asset = ::policyAsset;
-        std::string feeAssetString = request.params[4].get_str();
-        fee_asset = GetAssetFromString(feeAssetString);
-        if (fee_asset.IsNull()) {
-            throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAssetString));
+    if (g_con_any_asset_fees) {
+        if (request.params.size() >= 5) {
+            CAsset fee_asset = ::policyAsset;
+            std::string feeAssetString = request.params[4].get_str();
+            fee_asset = GetAssetFromString(feeAssetString);
+            if (fee_asset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAssetString));
+            }
+            coin_control.m_fee_asset = fee_asset;
         }
-        coin_control.m_fee_asset = fee_asset;
+        if (request.params.size() >= 6) {
+            issuance_details.denomination = request.params[5].get_int();
+        }
     }
 
     CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, nTokens, &issuance_details, coin_control, pwallet);
@@ -1624,6 +1630,7 @@ RPCHelpMan listissuances()
                             {RPCResult::Type::STR_HEX, "token", "Token type for issuancen"},
                             {RPCResult::Type::NUM, "vin", "The input position of the issuance in the transaction"},
                             {RPCResult::Type::STR_AMOUNT, "assetamount", "The amount of asset issued. Is -1 if blinded and unknown to wallet"},
+                            {RPCResult::Type::NUM, "denomination", "Asset decimal denomination"},
                             {RPCResult::Type::STR_AMOUNT, "tokenamount", "The reissuance token amount issued. Is -1 if blinded and unknown to wallet"},
                             {RPCResult::Type::BOOL, "isreissuance", "Whether this is a reissuance"},
                             {RPCResult::Type::STR_HEX, "assetblinds", "Blinding factor for asset amounts"},
@@ -1687,6 +1694,7 @@ RPCHelpMan listissuances()
             }
             CAmount iaamount = pcoin->GetIssuanceAmount(*pwallet, vinIndex, false);
             item.pushKV("assetamount", (iaamount == -1 ) ? -1 : ValueFromAmount(iaamount));
+            item.pushKV("denomination", issuance.denomination);
             item.pushKV("assetblinds", pcoin->GetIssuanceBlindingFactor(*pwallet, vinIndex, false).GetHex());
             if (!asset_filter.IsNull() && asset_filter != asset) {
                 continue;

@@ -225,6 +225,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "issueasset", 0, "assetamount" },
     { "issueasset", 1, "tokenamount" },
     { "issueasset", 2, "blind" },
+    { "issueasset", 5, "denomination" },
     { "reissueasset", 1, "assetamount" },
     { "initpegoutwallet", 1, "bip32_counter"},
     { "rawblindrawtransaction", 1, "inputamountblinders" },

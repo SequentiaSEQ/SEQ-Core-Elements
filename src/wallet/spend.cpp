@@ -1410,6 +1410,8 @@ static bool CreateTransactionInternal(
                     }
                 }
             }
+            // SEQUENTIA: Add denomination in the asset issuance
+            txNew.vin[0].assetIssuance.denomination = issuance_details->denomination;
         // Asset being reissued with explicitly named asset/token
         } else if (asset_index != -1) {
             assert(reissuance_index != -1);
@@ -1693,7 +1695,7 @@ static bool CreateTransactionInternal(
     }
 
     if (g_con_any_asset_fees) {
-        CAmount nFeeRetValue = ExchangeRateMap::GetInstance().ConvertAmountToValue(nFeeRet, coin_selection_params.m_fee_asset).GetValue(); 
+        CAmount nFeeRetValue = ExchangeRateMap::GetInstance().ConvertAmountToValue(nFeeRet, coin_selection_params.m_fee_asset).GetValue();
         if (nFeeRetValue > wallet.m_default_max_tx_fee) {
             error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
             return false;

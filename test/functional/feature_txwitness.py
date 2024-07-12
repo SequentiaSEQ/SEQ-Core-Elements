@@ -203,9 +203,10 @@ class TxWitnessTest(BitcoinTestFramework):
         block_witness_stuffed.vtx[0].vin[0].scriptSig = coinbase_orig.scriptSig
         block_witness_stuffed.vtx[0].vin[0].nSequence = coinbase_orig.nSequence
         block_witness_stuffed.vtx[0].vin[0].assetIssuance.nAmount.setToAmount(1)
+        block_witness_stuffed.vtx[0].vin[0].assetIssuance.denomination = 8
         bad_coinbase_ser_size = len(block_witness_stuffed.vtx[0].vin[0].serialize())
-        # 32+32+9+1 should be serialized for each assetIssuance field
-        assert_equal(bad_coinbase_ser_size, coinbase_ser_size+32+32+9+1)
+        # 32+32+9+1+1 should be serialized for each assetIssuance field
+        assert_equal(bad_coinbase_ser_size, coinbase_ser_size+32+32+9+1+1)
         assert not block_witness_stuffed.vtx[0].vin[0].assetIssuance.isNull()
         assert_raises_rpc_error(-22, "TX decode failed", self.nodes[0].decoderawtransaction, block_witness_stuffed.vtx[0].serialize().hex())
 

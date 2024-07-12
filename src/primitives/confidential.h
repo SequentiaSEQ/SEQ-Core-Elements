@@ -192,13 +192,15 @@ public:
     // generating transaction.
     CConfidentialValue nInflationKeys;
 
+    uint8_t denomination = 8;
+
 public:
     CAssetIssuance()
     {
         SetNull();
     }
 
-    SERIALIZE_METHODS(CAssetIssuance, obj) { READWRITE(obj.assetBlindingNonce, obj.assetEntropy, obj.nAmount, obj.nInflationKeys); }
+    SERIALIZE_METHODS(CAssetIssuance, obj) { READWRITE(obj.assetBlindingNonce, obj.assetEntropy, obj.nAmount, obj.nInflationKeys, obj.denomination); }
 
     void SetNull() { nAmount.SetNull(); nInflationKeys.SetNull(); }
     bool IsNull() const { return (nAmount.IsNull() && nInflationKeys.IsNull()); }
@@ -209,6 +211,7 @@ public:
                a.assetEntropy == b.assetEntropy &&
                a.nAmount == b.nAmount &&
                a.nInflationKeys == b.nInflationKeys;
+               a.denomination == b.denomination;
     }
 
     friend bool operator!=(const CAssetIssuance& a, const CAssetIssuance& b)
