@@ -41,7 +41,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
         self.node1_address = self.nodes[1].getnewaddress()
 
         self.issue_amount1 = Decimal('100')
-        self.issuance1 = self.nodes[0].issueasset(self.issue_amount1, 1)
+        self.issuance1 = self.nodes[0].issueasset(self.issue_amount1, 1, False)
         self.asset1 = self.issuance1['asset']
         self.issuance_txid1 = self.issuance1['txid']
         self.issuance_vin1 = self.issuance1['vin']
@@ -74,7 +74,6 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
                 assetamount=self.issue_amount2,
                 tokenamount=1,
                 blind=False,
-                contract_hash=self.asset1,
                 fee_asset = self.asset1)
         self.asset2 = self.issuance2['asset']
         self.issuance_txid2 = self.issuance2['txid']

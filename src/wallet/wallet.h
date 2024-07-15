@@ -154,6 +154,9 @@ struct IssuanceDetails {
     CAsset reissuance_asset;
     CAsset reissuance_token;
     uint256 entropy;
+
+    // SEQUENTIA: Asset denomination
+    uint8_t denomination = 8;
 };
 //end ELEMENTS
 

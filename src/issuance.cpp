@@ -85,6 +85,7 @@ void AppendInitialIssuance(CBlock& genesis_block, const COutPoint& prevout, cons
     txNew.vin[0].assetIssuance.assetEntropy = contract;
     txNew.vin[0].assetIssuance.nAmount = CConfidentialValue(asset_values * asset_outputs);
     txNew.vin[0].assetIssuance.nInflationKeys = CConfidentialValue(reissuance_values * reissuance_outputs);
+    txNew.vin[0].assetIssuance.denomination = 8;
 
     for (unsigned int i = 0; i < asset_outputs; i++) {
         txNew.vout.push_back(CTxOut(asset, CConfidentialValue(asset_values), issuance_destination));

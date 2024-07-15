@@ -36,16 +36,26 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         assert self.nodes[0].dumpassetlabels() == {'gasset': 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'}
         assert self.nodes[0].getfeeexchangerates() == { 'gasset': 100000000 }
 
+        self.node0_address = self.nodes[0].getnewaddress()
+        self.node1_address = self.nodes[1].getnewaddress()
+
         self.issue_amount = Decimal('100')
-        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
+        self.issuance = self.nodes[0].issueasset(
+            assetamount = self.issue_amount,
+            tokenamount = 1,
+            blind = False,
+            denomination = 2)
         self.asset = self.issuance['asset']
         #token = issuance['token']
         self.issuance_txid = self.issuance['txid']
         self.issuance_vin = self.issuance['vin']
 
-        assert len(self.nodes[0].listissuances()) == 2  # asset & reisuance token
+        self.generatetoaddress(self.nodes[0], 1, self.node0_address)  # confirm the tx
 
-        self.nodes[0].generatetoaddress(1, self.nodes[0].getnewaddress(), invalid_call=False)  # confirm the tx
+        assert len(self.nodes[0].listissuances()) == 2  # asset & devcoin
+        issuances = self.nodes[0].listissuances()
+        assert (issuances[0]['denomination'] == 2 and issuances[1]['denomination'] == 8) \
+            or (issuances[0]['denomination'] == 2 and issuances[1]['denomination'] == 8)
 
         self.issuance_addr = self.nodes[0].gettransaction(self.issuance_txid)['details'][0]['address']
         self.nodes[1].importaddress(self.issuance_addr)
@@ -55,11 +65,6 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         issuances = self.nodes[1].listissuances()
         assert (issuances[0]['tokenamount'] == 1 and issuances[0]['assetamount'] == self.issue_amount) \
             or (issuances[1]['tokenamount'] == 1 and issuances[1]['assetamount'] == self.issue_amount)
-
-        self.node0_address = self.nodes[0].getnewaddress()
-        self.node0_nonct_address = self.nodes[0].getaddressinfo(self.node0_address)["unconfidential"]
-        self.node1_address = self.nodes[1].getnewaddress()
-        self.node1_nonct_address = self.nodes[1].getaddressinfo(self.node1_address)["unconfidential"]
 
         new_rates = { "gasset": 100000000, self.asset: 100000000 }
         self.nodes[0].setfeeexchangerates(new_rates)
