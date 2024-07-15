@@ -38,7 +38,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
 
         self.gasset = self.nodes[0].dumpassetlabels()['gasset']
         self.issue_amount = Decimal('100')
-        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
+        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1, False)
         self.asset = self.issuance['asset']
         #token = issuance['token']
         self.issuance_txid = self.issuance['txid']

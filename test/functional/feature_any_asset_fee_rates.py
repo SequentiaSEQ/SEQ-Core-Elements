@@ -43,7 +43,7 @@ class AnyAssetFeeRatesTest(BitcoinTestFramework):
         self.gasset = 'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23'
 
         self.issue_amount = Decimal('100')
-        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1)
+        self.issuance = self.nodes[0].issueasset(self.issue_amount, 1, False)
         self.asset = self.issuance['asset']
         self.issuance_txid = self.issuance['txid']
         self.issuance_vin = self.issuance['vin']

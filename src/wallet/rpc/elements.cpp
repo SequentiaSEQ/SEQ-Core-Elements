@@ -1396,7 +1396,7 @@ RPCHelpMan issueasset()
                 {
                     {"assetamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of asset to generate. Note that the amount is BTC-like, with 8 decimal places."},
                     {"tokenamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of reissuance tokens to generate. Note that the amount is BTC-like, with 8 decimal places. These will allow you to reissue the asset if in wallet using `reissueasset`. These tokens are not consumed during reissuance."},
-                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to blind the issuances."},
+                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{false}, "Whether to blind the issuances."},
                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
                     {"fee_asset", RPCArg::Type::STR, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay the fees"},
                     {"denomination", RPCArg::Type::NUM, RPCArg::Default{8}, "Number of decimals to denominate the asset - default: 8\n"},
@@ -1433,11 +1433,14 @@ RPCHelpMan issueasset()
         throw JSONRPCError(RPC_TYPE_ERROR, "Issuance must have one non-zero component");
     }
 
-    bool blind_issuances = request.params.size() < 3 || request.params[2].get_bool();
+    bool blind_issuances = false;
+    if (!request.params[2].isNull()) {
+        blind_issuances = request.params[2].get_bool();
+    }
 
     // Check for optional contract to hash into definition
     uint256 contract_hash;
-    if (request.params.size() >= 4) {
+    if (!request.params[3].isNull()) {
         contract_hash = ParseHashV(request.params[3], "contract_hash");
     }
 
@@ -1471,7 +1474,7 @@ RPCHelpMan issueasset()
     issuance_details.contract_hash = contract_hash;
     CCoinControl coin_control;
     if (g_con_any_asset_fees) {
-        if (request.params.size() >= 5) {
+        if (!request.params[4].isNull()) {
             CAsset fee_asset = ::policyAsset;
             std::string feeAssetString = request.params[4].get_str();
             fee_asset = GetAssetFromString(feeAssetString);
@@ -1480,7 +1483,7 @@ RPCHelpMan issueasset()
             }
             coin_control.m_fee_asset = fee_asset;
         }
-        if (request.params.size() >= 6) {
+        if (!request.params[5].isNull()) {
             issuance_details.denomination = request.params[5].get_int();
         }
     }
