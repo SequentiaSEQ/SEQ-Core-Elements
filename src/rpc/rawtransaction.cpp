@@ -3008,7 +3008,7 @@ static RPCHelpMan rawissueasset()
                                     {"asset_address", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Destination address of generated asset. Required if `asset_amount` given."},
                                     {"token_amount", RPCArg::Type::AMOUNT, RPCArg::Optional::OMITTED_NAMED_ARG, "Amount of reissuance token to generate, if any."},
                                     {"token_address", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Destination address of generated reissuance tokens. Required if `token_amount` given."},
-                                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to mark the issuance input for blinding or not. Only affects issuances with re-issuance tokens."},
+                                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{false}, "Whether to mark the issuance input for blinding or not. Only affects issuances with re-issuance tokens."},
                                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
                                     {"denomination", RPCArg::Type::NUM, RPCArg::Default{8}, "Number of decimals to denominate the asset - default: 8\n"},
                                 }
@@ -3103,8 +3103,10 @@ static RPCHelpMan rawissueasset()
         }
 
         // If we have issuances, check if reissuance tokens will be generated via blinding path
-        const UniValue blind_uni = issuance_o["blind"];
-        const bool blind_issuance = !blind_uni.isBool() || blind_uni.get_bool();
+        bool blind_issuance = false;
+        if (!issuance_o["blind"].isNull()) {
+            blind_issuance = issuance_o["blind"].get_bool();
+        }
 
         // Check for optional contract to hash into definition
         uint256 contract_hash;
@@ -3112,7 +3114,7 @@ static RPCHelpMan rawissueasset()
             contract_hash = ParseHashV(issuance_o["contract_hash"], "contract_hash");
         }
 
-        uint8_t denomination = 0;
+        uint8_t denomination = 8;
         if (!issuance_o["denomination"].isNull()) {
             denomination = issuance_o["denomination"].get_int();
         }
