@@ -210,7 +210,7 @@ public:
         return a.assetBlindingNonce == b.assetBlindingNonce &&
                a.assetEntropy == b.assetEntropy &&
                a.nAmount == b.nAmount &&
-               a.nInflationKeys == b.nInflationKeys;
+               a.nInflationKeys == b.nInflationKeys &&
                a.nDenomination == b.nDenomination;
     }
 
