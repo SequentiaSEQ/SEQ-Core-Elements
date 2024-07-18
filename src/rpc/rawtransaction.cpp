@@ -2928,6 +2928,7 @@ void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_deta
         issuance_details.denomination = denomination;
 
     mtx.vin[issuance_input_index].assetIssuance.assetEntropy = contract_hash;
+    mtx.vin[issuance_input_index].assetIssuance.nDenomination = issuance_details.denomination;
 
     if (asset_amount > 0) {
         // Fee output is required to be last. We will insert _before_ the selected position, which preserves that.

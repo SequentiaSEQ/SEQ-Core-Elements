@@ -1411,7 +1411,7 @@ static bool CreateTransactionInternal(
                 }
             }
             // SEQUENTIA: Add denomination in the asset issuance
-            txNew.vin[0].assetIssuance.denomination = issuance_details->denomination;
+            txNew.vin[0].assetIssuance.nDenomination = issuance_details->denomination;
         // Asset being reissued with explicitly named asset/token
         } else if (asset_index != -1) {
             assert(reissuance_index != -1);

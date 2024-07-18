@@ -1697,7 +1697,7 @@ RPCHelpMan listissuances()
             }
             CAmount iaamount = pcoin->GetIssuanceAmount(*pwallet, vinIndex, false);
             item.pushKV("assetamount", (iaamount == -1 ) ? -1 : ValueFromAmount(iaamount));
-            item.pushKV("denomination", issuance.denomination);
+            item.pushKV("denomination", issuance.nDenomination);
             item.pushKV("assetblinds", pcoin->GetIssuanceBlindingFactor(*pwallet, vinIndex, false).GetHex());
             if (!asset_filter.IsNull() && asset_filter != asset) {
                 continue;
