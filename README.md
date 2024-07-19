@@ -1,46 +1,56 @@
-Sequentia Project blockchain platform
-====================================
+# Sequentia Project blockchain platform
+Sequentia is a Bitcoin sidechain dedicated to asset tokenization and decentralized exchanges.
 
 https://sequentia.io/
 
-Sequentia is a Bitcoin sidechain dedicated to asset tokenization and decentralized exchanges.
-
 Current code is based on Elements Version: 23.2.1
 
-Quick Ubuntu build instructions for development:
------
+## Installing Prerequisistes
 
-Instal build tools
+### Install build tools
+On Ubuntu (and probably Debian), you should be able to install the prerequisite
+build tools with the following command:
 ```bash
-sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
+sudo apt install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3
 ```
-Install clang 15:
-```bash
-wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
-```
-Setup ccache:
+YMMV on other software distributions.
+
+### Setup ccache
+You may achieve speedups when building and rebuilding by using ccache,
+that you may install and configure as follows:
 ```bash
 sudo /usr/sbin/update-ccache-symlinks
 echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
 source ~/.bashrc
 ```
-Build:
+
+## Configure and Build
+
+### Prepare configuration
+
 ```bash
 ./autogen.sh
-./contrib/install_db4.sh .
-export CC=clang-15 CXX=clang++-15 BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include"
-./configure --without-gui --without-natpmp --without-miniupnpc
+make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site NOWARN_CXXFLAGS='-Wno-deprecated -Wno-unused-result'
+```
+
+### Configure
+```bash
+./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-tests --disable-fuzz-binary
+```
+
+Note that the `--enable-any-asset-fees` flag is an addition by Sequentia,
+that will configure RPC documentation to denominate fee rates
+using RFU and rfa instead of BTC and sat.
+
+### Last But Not Least, Build
+```bash
 make -j$(nproc)
 ```
-To speed up the build if not necessary, disable bench and tests in configure:
-```bash
-./configure --without-gui --without-natpmp --without-miniupnpc --disable-bench --disable-tests
-```
 
-Modes
------
-
-Elements supports a few different pre-set chains for syncing. Note though some are intended for QA and debugging only:
+## Modes
+Elements supports a few different pre-set chains for syncing.
+Note though some are intended for QA and debugging only:
 
 * Liquid mode: `elementsd -chain=liquidv1` (syncs with Liquid network)
 * Bitcoin mainnet mode: `elementsd -chain=main` (not intended to be run for commerce)
@@ -48,8 +58,7 @@ Elements supports a few different pre-set chains for syncing. Note though some a
 * Bitcoin regtest mode: `elementsd -chain=regtest`
 * Elements custom chains: Any other `-chain=` argument. It has regtest-like default parameters that can be over-ridden by the user by a rich set of start-up options.
 
-Confidential Assets
-----------------
+## Confidential Assets
 The latest feature in the Elements blockchain platform is Confidential Assets,
 the ability to issue multiple assets on a blockchain where asset identifiers
 and amounts are blinded yet auditable through the use of applied cryptography.
@@ -60,10 +69,9 @@ and amounts are blinded yet auditable through the use of applied cryptography.
  * [Confidential Assets Demo](https://github.com/ElementsProject/confidential-assets-demo)
  * [Elements Code Tutorial](https://elementsproject.org/elements-code-tutorial/overview) covering blockchain configuration and how to use the main features.
 
-Features of the Elements blockchain platform
-----------------
+## Features of the Elements blockchain platform
 
-Compared to Bitcoin itself, it adds the following features:
+Compared to Bitcoin itself, Elements adds the following features:
  * [Confidential Assets][asset-issuance]
  * [Confidential Transactions][confidential-transactions]
  * [Federated Two-Way Peg][federated-peg]
@@ -83,8 +91,7 @@ Additional RPC commands and parameters:
 The CI (Continuous Integration) systems make sure that every pull request is built for Windows, Linux, and macOS,
 and that unit/sanity tests are run automatically.
 
-License
--------
+## License
 Elements is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see http://opensource.org/licenses/MIT.
 
@@ -95,15 +102,12 @@ information or see http://opensource.org/licenses/MIT.
 [asset-issuance]: https://elementsproject.org/features/issued-assets
 [schnorr-signatures]: https://elementsproject.org/features/schnorr-signatures
 
-What is the Elements Project?
------------------
+## What is the Elements Project?
 Elements is an open source, sidechain-capable blockchain platform. It also allows experiments to more rapidly bring technical innovation to the Bitcoin ecosystem.
 
 Learn more on the [Elements Project website](https://elementsproject.org)
 
 https://github.com/ElementsProject/elementsproject.github.io
 
-Secure Reporting
-------------------
+## Secure Reporting
 See [our vulnerability reporting guide](SECURITY.md)
-

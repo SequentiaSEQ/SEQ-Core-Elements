@@ -61,6 +61,7 @@ src/qt/bitcoin-qt.includes
 .deps
 .dirstamp
 .libs
+.gerbil
 .*.swp
 *~
 *.bak
@@ -151,3 +152,6 @@ osx_volname
 dist/
 
 /guix-build-*
+
+# nix
+result
