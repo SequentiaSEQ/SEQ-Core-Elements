@@ -159,7 +159,7 @@ class IssuanceTest(BitcoinTestFramework):
 
         # Test various issuance and auditing paths
 
-        issuancedata = self.nodes[0].issueasset(Decimal('0.00000002'), Decimal('0.00000001')) #2 of asset, 1 reissuance token
+        issuancedata = self.nodes[0].issueasset(Decimal('0.00000002'), Decimal('0.00000001'), True) #2 of asset, 1 reissuance token
         self.generate(self.nodes[1], 1)
         self.sync_all()
         assert_equal(self.nodes[0].getwalletinfo()["balance"][issuancedata["asset"]], Decimal('0.00000002'))
@@ -175,7 +175,7 @@ class IssuanceTest(BitcoinTestFramework):
             pass
 
 
-        issuancedata = self.nodes[2].issueasset(Decimal('0.00000005'), 0) #5 of asset, 0 reissuance token
+        issuancedata = self.nodes[2].issueasset(Decimal('0.00000005'), 0, True) #5 of asset, 0 reissuance token
         # No reissuance tokens
         try:
             self.nodes[2].reissueasset(issuancedata["token"], 5)
@@ -183,7 +183,7 @@ class IssuanceTest(BitcoinTestFramework):
         except JSONRPCException:
             pass
 
-        issuancedata = self.nodes[2].issueasset(0, Decimal('0.00000006')) #0 of asset, 6 reissuance token
+        issuancedata = self.nodes[2].issueasset(0, Decimal('0.00000006'), True) #0 of asset, 6 reissuance token
 
         # Node 2 will send node 1 a reissuance token, both will generate assets
         self.nodes[2].sendtoaddress(self.nodes[1].getnewaddress(), Decimal('0.00000001'), "", "", False, False, 1, "UNSET", False, issuancedata["token"])
@@ -294,7 +294,7 @@ class IssuanceTest(BitcoinTestFramework):
         self.raw_issuance(self.nodes[0], [{"asset_amount": 7, "asset_address": nonblind_addr, "token_amount":2, "token_address":blind_addr, "blind":False}, {"asset_amount":2, "asset_address":nonblind_addr, "blind":False}])
         self.raw_issuance(self.nodes[0], [{"asset_amount": 1, "asset_address": nonblind_addr, "token_amount":2, "token_address":blind_addr, "blind":False}, {"asset_amount":3, "asset_address":nonblind_addr, "blind":False}, {"asset_amount":4, "asset_address":nonblind_addr, "token_amount":5, "token_address":blind_addr, "blind":False}, {"asset_amount":6, "asset_address":nonblind_addr, "token_amount":7, "token_address":blind_addr, "blind":False}, {"asset_amount":8, "asset_address":nonblind_addr, "token_amount":9, "token_address":blind_addr, "blind":False}])
         # Default "blind" value is true, omitting explicit argument for last
-        self.raw_issuance(self.nodes[0], [{"asset_amount": 1, "asset_address": nonblind_addr, "token_amount":2, "token_address":blind_addr, "blind":True}, {"asset_amount":3, "asset_address":nonblind_addr, "blind":True}, {"asset_amount":4, "asset_address":nonblind_addr, "token_amount":5, "token_address":blind_addr, "blind":True}, {"asset_amount":6, "asset_address":nonblind_addr, "token_amount":7, "token_address":blind_addr, "blind":True}, {"asset_amount":8, "asset_address":nonblind_addr, "token_amount":9, "token_address":blind_addr}])
+        self.raw_issuance(self.nodes[0], [{"asset_amount": 1, "asset_address": nonblind_addr, "token_amount":2, "token_address":blind_addr, "blind":True}, {"asset_amount":3, "asset_address":nonblind_addr, "blind":True}, {"asset_amount":4, "asset_address":nonblind_addr, "token_amount":5, "token_address":blind_addr, "blind":True}, {"asset_amount":6, "asset_address":nonblind_addr, "token_amount":7, "token_address":blind_addr, "blind":True}, {"asset_amount":8, "asset_address":nonblind_addr, "token_amount":9, "token_address":blind_addr, "blind":True}])
 
 
         # Make sure that fee is checked
@@ -374,7 +374,7 @@ class IssuanceTest(BitcoinTestFramework):
         assert_equal(len(id_set), 4)
 
         print("Raw reissuance tests")
-        issued_asset = self.nodes[0].issueasset(0, 1)
+        issued_asset = self.nodes[0].issueasset(0, 1, True)
         self.generate(self.nodes[0], 1)
         utxo_info = None
         # Find info about the token output using wallet
@@ -452,7 +452,7 @@ class IssuanceTest(BitcoinTestFramework):
         contract_hash = "deadbeee"*8
         raw_tx = self.nodes[0].createrawtransaction([], [{self.nodes[0].getnewaddress():1}])
         funded_tx = self.nodes[0].fundrawtransaction(raw_tx)["hex"]
-        issued_tx = self.nodes[0].rawissueasset(funded_tx, [{"token_amount":1, "token_address":self.nodes[0].getnewaddress(), "contract_hash":contract_hash}])[0]
+        issued_tx = self.nodes[0].rawissueasset(funded_tx, [{"token_amount":1, "token_address":self.nodes[0].getnewaddress(), "contract_hash":contract_hash, "blind":True}])[0]
         blinded_tx = self.nodes[0].blindrawtransaction(issued_tx["hex"])
         signed_tx = self.nodes[0].signrawtransactionwithwallet(blinded_tx)
         tx_id = self.nodes[0].sendrawtransaction(signed_tx["hex"])
