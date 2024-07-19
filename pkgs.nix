@@ -9,8 +9,8 @@ let
   nixpkgs-gerbil = systemPkgs.fetchFromGitHub {
     owner = "MuKnIO";
     repo = "nixpkgs";
-    rev = "b34dfaf64b324157ee3bed43b319f947ca4e93f1";
-    sha256 = "sha256-sY1OtbCe4bYA8/izsR+wMCP+25QvGeeHe6H9eJ3FF0U=";
+    rev = "3494555347ea7c4c2a273b5308cde2d8f30424ea";
+    sha256 = "sha256-0Rlh/mUFi3s3flhlDK0WSb0TPD0MAiHcRrHq15I6Sso=";
   };
   pg = import nixpkgs-gerbil {};
   pkgs = import nixpkgs-repo {
@@ -71,6 +71,7 @@ stdenv.mkDerivation rec {
   configureFlags = [
     "--with-boost-libdir=${boost.out}/lib"
     "--disable-bench"
+    "--enable-any-asset-fees"
   ] ++ lib.optionals (!doCheck) [
     "--disable-tests"
     "--disable-gui-tests"

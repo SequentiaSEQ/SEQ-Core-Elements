@@ -14,6 +14,7 @@ in pkgs.mkShell {
   # Until gerbil-support includes static compilation objects,
   # let's not use gerbilLoadPath and instead copy the sources into the writable GERBIL_PATH.
   shellHook = ''
+    export PATH=$PWD/src:$PATH
     export GERBIL_PATH=$PWD/.gerbil
     mkdir -p $GERBIL_PATH
     chmod -R u+w .gerbil
