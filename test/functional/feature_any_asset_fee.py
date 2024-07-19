@@ -55,7 +55,7 @@ class AnyAssetFeeTest(BitcoinTestFramework):
         assert len(self.nodes[0].listissuances()) == 2  # asset & devcoin
         issuances = self.nodes[0].listissuances()
         assert (issuances[0]['denomination'] == 2 and issuances[1]['denomination'] == 8) \
-            or (issuances[0]['denomination'] == 2 and issuances[1]['denomination'] == 8)
+            or (issuances[0]['denomination'] == 8 and issuances[1]['denomination'] == 2)
 
         self.issuance_addr = self.nodes[0].gettransaction(self.issuance_txid)['details'][0]['address']
         self.nodes[1].importaddress(self.issuance_addr)

@@ -328,6 +328,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             } else if (issuance.nAmount.IsCommitment()) {
                 issue.pushKV("assetamountcommitment", HexStr(issuance.nAmount.vchCommitment));
             }
+            issue.pushKV("denomination", issuance.nDenomination);
             if (issuance.nInflationKeys.IsExplicit()) {
                 issue.pushKV("tokenamount", ValueFromAmount(issuance.nInflationKeys.GetAmount()));
             } else if (issuance.nInflationKeys.IsCommitment()) {
