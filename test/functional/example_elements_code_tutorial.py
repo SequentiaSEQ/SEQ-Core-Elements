@@ -64,7 +64,7 @@ class WalletTest(BitcoinTestFramework):
 
         expected_amt = {
             'bitcoin': 0,
-            '884071e106da92ff53b432340c8d160066502c781f50dfac5afc67459f946d6f': 0,
+            '5d5acd36c6f1f6f908c182e0c53b8ed2409bc6d2314d6cdcc576c41cb8b8bb0c': 0,
             'daa8284c0d06cb02ef28b75ffa74c3b512131884d9c72e4f11dac634703d4fc4': 99
         }
         assert self.nodes[0].gettransaction(reissuance_txid)['amount'] == expected_amt
