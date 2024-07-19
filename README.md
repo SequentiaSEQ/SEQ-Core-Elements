@@ -34,15 +34,9 @@ make -j$(nproc) -C depends NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
 export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site NOWARN_CXXFLAGS='-Wno-deprecated -Wno-unused-result'
 ```
 
-### Actually configure
-Simple configuration:
+### Configure
 ```bash
 ./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-tests --disable-fuzz-binary
-```
-
-I (@fare) have been configuring my test systems this way, enabling tests and extra functional tests:
-```bash
-./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-fuzz-binary --enable-extended-functional-tests=yes
 ```
 
 Note that the `--enable-any-asset-fees` flag is an addition by Sequentia,
