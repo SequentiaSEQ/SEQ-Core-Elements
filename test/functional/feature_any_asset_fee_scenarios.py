@@ -193,7 +193,6 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
         self.nodes[0].generatetoaddress(1, self.node0_address, invalid_call=False)
         self.sync_all()
 
-
     def run_test(self):
         self.init()
 
@@ -209,7 +208,7 @@ class AnyAssetFeeScenariosTest(BitcoinTestFramework):
         # Bump fee amount for tx, check that the tx is on node1 after bumping the fee
         self.scenario4()
 
-        # RBF, bumpf fee with changing the asset to pay the fee, check that the tx is on node1 after RBF
+        # RBF, bump fee with changing the asset to pay the fee, check that the tx is on node1 after RBF
         self.scenario5()
 
 if __name__ == '__main__':

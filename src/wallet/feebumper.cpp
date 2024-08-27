@@ -183,23 +183,33 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     // Fill in recipients (and preserve a single change key per asset if there is one)
     std::map<CAsset, CTxDestination> destinations;
     std::vector<wallet::CRecipient> recipients;
+    int n = 0;
     for (const auto& output : wtx.tx->vout) {
         // ELEMENTS:
         bool is_change = OutputIsChange(wallet, output);
         bool is_fee = output.IsFee();
+        const CTxOutWitness* ptxoutwit = &wtx.tx->witness.vtxoutwit[n];
+        uint256 blinding_factor;
+        uint256 asset_blinding_factor;
+        CAsset asset;
+        CAmount amount;
         if (!output.nValue.IsExplicit() || !output.nAsset.IsExplicit()) {
-            errors.push_back(Untranslated("bumpfee can only be called on an unblinded transaction"));
-            return Result::WALLET_ERROR;
+            UnblindConfidentialPair(wallet.GetBlindingKey(&output.scriptPubKey), output.nValue, output.nAsset, output.nNonce, output.scriptPubKey, ptxoutwit->vchRangeproof, amount, blinding_factor, asset, asset_blinding_factor);
+        }
+        else {
+            amount = output.nValue.GetAmount();
+            asset = output.nAsset.GetAsset();
         }
 
         if (!is_change && !is_fee) {
-            wallet::CRecipient recipient = {output.scriptPubKey, output.nValue.GetAmount(), output.nAsset.GetAsset(), CPubKey(output.nNonce.vchCommitment), false};
+            wallet::CRecipient recipient = {output.scriptPubKey, amount, asset, CPubKey(output.nNonce.vchCommitment), false};
             recipients.push_back(recipient);
         } else if (is_change) {
             CTxDestination change_dest;
             ExtractDestination(output.scriptPubKey, change_dest);
-            destinations[output.nAsset.GetAsset()] = change_dest;
+            destinations[asset] = change_dest;
         }
+        ++n;
     }
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
