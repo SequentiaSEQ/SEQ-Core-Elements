@@ -131,4 +131,3 @@ jobs:
           name: sequentia-dev-${{ env.TARGET }}
           path: |
             *.zip
-
