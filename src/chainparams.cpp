@@ -397,8 +397,8 @@ public:
             AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
         }
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("997d61a708543ee56de675c9afebb690007793429967d7a28c61358a033766cd"));
-        assert(genesis.hashMerkleRoot == uint256S("3186a7307ae08419ba779733ad36c32841237f0f7909bbd1d2f38285ecd23ed3"));
+        assert(consensus.hashGenesisBlock == uint256S("0x997d61a708543ee56de675c9afebb690007793429967d7a28c61358a033766cd"));
+        assert(genesis.hashMerkleRoot == uint256S("0x3186a7307ae08419ba779733ad36c32841237f0f7909bbd1d2f38285ecd23ed3"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -515,7 +515,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].min_activation_height = 0; // No activation delay
         // DynaFed: never activate (but set to avoid use of uninitialized memory in tests)
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].bit = 25;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nStartTime = Consensus::BIP9Deployment::NEVER_ACTIVE;
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].min_activation_height = 0; // No activation delay
 
@@ -581,7 +581,7 @@ public:
         strNetworkID =  CBaseChainParams::REGTEST;
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
-        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.nSubsidyHalvingInterval = 150;
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 1; // Always active unless overridden
         consensus.BIP34Hash = uint256();
@@ -605,7 +605,7 @@ public:
 
         // DynaFed: never activate (but set to avoid use of uninitialized memory in tests)
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].bit = 25;
-        consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nStartTime = Consensus::BIP9Deployment::NEVER_ACTIVE;
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_DYNA_FED].min_activation_height = 0; // No activation delay
 
@@ -620,51 +620,33 @@ public:
         consensus.defaultAssumeValid = uint256{};
 
         consensus.genesis_subsidy = 50*COIN;
-        consensus.connect_genesis_outputs = true;
-        anyonecanspend_aremine = true;
+        consensus.connect_genesis_outputs = false;
+        consensus.subsidy_asset = CAsset();
+        anyonecanspend_aremine = false;
         enforce_pak = false;
         multi_data_permitted = false;
         consensus.has_parent_chain = false;
         g_signed_blocks = false;
-        g_con_elementsmode = true;
-        g_con_blockheightinheader = true;
-        g_con_any_asset_fees = true;
+        g_con_elementsmode = false;
         consensus.elements_mode = g_con_elementsmode;
+        g_con_blockheightinheader = false;
         consensus.total_valid_epochs = 0;
-        consensus.dynamic_epoch_length = 10;
 
-        pchMessageStart[0] = 0x8d;
-        pchMessageStart[1] = 0x4f;
-        pchMessageStart[2] = 0xf1;
-        pchMessageStart[3] = 0xe5;
-        nDefaultPort = 19777;
+        pchMessageStart[0] = 0xfa;
+        pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xda;
+        nDefaultPort = 18444;
         nPruneAfterHeight = args.GetBoolArg("-fastprune", false) ? 100 : 1000;
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
 
-        std::vector<unsigned char> sign_bytes = ParseHex("51");
-        consensus.signblockscript = CScript(sign_bytes.begin(), sign_bytes.end());
-        consensus.max_block_signature_size = 74;
-        g_signed_blocks = true;
-
         UpdateActivationParametersFromArgs(args);
 
-        // Calculate regcoin asset
-        std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
-        uint256 entropy;
-        GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), uint256{});
-        CalculateAsset(consensus.subsidy_asset, entropy);
-        consensus.pegged_asset = consensus.subsidy_asset;
-
-        consensus.genesis_style = "elements";
-        initialFreeCoins = 1000000000;
-        genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1296688602, 2, 0x207fffff, 1, 0);
-        if (initialFreeCoins != 0 || initial_reissuance_tokens != 0) {
-            AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
-        }
+        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN, consensus);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0xa85f07bad5a99192f1e5c0b03867a6dc12191f6d07d8a77213ca4632e6f6a4a7"));
-        assert(genesis.hashMerkleRoot == uint256S("0x9d41c1b8f6887a4403f0fec56cd6d5a2b1730ae1f3065eb6dcc2e06b9075de9f"));
+        assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
+        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();
@@ -675,20 +657,37 @@ public:
         m_is_test_chain = true;
         m_is_mockable_chain = true;
 
+        checkpointData = {
+            {
+                {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")},
+            }
+        };
+
+        m_assumeutxo_data = MapAssumeutxo{
+            {
+                110,
+                {AssumeutxoHash{uint256S("0x09a3e443dbf48f3b95207c9ce529062d9764395232c482aa7d3a0bf274d282d9")}, 110},
+            },
+            {
+                200,
+                {AssumeutxoHash{uint256S("0x51c8d11d8b5c1de51543c579736e786aa2736206d1e11e627568029ce092cf62")}, 200},
+            },
+        };
+
         chainTxData = ChainTxData{
             0,
             0,
             0
         };
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,108);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,128);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,222);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0x14, 0xE5, 0x69, 0x91};
-        base58Prefixes[EXT_SECRET_KEY] = {0x4B, 0xC5, 0x4E, 0x09};
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
-        bech32_hrp = "rsq";
-        blech32_hrp = "rsqb";
+        bech32_hrp = "bcrt";
+        blech32_hrp = bech32_hrp;
     }
 
     /**
@@ -983,6 +982,8 @@ public:
         UpdateFromArgs(args);
         SetGenesisBlock();
         consensus.hashGenesisBlock = genesis.GetHash();
+        std::cout << "genesis hash: " << consensus.hashGenesisBlock.ToString() << std::endl;
+
     }
 };
 
