@@ -619,7 +619,7 @@ public:
         consensus.nMinimumChainWork = uint256{};
         consensus.defaultAssumeValid = uint256{};
 
-        consensus.genesis_subsidy = 1*COIN;
+        consensus.genesis_subsidy = 50*COIN;
         consensus.connect_genesis_outputs = true;
         anyonecanspend_aremine = true;
         enforce_pak = false;
