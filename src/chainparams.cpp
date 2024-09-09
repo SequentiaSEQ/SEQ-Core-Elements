@@ -982,8 +982,6 @@ public:
         UpdateFromArgs(args);
         SetGenesisBlock();
         consensus.hashGenesisBlock = genesis.GetHash();
-        std::cout << "genesis hash: " << consensus.hashGenesisBlock.ToString() << std::endl;
-
     }
 };
 
