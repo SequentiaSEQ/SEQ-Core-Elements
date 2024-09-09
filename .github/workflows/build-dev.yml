@@ -1,4 +1,4 @@
-name: Sequentia Core CI
+name: Build-dev
 
 on:
   workflow_dispatch:
@@ -12,8 +12,15 @@ on:
       - dev
 
 jobs:
-  build:
-    runs-on: ubuntu-20.04
+  build_and_test:
+    runs-on: ubuntu-22.04
+
+    continue-on-error: true
+    strategy:
+      matrix:
+        target: [x86_64-pc-linux-gnu, x86_64-w64-mingw32, x86_64-apple-darwin]
+    env:
+      TARGET: ${{matrix.target}}
 
     steps:
       - uses: actions/checkout@v4
@@ -21,33 +28,106 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev
-          wget -O - "https://apt.llvm.org/llvm.sh" | sudo bash -s 15
+          sudo apt-get install ccache build-essential libtool autotools-dev automake pkg-config bsdmainutils python3
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
           source ~/.bashrc
-          
+        
+      - name: Install Windows dependencies
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
+        run: sudo apt-get install zip g++-mingw-w64-x86-64-posix
+      
+      - name: Install OSX dependencies
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        run: |
+          sudo apt-get install curl bsdmainutils cmake libz-dev python3-setuptools libtinfo5 xorriso cpio
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ env.TARGET }}
+          max-size: 1G
+          append-timestamp: false
+
+      - name: Depends cache
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/depends/${{ env.TARGET }}
+          key: ${{ env.TARGET }}-deps
+
+      - name: OSX SDK cache
+        id: osx-sdk-cache
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/depends/SDKs
+          key: ${{ env.TARGET }}-osx-sdk
+
+      - name: Extract XCode SDK
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' && steps.osx-sdk-cache.outputs.cache-hit != 'true' }}
+        run: |
+          cd depends && mkdir SDKs && cd SDKs
+          wget http://mixakuca.ddns.net:8000/Xcode-12.2.tar.gz
+          tar -xzf Xcode-12.2.tar.gz
+
+      - name: Build depends
+        if: ${{ steps.deps-cache.outputs.cache-hit != 'true' }}
+        run: make -j$(nproc) -C depends HOST=${{env.TARGET}} NO_QT=1 NO_NATPMP=1 NO_UPNP=1 NO_ZMQ=1 NO_USDT=1
+
       - name: Build
         env:
-          BDB_PREFIX: '/home/runner/work/SEQ-Core-Elements/SEQ-Core-Elements/db4'
-          BDB_LIBS: '-L${BDB_PREFIX}/lib -ldb_cxx-4.8'
-          BDB_CFLAGS: '-I${BDB_PREFIX}/include'
-          CC: clang-15
-          CXX: clang++-15
+          CONFIG_SITE: ${{ github.workspace }}/depends/${{ env.TARGET }}/share/config.site
+          NOWARN_CXXFLAGS: -Wno-deprecated -Wno-unused-result
         run: |
           ./autogen.sh
-          ./contrib/install_db4.sh .
-          ./configure --disable-bench --without-gui --without-natpmp --without-miniupnpc
+          ./configure --enable-any-asset-fees
           make clean
           make -j$(nproc)
 
-      - name: Publish artifact - linux
+      - name: Run tests
+        id: tests
+        if: ${{ env.TARGET == 'x86_64-pc-linux-gnu' }}
+        run: |
+          echo "Running tests"
+          ./test/functional/test_runner.py
+
+      - name: Prepare artifacts - Linux
+        if: ${{ env.TARGET == 'x86_64-pc-linux-gnu' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
+        run: |
+          mkdir -p sequentia-dev-linux/bin sequentia-dev-linux/lib
+          cp src/elementsd src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-linux/bin/
+          cp src/.libs/libelementsconsensus.so* sequentia-dev-linux/lib/
+          tar -cvf sequentia-dev-linux.tar --owner=0 --group=0 --numeric-owner sequentia-dev-linux
+      
+      - name: Prepare artifacts - Windows
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
+        run: |
+          mkdir -p sequentia-dev-win64/bin sequentia-dev-win64/lib
+          cp src/elementsd.exe src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-win64/bin/
+          cp src/.libs/libelementsconsensus-0.dll sequentia-dev-win64/lib/
+          zip -r sequentia-dev-win64.zip sequentia-dev-win64
+      
+      - name: Prepare artifacts - OSX
+        if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
+        run: |
+          mkdir -p sequentia-dev-osx/bin sequentia-dev-osx/lib
+          cp src/elementsd src/elements-cli src/elements-tx src/elements-util src/elements-wallet sequentia-dev-osx/bin/
+          cp src/.libs/*.dylib sequentia-dev-osx/lib/
+          tar -cvf sequentia-dev-osx.tar --owner=0 --group=0 --numeric-owner sequentia-dev-osx
+
+      - name: Publish artifact
+        if: ${{ env.TARGET != 'x86_64-w64-mingw32' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
         uses: actions/upload-artifact@v4
         with:
-          name: sequentia-linux
+          name: sequentia-dev-${{ env.TARGET }}
           path: |
-            src/elementsd
-            src/elements-cli
-            src/elements-tx
-            src/elements-util
-            src/elements-wallet
+            *.tar
+      
+      - name: Publish artifact Windows
+        if: ${{ env.TARGET == 'x86_64-w64-mingw32' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sequentia-dev-${{ env.TARGET }}
+          path: |
+            *.zip

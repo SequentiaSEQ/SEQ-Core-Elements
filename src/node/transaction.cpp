@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <consensus/validation.h>
+#include <exchangerates.h>
 #include <index/txindex.h>
 #include <net.h>
 #include <net_processing.h>
@@ -74,6 +75,11 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
                 const MempoolAcceptResult result = node.chainman->ProcessTransaction(tx, /*test_accept=*/ true);
                 if (result.m_result_type != MempoolAcceptResult::ResultType::VALID) {
                     return HandleATMPError(result.m_state, err_string);
+                } else if (g_con_any_asset_fees) {
+                    CValue mBaseFeesValue = ExchangeRateMap::GetInstance().ConvertAmountToValue(result.m_base_fees.value(), tx->GetFeeAsset(::policyAsset));
+                    if (mBaseFeesValue.GetValue() > max_tx_fee) {
+                        return TransactionError::MAX_FEE_EXCEEDED;
+                    }
                 } else if (result.m_base_fees.value() > max_tx_fee) {
                     return TransactionError::MAX_FEE_EXCEEDED;
                 }

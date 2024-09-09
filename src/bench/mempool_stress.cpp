@@ -18,7 +18,7 @@ static void AddTx(const CTransactionRef& tx, CTxMemPool& pool) EXCLUSIVE_LOCKS_R
     unsigned int sigOpCost = 4;
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
     LockPoints lp;
-    pool.addUnchecked(CTxMemPoolEntry(tx, 1000, nTime, nHeight, spendsCoinbase, sigOpCost, lp, setPeginsSpent));
+    pool.addUnchecked(CTxMemPoolEntry(tx, 1000, ::policyAsset, 1000, nTime, nHeight, spendsCoinbase, sigOpCost, lp, setPeginsSpent));
 }
 
 struct Available {

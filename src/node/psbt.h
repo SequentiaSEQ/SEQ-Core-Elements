@@ -40,6 +40,7 @@ struct PSBTAnalysis {
     std::optional<size_t> estimated_vsize;      //!< Estimated weight of the transaction
     std::optional<CFeeRate> estimated_feerate;  //!< Estimated feerate (fee / weight) of the transaction
     std::optional<CAmount> fee;                 //!< Amount of fee being paid by the transaction
+    std::optional<CAsset> fee_asset;            //!< ELEMENTS: Asset used to pay fees
     std::vector<PSBTInputAnalysis> inputs; //!< More information about the individual inputs of the transaction
     std::vector<PSBTOutputAnalysis> outputs; //!< More information about the individual outputs of the transaction
     PSBTRole next;                         //!< Which of the BIP 174 roles needs to handle the transaction next
@@ -50,6 +51,7 @@ struct PSBTAnalysis {
         estimated_vsize = std::nullopt;
         estimated_feerate = std::nullopt;
         fee = std::nullopt;
+        fee_asset = std::nullopt;
         inputs.clear();
         next = PSBTRole::CREATOR;
         error = err_msg;

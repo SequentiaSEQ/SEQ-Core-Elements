@@ -5,6 +5,7 @@
 #include <blind.h> // ELEMENTS: for MAX_RANGEPROOF_SIZE
 #include <consensus/amount.h>
 #include <consensus/validation.h>
+#include <exchangerates.h>
 #include <interfaces/chain.h>
 #include <issuance.h> // ELEMENTS: for GenerateAssetEntropy and others
 #include <policy/policy.h>
@@ -522,10 +523,10 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
     // So we need to include that for KnapsackSolver as well, as we are expecting to create a change output.
     CAmountMap mapTargetValue_copy = mapTargetValue;
     if (!coin_selection_params.m_subtract_fee_outputs) {
-        mapTargetValue_copy[::policyAsset] += coin_selection_params.m_change_fee;
+        mapTargetValue_copy[coin_selection_params.m_fee_asset] += coin_selection_params.m_change_fee;
     }
 
-    if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy)}) {
+    if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy, coin_selection_params.m_fee_asset)}) {
          knapsack_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
          results.push_back(*knapsack_result);
     }
@@ -624,7 +625,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // error = _("Missing solving data for estimating transaction size"); // ELEMENTS
             return std::nullopt; // Not solvable, can't estimate size for fee
         }
-        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes);
+        coin.effective_value = coin.value - coin_selection_params.m_effective_feerate.GetFee(coin.m_input_bytes, coin_selection_params.m_fee_asset);
         if (coin_selection_params.m_subtract_fee_outputs) {
             value_to_select[coin.asset] -= coin.value;
         } else {
@@ -653,10 +654,10 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
     const size_t max_descendants = (size_t)std::max<int64_t>(1, limit_descendant_count);
     const bool fRejectLongChains = gArgs.GetBoolArg("-walletrejectlongchains", DEFAULT_WALLET_REJECT_LONG_CHAINS);
 
-    // ELEMENTS: filter coins for assets we are interested in; always keep policyAsset for fees
+    // ELEMENTS: filter coins for assets we are interested in; always keep asset for fees
     for (std::vector<COutput>::iterator it = vCoins.begin(); it != vCoins.end() && coin_control.HasSelected();) {
         CAsset asset = it->GetInputCoin(wallet).asset;
-        if (asset != ::policyAsset && mapTargetValue.find(asset) == mapTargetValue.end()) {
+        if (asset != coin_selection_params.m_fee_asset && mapTargetValue.find(asset) == mapTargetValue.end()) {
             it = vCoins.erase(it);
         } else {
             ++it;
@@ -939,11 +940,12 @@ static bool CreateTransactionInternal(
 
     CoinSelectionParams coin_selection_params; // Parameters for coin selection, init with dummy
     coin_selection_params.m_avoid_partial_spends = coin_control.m_avoid_partial_spends;
+    coin_selection_params.m_fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
 
     CScript dummy_script = CScript() << 0x00;
     CAmountMap map_recipients_sum;
-    // Always assume that we are at least sending policyAsset.
-    map_recipients_sum[::policyAsset] = 0;
+    // Always assume that we are at least sending fee asset.
+    map_recipients_sum[coin_selection_params.m_fee_asset] = 0;
     std::vector<std::unique_ptr<ReserveDestination>> reservedest;
     // Set the long term feerate estimate to the wallet's consolidate feerate
     coin_selection_params.m_long_term_feerate = wallet.m_consolidate_feerate;
@@ -1116,8 +1118,8 @@ static bool CreateTransactionInternal(
     // For creating the change output now, we use the effective feerate.
     // For spending the change output in the future, we use the discard feerate for now.
     // So cost of change = (change output size * effective feerate) + (size of spending change output * discard feerate)
-    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size);
-    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size) + coin_selection_params.m_change_fee;
+    coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size, coin_selection_params.m_fee_asset);
+    coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size, coin_selection_params.m_fee_asset) + coin_selection_params.m_change_fee;
 
     // vouts to the payees
     if (!coin_selection_params.m_subtract_fee_outputs) {
@@ -1140,7 +1142,7 @@ static bool CreateTransactionInternal(
             coin_selection_params.tx_noinputs_size += ::GetSerializeSize(txout, PROTOCOL_VERSION);
         }
 
-        if (recipient.asset == policyAsset && IsDust(txout, wallet.chain().relayDustFee()))
+        if (recipient.asset == coin_selection_params.m_fee_asset && IsDust(txout, wallet.chain().relayDustFee()))
         {
             error = _("Transaction amount too small");
             return false;
@@ -1191,9 +1193,9 @@ static bool CreateTransactionInternal(
     }
 
     // Include the fees for things that aren't inputs, excluding the change output
-    const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.tx_noinputs_size);
+    const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.tx_noinputs_size, coin_selection_params.m_fee_asset);
     CAmountMap map_selection_target = map_recipients_sum;
-    map_selection_target[policyAsset] += not_input_fees;
+    map_selection_target[coin_selection_params.m_fee_asset] += not_input_fees;
 
     // Get available coins
     std::vector<COutput> vAvailableCoins;
@@ -1223,7 +1225,7 @@ static bool CreateTransactionInternal(
     CAmountMap map_change_and_fee = result->GetSelectedValue() - map_recipients_sum;
     // Zero out any non-policy assets which have zero change value
     for (auto it = map_change_and_fee.begin(); it != map_change_and_fee.end(); ) {
-        if (it->first != policyAsset && it->second == 0) {
+        if (it->first != coin_selection_params.m_fee_asset && it->second == 0) {
             it = map_change_and_fee.erase(it);
         } else {
             ++it;
@@ -1239,12 +1241,12 @@ static bool CreateTransactionInternal(
         error = _("Transaction change output index out of range");
         return false;
     } else {
-        change_pos[nChangePosInOut] = policyAsset;
+        change_pos[nChangePosInOut] = coin_selection_params.m_fee_asset;
     }
 
     for (const auto& asset_change_and_fee : map_change_and_fee) {
         // No need to randomly set the policyAsset change if has been set manually
-        if (nChangePosInOut >= 0 && asset_change_and_fee.first == policyAsset) {
+        if (nChangePosInOut >= 0 && asset_change_and_fee.first == coin_selection_params.m_fee_asset) {
             continue;
         }
 
@@ -1254,7 +1256,7 @@ static bool CreateTransactionInternal(
         } while (change_pos[index]);
 
         change_pos[index] = asset_change_and_fee.first;
-        if (asset_change_and_fee.first == policyAsset) {
+        if (asset_change_and_fee.first == coin_selection_params.m_fee_asset) {
             nChangePosInOut = index;
         }
     }
@@ -1294,7 +1296,7 @@ static bool CreateTransactionInternal(
                     blind_pub = wallet.GetBlindingPubKey(itScript->second.second);
                 }
             } else {
-                assert(asset == policyAsset);
+                assert(asset == coin_selection_params.m_fee_asset);
             }
 
             if (blind_pub) {
@@ -1316,7 +1318,7 @@ static bool CreateTransactionInternal(
 
     // Add fee output.
     if (g_con_elementsmode) {
-        CTxOut fee(::policyAsset, 0, CScript());
+        CTxOut fee(coin_selection_params.m_fee_asset, 0, CScript());
         assert(fee.IsFee());
         txNew.vout.push_back(fee);
         if (blind_details) {
@@ -1408,6 +1410,8 @@ static bool CreateTransactionInternal(
                     }
                 }
             }
+            // SEQUENTIA: Add denomination in the asset issuance
+            txNew.vin[0].assetIssuance.nDenomination = issuance_details->denomination;
         // Asset being reissued with explicitly named asset/token
         } else if (asset_index != -1) {
             assert(reissuance_index != -1);
@@ -1460,7 +1464,7 @@ static bool CreateTransactionInternal(
         error = _("Missing solving data for estimating transaction size");
         return false;
     }
-    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes, coin_selection_params.m_fee_asset);
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
@@ -1529,21 +1533,21 @@ static bool CreateTransactionInternal(
 
     // The only time that fee_needed should be less than the amount available for fees (in change_and_fee - change_amount) is when
     // we are subtracting the fee from the outputs. If this occurs at any other time, it is a bug.
-    if (!coin_selection_params.m_subtract_fee_outputs && fee_needed > map_change_and_fee.at(policyAsset) - change_amount) {
+    if (!coin_selection_params.m_subtract_fee_outputs && fee_needed > map_change_and_fee.at(coin_selection_params.m_fee_asset) - change_amount) {
         wallet.WalletLogPrintf("ERROR: not enough coins to cover for fee (needed: %d, total: %d, change: %d)\n",
-            fee_needed, map_change_and_fee.at(policyAsset), change_amount);
+            fee_needed, map_change_and_fee.at(coin_selection_params.m_fee_asset), change_amount);
         error = _("Could not cover fee");
         return false;
     }
 
     // Update nFeeRet in case fee_needed changed due to dropping the change output
-    if (fee_needed <= map_change_and_fee.at(policyAsset) - change_amount) {
-        nFeeRet = map_change_and_fee.at(policyAsset) - change_amount;
+    if (fee_needed <= map_change_and_fee.at(coin_selection_params.m_fee_asset) - change_amount) {
+        nFeeRet = map_change_and_fee.at(coin_selection_params.m_fee_asset) - change_amount;
     }
 
     // Reduce output values for subtractFeeFromAmount
     if (coin_selection_params.m_subtract_fee_outputs) {
-        CAmount to_reduce = fee_needed + change_amount - map_change_and_fee.at(policyAsset);
+        CAmount to_reduce = fee_needed + change_amount - map_change_and_fee.at(coin_selection_params.m_fee_asset);
         int i = 0;
         bool fFirst = true;
         for (const auto& recipient : vecSend)
@@ -1556,8 +1560,8 @@ static bool CreateTransactionInternal(
             if (recipient.fSubtractFeeFromAmount)
             {
                 CAmount value = txout.nValue.GetAmount();
-                if (recipient.asset != policyAsset) {
-                    error = Untranslated(strprintf("Wallet does not support more than one type of fee at a time, therefore can not subtract fee from address amount, which is of a different asset id. fee asset: %s recipient asset: %s", policyAsset.GetHex(), recipient.asset.GetHex()));
+                if (recipient.asset != coin_selection_params.m_fee_asset) {
+                    error = Untranslated(strprintf("Wallet does not support more than one type of fee at a time, therefore can not subtract fee from address amount, which is of a different asset id. fee asset: %s recipient asset: %s", coin_selection_params.m_fee_asset.GetHex(), recipient.asset.GetHex()));
                     return false;
                 }
 
@@ -1690,7 +1694,13 @@ static bool CreateTransactionInternal(
         return false;
     }
 
-    if (nFeeRet > wallet.m_default_max_tx_fee) {
+    if (g_con_any_asset_fees) {
+        CAmount nFeeRetValue = ExchangeRateMap::GetInstance().ConvertAmountToValue(nFeeRet, coin_selection_params.m_fee_asset).GetValue();
+        if (nFeeRetValue > wallet.m_default_max_tx_fee) {
+            error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
+            return false;
+        }
+    } else if (nFeeRet > wallet.m_default_max_tx_fee) {
         error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
         return false;
     }

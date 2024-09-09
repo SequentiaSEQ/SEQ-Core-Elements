@@ -192,7 +192,9 @@ static void SidechainScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& o
     CTxDestination address;
 
     out.pushKV(prefix + "asm", ScriptToAsmStr(scriptPubKey));
-    out.pushKV(prefix + "desc", InferDescriptor(scriptPubKey, DUMMY_SIGNING_PROVIDER)->ToString());
+    if (include_addresses) {
+        out.pushKV(prefix + "desc", InferDescriptor(scriptPubKey, DUMMY_SIGNING_PROVIDER)->ToString());
+    }
     if (include_hex) out.pushKV(prefix + "hex", HexStr(scriptPubKey));
 
     std::vector<std::vector<unsigned char>> solns;
@@ -326,6 +328,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             } else if (issuance.nAmount.IsCommitment()) {
                 issue.pushKV("assetamountcommitment", HexStr(issuance.nAmount.vchCommitment));
             }
+            issue.pushKV("denomination", issuance.nDenomination);
             if (issuance.nInflationKeys.IsExplicit()) {
                 issue.pushKV("tokenamount", ValueFromAmount(issuance.nInflationKeys.GetAmount()));
             } else if (issuance.nInflationKeys.IsCommitment()) {

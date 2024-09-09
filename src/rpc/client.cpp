@@ -42,7 +42,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendtoaddress", 6 , "conf_target" },
     { "sendtoaddress", 8, "avoid_reuse" },
     { "sendtoaddress", 11, "fee_rate"},
-    { "sendtoaddress", 12, "verbose"},
+    { "sendtoaddress", 13, "verbose"},
     { "settxfee", 0, "amount" },
     { "sethdseed", 0, "newkeypool" },
     { "getreceivedbyaddress", 1, "minconf" },
@@ -80,7 +80,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendmany", 5 , "replaceable" },
     { "sendmany", 6 , "conf_target" },
     { "sendmany", 10, "fee_rate"},
-    { "sendmany", 11, "verbose" },
+    { "sendmany", 12, "verbose" },
     { "deriveaddresses", 1, "range" },
     { "scantxoutset", 1, "scanobjects" },
     { "addmultisigaddress", 0, "nrequired" },
@@ -205,6 +205,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "addpeeraddress", 2, "tried"},
     { "stop", 0, "wait" },
     //
+    // SEQUENTIA
+    { "setfeeexchangerates", 0, "rates"},
+    //
     // ELEMENTS:
     { "calcfastmerkleroot", 0, "leaves" },
     { "combineblocksigs", 1, "signatures" },
@@ -222,6 +225,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "issueasset", 0, "assetamount" },
     { "issueasset", 1, "tokenamount" },
     { "issueasset", 2, "blind" },
+    { "issueasset", 5, "denomination" },
     { "reissueasset", 1, "assetamount" },
     { "initpegoutwallet", 1, "bip32_counter"},
     { "rawblindrawtransaction", 1, "inputamountblinders" },

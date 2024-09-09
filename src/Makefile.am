@@ -106,10 +106,6 @@ if BUILD_BITCOIN_UTIL
   bin_PROGRAMS += elements-util
 endif
 
-if BUILD_BITCOIN_CHAINSTATE
-  bin_PROGRAMS += bitcoin-chainstate
-endif
-
 .PHONY: FORCE check-symbols check-security
 # bitcoin core #
 BITCOIN_CORE_H = \
@@ -154,6 +150,7 @@ BITCOIN_CORE_H = \
   deploymentinfo.h \
   deploymentstatus.h \
   dynafed.h \
+  exchangerates.h \
   external_signer.h \
   flatfile.h \
   fs.h \
@@ -212,6 +209,7 @@ BITCOIN_CORE_H = \
   policy/policy.h \
   policy/rbf.h \
   policy/settings.h \
+  policy/value.h \
   pow.h \
   primitives/pak.h \
   protocol.h \
@@ -355,6 +353,7 @@ libbitcoin_node_a_SOURCES = \
   dynafed.cpp \
   dbwrapper.cpp \
   deploymentstatus.cpp \
+  exchangerates.cpp \
   flatfile.cpp \
   httprpc.cpp \
   httpserver.cpp \
@@ -390,6 +389,7 @@ libbitcoin_node_a_SOURCES = \
   primitives/pak.cpp \
   rest.cpp \
   rpc/blockchain.cpp \
+  rpc/exchangerates.cpp \
   rpc/mining.cpp \
   rpc/misc.cpp \
   rpc/net.cpp \
@@ -818,132 +818,6 @@ elements_util_LDADD = \
   $(LIBBITCOIN_CONSENSUS) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBSECP256K1)
-#
-
-# bitcoin-chainstate binary #
-bitcoin_chainstate_SOURCES = \
-  bitcoin-chainstate.cpp \
-  arith_uint256.cpp \
-  blockfilter.cpp \
-  chain.cpp \
-  chainparamsbase.cpp \
-  chainparams.cpp \
-  clientversion.cpp \
-  coins.cpp \
-  compat/glibcxx_sanity.cpp \
-  compressor.cpp \
-  consensus/merkle.cpp \
-  consensus/tx_check.cpp \
-  consensus/tx_verify.cpp \
-  core_read.cpp \
-  dbwrapper.cpp \
-  deploymentinfo.cpp \
-  deploymentstatus.cpp \
-  flatfile.cpp \
-  fs.cpp \
-  hash.cpp \
-  index/base.cpp \
-  index/blockfilterindex.cpp \
-  index/coinstatsindex.cpp \
-  init/common.cpp \
-  key.cpp \
-  logging.cpp \
-  netaddress.cpp \
-  node/blockstorage.cpp \
-  node/chainstate.cpp \
-  node/coinstats.cpp \
-  node/ui_interface.cpp \
-  policy/feerate.cpp \
-  policy/fees.cpp \
-  policy/packages.cpp \
-  policy/policy.cpp \
-  policy/rbf.cpp \
-  policy/settings.cpp \
-  pow.cpp \
-  primitives/block.cpp \
-  primitives/transaction.cpp \
-  pubkey.cpp \
-  random.cpp \
-  randomenv.cpp \
-  scheduler.cpp \
-  script/interpreter.cpp \
-  script/script.cpp \
-  script/script_error.cpp \
-  script/sigcache.cpp \
-  script/standard.cpp \
-  shutdown.cpp \
-  signet.cpp \
-  support/cleanse.cpp \
-  support/lockedpool.cpp \
-  sync.cpp \
-  threadinterrupt.cpp \
-  timedata.cpp \
-  txdb.cpp \
-  txmempool.cpp \
-  uint256.cpp \
-  util/asmap.cpp \
-  util/bytevectorhash.cpp \
-  util/getuniquepath.cpp \
-  util/hasher.cpp \
-  util/moneystr.cpp \
-  util/rbf.cpp \
-  util/serfloat.cpp \
-  util/settings.cpp \
-  util/strencodings.cpp \
-  util/syscall_sandbox.cpp \
-  util/system.cpp \
-  util/thread.cpp \
-  util/threadnames.cpp \
-  util/time.cpp \
-  util/tokenpipe.cpp \
-  validation.cpp \
-  validationinterface.cpp \
-  versionbits.cpp \
-  warnings.cpp
-# ELEMENTS: additional sources for chainstate
-bitcoin_chainstate_SOURCES += \
-  asset.cpp \
-  blind.cpp \
-  blindpsbt.cpp \
-  block_proof.cpp \
-  common/bloom.cpp \
-  confidential_validation.cpp \
-  dynafed.cpp \
-  issuance.cpp \
-  mainchainrpc.cpp \
-  merkleblock.cpp \
-  pegins.cpp \
-  primitives/bitcoin/block.cpp \
-  primitives/bitcoin/merkleblock.cpp \
-  primitives/bitcoin/transaction.cpp \
-  primitives/confidential.cpp \
-  primitives/pak.cpp \
-  primitives/txwitness.cpp \
-  psbt.cpp \
-  rpc/request.cpp \
-  script/pegins.cpp \
-  script/sign.cpp \
-  script/signingprovider.cpp \
-  support/events.h \
-  util/url.cpp
-
-bitcoin_chainstate_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-bitcoin_chainstate_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_chainstate_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
-bitcoin_chainstate_LDADD = \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBUNIVALUE) \
-  $(LIBSECP256K1) \
-  $(LIBLEVELDB) \
-  $(LIBLEVELDB_SSE42) \
-  $(LIBMEMENV)
-# ELEMENTS:
-bitcoin_chainstate_LDADD += \
-  $(EVENT_LIBS)
-
-# Required for obj/build.h to be generated first.
-# More details: https://www.gnu.org/software/automake/manual/html_node/Built-Sources-Example.html
-bitcoin_chainstate-clientversion.$(OBJEXT): obj/build.h
 #
 
 # bitcoinconsensus library #

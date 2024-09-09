@@ -597,7 +597,7 @@ UniValue RPCHelpMan::HandleRequest(const JSONRPCRequest& request) const
         throw std::runtime_error(ToString());
     }
     const UniValue ret = m_fun(*this, request);
-    CHECK_NONFATAL(std::any_of(m_results.m_results.begin(), m_results.m_results.end(), [ret](const RPCResult& res) { return res.MatchesType(ret); }));
+    CHECK_NONFATAL(std::any_of(m_results.m_results.begin(), m_results.m_results.end(), [&ret](const RPCResult& res) { return res.MatchesType(ret); }));
     return ret;
 }
 
@@ -1239,7 +1239,9 @@ UniValue AmountMapToUniv(const CAmountMap& balanceOrig, std::string strasset)
 {
     // Make sure the policyAsset is always present in the balance map.
     CAmountMap balance = balanceOrig;
-    balance[::policyAsset] += 0;
+    if (!g_con_any_asset_fees) {
+        balance[::policyAsset] += 0;
+    }
 
     // If we don't do assets or a specific asset is given, we filter out once asset.
     if (!g_con_elementsmode || strasset != "") {

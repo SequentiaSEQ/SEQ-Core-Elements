@@ -612,7 +612,7 @@ public:
         if (!m_node.mempool) return true;
         LockPoints lp;
         std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
-        CTxMemPoolEntry entry(tx, 0, 0, 0, false, 0, lp, setPeginsSpent);
+        CTxMemPoolEntry entry(tx, 0, ::policyAsset, 0, 0, 0, false, 0, lp, setPeginsSpent);
         CTxMemPool::setEntries ancestors;
         auto limit_ancestor_count = gArgs.GetIntArg("-limitancestorcount", DEFAULT_ANCESTOR_LIMIT);
         auto limit_ancestor_size = gArgs.GetIntArg("-limitancestorsize", DEFAULT_ANCESTOR_SIZE_LIMIT) * 1000;

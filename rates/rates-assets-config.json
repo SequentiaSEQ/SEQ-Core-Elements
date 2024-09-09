@@ -1,0 +1,115 @@
+{"RFU":
+ {"__comments__":
+  ["This file is a template for an assets configuration file for the rates server.",
+   "Put it in your ~/.config/sequentia/rates-assets-config.json",
+   "or ${XDG_CONFIG_HOME}/sequentia/rates-assets-config.json",
+
+   "Unlike the rates-services-config.json file that you should absolutely never share,",
+   "you can totally share this file with people setting up their servers.",
+
+   "You may want to remove the __comments__ from your actual configuration.",
+
+
+   "The present entry defines the special Reference Fee Unit (RFU) is defined.",
+   "The default if left undefined is:",
+   {"nAsset": false, "decimals": 8, "fudge_factor": 1, "oracles": {"constant": 1}},
+
+   "Below, decimals is defined to be 9,",
+   "which means 1 RFU comprises exactly 1e9 Reference Fee Atoms (RFA),",
+   "wherein fees will be accounted in 53-bit integer multiples of such RFA.",
+   "Note that this differs from the default value of decimals, 8,",
+   "which matches the case of 1 BTC = 1e8 satoshi.",
+
+   "We leave nAsset undefined, same as false, meaning that there is no on-chain asset",
+   "that directly represents 1 atom of the asset == 1 RFA,",
+   "though some assets might be constant multiples.",
+
+   "We also don't define a fudge_factor, that could replace or complement decimals.",
+   "For instance,", {"decimals": 0, "fudge_factor": 1e9},
+   "would have the same effect as", {"decimals": 9, "fudge_factor": 1}, ".",
+   "Meanwhile, fudge_factor, which defaults to 1, can also be used in cases where",
+   "oracles return values in multiples of the RFU that are not powers of 10",
+   "as in 1 pound = 960 farthings, so that", {"decimals": 0, "fudge_factor": 960},
+   "would cover the case where 1 RFU = 1 pound and 1 RFA = 1 farthing",
+   "Alternatively, the constant rate different than 1 could be used",
+   "instead of the fudge_factor to achieve the same effect."],
+
+  "decimals": 9,
+  "oracles":
+  {"constant": 1}},
+
+ "BTC":
+ {"__comments__":
+  ["In the example below, decimals is omitted and defaults to 8, i.e. 1 BTC = 1e8 satoshi",
+   "where satoshi is the atom of value, just like in Bitcoin"],
+
+  "nAsset": "0000000000000000000000000000000000000000000000000000000000000001",
+  "oracles":
+  {"blockchain.info": "BTC",
+   "cex.io": "BTC:USD",
+   "coinapi.io": "BTC",
+   "coinlayer.com": "BTC",
+   "coinmarketcap.com": "BTC",
+   "financialmodelingprep.com": "BTCUSD"}},
+
+ "USD":
+ {"__comments__":
+  ["The constant oracle will always report the given number,",
+   "as our example RFU is indeed indexed on the dollar",
+
+   "The fudge_factor of 1.03 makes it 3% cheaper to use this asset for fees",
+   "i.e. the node will overvalue it compared to other assets,",
+   "and the user can thus pay fees with an according discount.",
+   "To disfavor a fee asset and provide cover for its volatility,",
+   "you could instead use a fudge_factor of 0.97 to put a 3% premium on its use.",
+
+   "Finally, decimals is the number of decimals that *this asset* (as opposed to RFU)",
+   "has on-chain. There again, the default is 8, i.e.",
+   "1 unit of the asset as priced by the oracles is worth 1e8 on-chain atoms of the asset,",
+   "just like 1 BTC = 1e8 satoshi.",
+   "But if we have \"decimals\": 2 as below, then 1 unit = 1e2 atoms = 100 atoms.",
+   "In other words, one on-chain atom represents 1 cent.",
+
+   "getrates will ignore both the fudge factor and decimals and return",
+   "the value of one whole unit of currency in terms of 1 RFU;",
+   "meanwhile getfeeexchangerates will apply both, multiplying by the fudge factor,",
+   "and returning the value of one atom of the asset in terms of 1 RFA",
+
+   "In this example file, one RFU is $1 divided in 1e9 RFA, but",
+   "the USD token uses cents as atoms, 1e2 atoms per USD, with a 3% incentive,",
+   "So that getrates will return 1, and getfeeexchangerates will return 10300000"],
+
+  "nAsset": "0000000000000000000000000000000000000000000000000000000000000099",
+  "decimals": 2,
+  "fudge_factor": 1.03,
+  "oracles":
+  {"constant": 1}},
+
+ "ETH":
+ {"__comment__":
+  ["ETH purists may have preferred decimals: 18, but there aren't enough information bits",
+   "to represent such large numbers on the Bitcoin side."],
+  "nAsset": "0000000000000000000000000000000000000000000000000000000000000002",
+  "decimals": 8,
+  "oracles":
+  {"cex.io": "ETH:USD",
+   "coinapi.io": "ETH",
+   "coinlayer.com": "ETH",
+   "coinmarketcap.com": "ETH",
+   "financialmodelingprep.com": "ETHUSD"}},
+
+ "AAPL":
+ {"__comments__":
+  ["We'll use decimals: 6 so we have 1/1000000th fractional shares"],
+  "nAsset": "0000000000000000000000000000000000000000000000000000000000000101",
+  "decimals": 6,
+  "oracles":
+  {"polygon.io": "AAPL"}},
+
+ "TSLA":
+ {"__comments__":
+  ["We'll use decimals: 4 so we have 1/10000th fractional shares"],
+  "nAsset": "0000000000000000000000000000000000000000000000000000000000000102",
+  "decimals": 4,
+  "oracles":
+  {"polygon.io": "TSLA"}}}

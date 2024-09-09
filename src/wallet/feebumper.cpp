@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <exchangerates.h>
 #include <interfaces/chain.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -79,24 +80,25 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CWalletTx& wt
         return feebumper::Result::WALLET_ERROR;
     }
 
-    CAmount new_total_fee = newFeerate.GetFee(maxTxSize);
+    const CAsset& fee_asset = g_con_any_asset_fees ? wtx.tx->GetFeeAsset(::policyAsset) : ::policyAsset;
+    CAmount new_total_fee = newFeerate.GetFee(maxTxSize, fee_asset);
 
     CFeeRate incrementalRelayFee = std::max(wallet.chain().relayIncrementalFee(), CFeeRate(WALLET_INCREMENTAL_RELAY_FEE));
 
     // Given old total fee and transaction size, calculate the old feeRate
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    CAmount old_fee = CachedTxGetDebit(wallet, wtx, filter)[::policyAsset] - wtx.tx->GetValueOutMap()[::policyAsset];
+    CAmount old_fee = CachedTxGetDebit(wallet, wtx, filter)[fee_asset] - wtx.tx->GetValueOutMap()[fee_asset];
     if (g_con_elementsmode) {
-        old_fee = GetFeeMap(*wtx.tx)[::policyAsset];
+        old_fee = GetFeeMap(*wtx.tx)[fee_asset];
     }
     const int64_t txSize = GetVirtualTransactionSize(*(wtx.tx));
     CFeeRate nOldFeeRate(old_fee, txSize);
     // Min total fee is old fee + relay fee
-    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize) + incrementalRelayFee.GetFee(maxTxSize);
+    CAmount minTotalFee = nOldFeeRate.GetFee(maxTxSize, fee_asset) + incrementalRelayFee.GetFee(maxTxSize, fee_asset);
 
     if (new_total_fee < minTotalFee) {
         errors.push_back(strprintf(Untranslated("Insufficient total fee %s, must be at least %s (oldFee %s + incrementalFee %s)"),
-            FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(nOldFeeRate.GetFee(maxTxSize)), FormatMoney(incrementalRelayFee.GetFee(maxTxSize))));
+            FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(nOldFeeRate.GetFee(maxTxSize, fee_asset)), FormatMoney(incrementalRelayFee.GetFee(maxTxSize, fee_asset))));
         return feebumper::Result::INVALID_PARAMETER;
     }
 
@@ -199,13 +201,28 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             destinations[output.nAsset.GetAsset()] = change_dest;
         }
     }
-    new_coin_control.destChange = destinations;
 
     isminefilter filter = wallet.GetLegacyScriptPubKeyMan() && wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) ? ISMINE_WATCH_ONLY : ISMINE_SPENDABLE;
-    old_fee = CachedTxGetDebit(wallet, wtx, filter)[::policyAsset] - wtx.tx->GetValueOutMap()[::policyAsset];
-    if (g_con_elementsmode) {
-        old_fee = GetFeeMap(*wtx.tx)[::policyAsset];
+    CAsset old_fee_asset = wtx.tx->GetFeeAsset(::policyAsset);
+    old_fee = CachedTxGetDebit(wallet, wtx, filter)[old_fee_asset] - wtx.tx->GetValueOutMap()[old_fee_asset];
+    if (g_con_elementsmode || g_con_any_asset_fees) {
+        old_fee = GetFeeMap(*wtx.tx)[old_fee_asset];
     }
+    // ELEMENTS: Ensure that the fee asset has a change destination in case the user wants
+    // to switch to paying with a fee asset that isn't used in the original transaction.
+    CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
+    if (g_con_any_asset_fees && !destinations.count(fee_asset)) {
+        CTxDestination change_dest;
+        OutputType output_type = wallet.m_default_change_type.value_or(wallet.m_default_address_type);
+        bilingual_str error;
+        bool add_blinding_key = false;
+        if (!wallet.GetNewChangeDestination(output_type, change_dest, error, add_blinding_key)) {
+            errors.push_back(error);
+            return Result::WALLET_ERROR;
+        }
+        destinations[fee_asset] = change_dest;
+    }
+    new_coin_control.destChange = destinations;
 
     if (coin_control.m_feerate) {
         // The user provided a feeRate argument.
@@ -217,7 +234,12 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
         }
     } else {
         // The user did not provide a feeRate argument
-        new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee, new_coin_control);
+        if (g_con_any_asset_fees) {
+            CValue old_fee_value = ExchangeRateMap::GetInstance().ConvertAmountToValue(old_fee, old_fee_asset);
+            new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee_value.GetValue(), new_coin_control);
+        } else {
+            new_coin_control.m_feerate = EstimateFeeRate(wallet, wtx, old_fee, new_coin_control);
+        }
     }
 
     // Fill in required inputs we are double-spending(all of them)

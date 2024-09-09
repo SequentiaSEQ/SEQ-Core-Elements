@@ -27,6 +27,7 @@ static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 // ELEMENTS:
 // Globals to avoid circular dependencies.
 extern bool g_con_elementsmode;
+extern bool g_con_any_asset_fees;
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
@@ -578,6 +579,17 @@ public:
     bool HasWitness() const
     {
         return !witness.IsNull();
+    }
+
+    const CAsset& GetFeeAsset(CAsset& default_asset) const 
+    {
+        CAsset& feeAsset = default_asset;
+        for (size_t i = 0; i < vout.size(); i++) {
+            if (vout[i].IsFee()) { 
+                feeAsset = vout[i].nAsset.GetAsset();
+            }
+        }
+        return feeAsset;
     }
 };
 

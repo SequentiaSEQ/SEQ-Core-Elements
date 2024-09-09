@@ -126,6 +126,8 @@ struct CoinSelectionParams
      * associated with the same address. This helps reduce privacy leaks resulting from address
      * reuse. Dust outputs are not eligible to be added to output groups and thus not considered. */
     bool m_avoid_partial_spends = false;
+    /** The asset with which to pay fees. */
+    CAsset m_fee_asset;
 
     CoinSelectionParams(size_t change_output_size, size_t change_spend_size, CFeeRate effective_feerate,
                         CFeeRate long_term_feerate, CFeeRate discard_feerate, size_t tx_noinputs_size, bool avoid_partial) :
@@ -184,6 +186,8 @@ struct OutputGroup
     CAmount effective_value{0};
     /** The fee to spend these UTXOs at the effective feerate. */
     CAmount fee{0};
+    /** The fee to spend these UTXOs at the effective feerate. */
+    CAsset fee_asset;
     /** The target feerate of the transaction we're trying to build. */
     CFeeRate m_effective_feerate{0};
     /** The fee to spend these UTXOs at the long term feerate. */
@@ -198,6 +202,7 @@ struct OutputGroup
 
     OutputGroup() {}
     OutputGroup(const CoinSelectionParams& params) :
+        fee_asset(params.m_fee_asset),
         m_effective_feerate(params.m_effective_feerate),
         m_long_term_feerate(params.m_long_term_feerate),
         m_subtract_fee_outputs(params.m_subtract_fee_outputs)
@@ -282,7 +287,7 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
 
 // ELEMENTS:
 // Knapsack that delegates for every asset individually.
-std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue);
+std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue, const CAsset& asset);
 
 // Get coin selection waste for a map of asset->amount.
 [[nodiscard]] CAmount GetSelectionWaste(const std::set<CInputCoin>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value);

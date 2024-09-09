@@ -114,7 +114,7 @@ void BlockAssembler::resetBlock()
 
     // These counters do not include coinbase tx
     nBlockTx = 0;
-    nFees = 0;
+    feeMap = CAmountMap();
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, std::chrono::seconds min_tx_age, DynaFedParamEntry* proposed_entry, const std::vector<CScript>* commit_scripts)
@@ -193,21 +193,38 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CMutableTransaction coinbaseTx;
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
-    coinbaseTx.vout.resize(1);
-    coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
-    coinbaseTx.vout[0].nAsset = policyAsset;
-    coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
-    if (g_con_elementsmode) {
-        if(chainparams.GetConsensus().subsidy_asset != policyAsset) {
-            // Only claim the subsidy if it's the same as the policy asset.
-            coinbaseTx.vout[0].nValue = nFees;
-        }
-        // 0-value outputs must be unspendable
-        if (coinbaseTx.vout[0].nValue.GetAmount() == 0) {
-            coinbaseTx.vout[0].scriptPubKey = CScript() << OP_RETURN;
-        }
-    }
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+    if (feeMap.size() == 0) {
+        feeMap[::policyAsset] = 0;
+    }
+    int index = 0;
+    for (auto& fee : feeMap) {
+        auto& feeAsset = fee.first;
+        auto& feeAmount = fee.second;
+        if (!g_con_any_asset_fees && feeAsset != ::policyAsset) {
+            continue;
+        }
+        CTxOut newTxOut;
+        newTxOut.scriptPubKey = scriptPubKeyIn;
+        newTxOut.nAsset = feeAsset;
+        newTxOut.nValue = feeAmount;
+        if (feeAsset == chainparams.GetConsensus().subsidy_asset) {
+            newTxOut.nValue = feeAmount + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+        }
+        if (g_con_elementsmode) {
+            if (chainparams.GetConsensus().subsidy_asset != policyAsset) {
+                // Only claim the subsidy if it's the same as the policy asset.
+                newTxOut.nValue = feeAmount;
+            }
+            // 0-value outputs must be unspendable
+            if (newTxOut.nValue.GetAmount() == 0) {
+                newTxOut.scriptPubKey = CScript() << OP_RETURN;
+            }
+        }
+        coinbaseTx.vout.push_back(newTxOut);
+        pblocktemplate->vTxFees[index] = -feeAmount;
+        index++;
+    }
     // Non-consensus commitment output before finishing coinbase transaction
     if (commit_scripts && !commit_scripts->empty()) {
         for (auto commit_script: *commit_scripts) {
@@ -216,9 +233,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
-    pblocktemplate->vTxFees[0] = -nFees;
-
-    LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+    LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %s sigops %d\n", GetBlockWeight(*pblock), nBlockTx, feeMap, nBlockSigOpsCost);
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
@@ -290,7 +305,7 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     nBlockWeight += iter->GetTxWeight();
     ++nBlockTx;
     nBlockSigOpsCost += iter->GetSigOpCost();
-    nFees += iter->GetFee();
+    feeMap[iter->GetFeeAsset()] += iter->GetFee();
     inBlock.insert(iter);
 
     bool fPrintPriority = gArgs.GetBoolArg("-printpriority", DEFAULT_PRINTPRIORITY);
@@ -437,7 +452,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
         assert(!inBlock.count(iter));
 
         uint64_t packageSize = iter->GetSizeWithAncestors();
-        CAmount packageFees = iter->GetModFeesWithAncestors();
+        CValue packageFees = iter->GetModFeesWithAncestors();
         int64_t packageSigOpsCost = iter->GetSigOpCostWithAncestors();
         if (fUsingModified) {
             packageSize = modit->nSizeWithAncestors;
@@ -445,7 +460,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
             packageSigOpsCost = modit->nSigOpCostWithAncestors;
         }
 
-        if (packageFees < blockMinFeeRate.GetFee(packageSize)) {
+        if (packageFees.GetValue() < blockMinFeeRate.GetFee(packageSize)) {
             // Everything else we might consider has a lower fee rate
             return;
         }

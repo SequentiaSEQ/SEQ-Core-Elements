@@ -81,7 +81,10 @@ static const size_t TOTAL_TRIES = 100000;
 
 std::optional<SelectionResult> SelectCoinsBnB(std::vector<OutputGroup>& utxo_pool, const CAmount& selection_target, const CAmount& cost_of_change)
 {
-    CAmountMap map_target{{ ::policyAsset, selection_target}};
+    if (utxo_pool.empty()) {
+        return std::nullopt;
+    }
+    CAmountMap map_target{{utxo_pool.at(0).fee_asset, selection_target}};
     SelectionResult result(map_target);
     CAmount curr_value = 0;
 
@@ -187,7 +190,10 @@ std::optional<SelectionResult> SelectCoinsBnB(std::vector<OutputGroup>& utxo_poo
 
 std::optional<SelectionResult> SelectCoinsSRD(const std::vector<OutputGroup>& utxo_pool, CAmount target_value)
 {
-    CAmountMap map_target{{ ::policyAsset, target_value}};
+    if (utxo_pool.empty()) {
+        return std::nullopt;
+    }
+    CAmountMap map_target{{utxo_pool.at(0).fee_asset, target_value}};
     SelectionResult result(map_target);
 
     std::vector<size_t> indexes;
@@ -255,7 +261,7 @@ static void ApproximateBestSubset(const std::vector<OutputGroup>& groups, const 
 }
 
 // ELEMENTS:
-std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue)
+std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue, const CAsset& feeAsset)
 {
     SelectionResult result(mapTargetValue);
 
@@ -270,7 +276,7 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
         if (it->second == 0) {
             continue;
         }
-        if (it->first == ::policyAsset) {
+        if (it->first == feeAsset) {
             continue;
         }
 
@@ -319,7 +325,7 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
     NOTE:
     CInputCoin::effective_value is negative for non-policy assets, so the sum non_policy_effective_value is negative. Therefore, it is subtracted in order to increase policy_target by the fees required.
     */
-    CAmount policy_target = mapTargetValue.at(::policyAsset) - non_policy_effective_value;
+    CAmount policy_target = mapTargetValue.at(feeAsset) - non_policy_effective_value;
     if (policy_target > 0) {
         inner_groups.clear();
 
@@ -335,7 +341,7 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
                     break;
                 }
 
-                if (c.asset != ::policyAsset) {
+                if (c.asset != feeAsset) {
                     add = false;
                     break;
                 }
@@ -351,10 +357,10 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
             return std::nullopt;
         }
 
-        if (auto inner_result = KnapsackSolver(inner_groups, policy_target, ::policyAsset)) {
+        if (auto inner_result = KnapsackSolver(inner_groups, policy_target, feeAsset)) {
             result.AddInput(*inner_result);
         } else {
-            LogPrint(BCLog::SELECTCOINS, "Not enough funds to create target %d for policy asset %s\n", policy_target, ::policyAsset.GetHex());
+            LogPrint(BCLog::SELECTCOINS, "Not enough funds to create target %d for fee asset %s\n", policy_target, feeAsset.GetHex());
             return std::nullopt;
         }
     }
@@ -444,9 +450,9 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
 
 void OutputGroup::Insert(const CInputCoin& output, int depth, bool from_me, size_t ancestors, size_t descendants, bool positive_only) {
     // Compute the effective value first
-    const CAmount coin_fee = output.m_input_bytes < 0 ? 0 : m_effective_feerate.GetFee(output.m_input_bytes);
-    // ELEMENTS: "effective value" only comes from the policy asset
-    const CAmount ev = output.value * (output.asset == ::policyAsset) - coin_fee;
+    const CAmount coin_fee = output.m_input_bytes < 0 ? 0 : m_effective_feerate.GetFee(output.m_input_bytes, fee_asset);
+    // ELEMENTS: "effective value" only comes from the fee asset
+    const CAmount ev = output.value * (output.asset == fee_asset) - coin_fee;
 
     // Filter for positive only here before adding the coin
     if (positive_only && ev <= 0) return;
@@ -486,7 +492,7 @@ CAmount OutputGroup::GetSelectionAmount() const
 {
     // ELEMENTS: non-policy assets always use `m_value`. Their (negative)
     //  `effective_value` will be added to the target for the policy asset
-    if (!m_outputs.empty() && m_outputs[0].asset != ::policyAsset) {
+    if (!m_outputs.empty() && m_outputs[0].asset != fee_asset) {
         return m_value;
     }
     return m_subtract_fee_outputs ? m_value : effective_value;

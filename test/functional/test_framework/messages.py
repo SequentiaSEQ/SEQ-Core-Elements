@@ -391,13 +391,14 @@ OUTPOINT_PEGIN_FLAG = (1 << 30)
 OUTPOINT_INDEX_MASK = 0x3fffffff
 
 class CAssetIssuance():
-    __slots__ = ("assetBlindingNonce", "assetEntropy", "nAmount", "nInflationKeys")
+    __slots__ = ("assetBlindingNonce", "assetEntropy", "nAmount", "nInflationKeys", "denomination")
 
     def __init__(self):
         self.assetBlindingNonce = 0
         self.assetEntropy = 0
         self.nAmount = CTxOutValue()
         self.nInflationKeys = CTxOutValue()
+        self.denomination = 8
 
     def isNull(self):
         return self.nAmount.isNull() and self.nInflationKeys.isNull()
@@ -409,6 +410,7 @@ class CAssetIssuance():
         self.nAmount.deserialize(f)
         self.nInflationKeys = CTxOutValue()
         self.nInflationKeys.deserialize(f)
+        self.denomination = deser_compact_size(f)
 
     def serialize(self):
         r = b""
@@ -416,6 +418,7 @@ class CAssetIssuance():
         r += ser_uint256(self.assetEntropy)
         r += self.nAmount.serialize()
         r += self.nInflationKeys.serialize()
+        r += ser_compact_size(self.denomination)
         return r
 
     # serialization of asset issuance used in taproot sighash

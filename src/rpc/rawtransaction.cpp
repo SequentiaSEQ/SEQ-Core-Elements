@@ -11,6 +11,7 @@
 #include <consensus/amount.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <exchangerates.h>
 #include <index/txindex.h>
 #include <key_io.h>
 #include <merkleblock.h>
@@ -137,6 +138,7 @@ static std::vector<RPCArg> CreateTxDoc()
                 {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
                     {
                         {"fee", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The key is \"fee\", the value the fee output you want to add."},
+                        {"fee_asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The asset tag for the fee if it is not the main chain asset"},
                     },
                     },
             },
@@ -1025,7 +1027,9 @@ static RPCHelpMan testmempoolaccept()
                             {RPCResult::Type::NUM, "vsize", /*optional=*/true, "Virtual transaction size as defined in BIP 141. This is different from actual serialized size for witness transactions as witness data is discounted (only present when 'allowed' is true)"},
                             {RPCResult::Type::OBJ, "fees", /*optional=*/true, "Transaction fees (only present if 'allowed' is true)",
                             {
-                                {RPCResult::Type::STR_AMOUNT, "base", "transaction fee in " + CURRENCY_UNIT},
+                                {RPCResult::Type::STR_AMOUNT, "base", "transaction fee in " + CURRENCY_UNIT + " unless specified otherwise in 'asset' field"},
+                                {RPCResult::Type::STR_HEX, "asset", "asset used to pay transaction fee"},
+                                {RPCResult::Type::STR_AMOUNT, "value", "transaction fee denominated in node's RFU (reference fee unit)"},
                             }},
                             {RPCResult::Type::STR, "reject-reason", /*optional=*/true, "Rejection string (only present when 'allowed' is false)"},
                         }},
@@ -1117,6 +1121,11 @@ static RPCHelpMan testmempoolaccept()
                 result_inner.pushKV("vsize", virtual_size);
                 UniValue fees(UniValue::VOBJ);
                 fees.pushKV("base", ValueFromAmount(fee));
+                if (g_con_any_asset_fees) {
+                    const CAsset& feeAsset = tx->GetFeeAsset(::policyAsset);
+                    fees.pushKV("asset", feeAsset.GetHex());
+                    fees.pushKV("value", ValueFromAmount(ExchangeRateMap::GetInstance().ConvertAmountToValue(fee, feeAsset).GetValue()));
+                }
                 result_inner.pushKV("fees", fees);
             }
         } else {
@@ -1202,6 +1211,7 @@ static RPCHelpMan decodepsbt()
                                     {RPCResult::Type::OBJ, "scriptPubKey", "",
                                     {
                                         {RPCResult::Type::STR, "asm", "The asm"},
+                                        {RPCResult::Type::STR, "desc", "Inferred descriptor for the output"},
                                         {RPCResult::Type::STR_HEX, "hex", "The hex"},
                                         {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
                                         {RPCResult::Type::STR, "address", /*optional=*/true, "The Bitcoin address (only if a well-defined address exists)"},
@@ -2583,6 +2593,7 @@ static RPCHelpMan analyzepsbt()
                     {RPCResult::Type::NUM, "estimated_vsize", /*optional=*/true, "Estimated vsize of the final signed transaction"},
                     {RPCResult::Type::STR_AMOUNT, "estimated_feerate", /*optional=*/true, "Estimated feerate of the final signed transaction in " + CURRENCY_UNIT + "/kvB. Shown only if all UTXO slots in the PSBT have been filled"},
                     {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The transaction fee paid. Shown only if all UTXO slots in the PSBT have been filled"},
+                    {RPCResult::Type::STR_AMOUNT, "fee_asset", /*optional=*/true, "The asset used to pay the transaction fee. Shown only if all UTXO slots in the PSBT have been filled"},
                     {RPCResult::Type::STR, "next", "Role of the next person that this psbt needs to go to"},
                     {RPCResult::Type::STR, "error", /*optional=*/true, "Error message (if there is one)"},
                 }
@@ -2678,6 +2689,9 @@ static RPCHelpMan analyzepsbt()
     }
     if (psbta.fee != std::nullopt) {
         result.pushKV("fee", ValueFromAmount(*psbta.fee));
+    }
+    if (psbta.fee_asset != std::nullopt) {
+        result.pushKV("fee_asset", (*psbta.fee_asset).GetHex());
     }
     result.pushKV("next", PSBTRoleName(psbta.next));
     if (!psbta.error.empty()) {
@@ -2872,12 +2886,13 @@ struct RawIssuanceDetails
     uint256 entropy;
     CAsset asset;
     CAsset token;
+    uint8_t denomination = 8;
 };
 
 // Appends a single issuance to the first input that doesn't have one, and includes
 // a single output per asset type in shuffled positions. Requires at least one output
 // to exist (the fee output, which must be last).
-void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_details, const CAmount asset_amount, const CAmount token_amount, const CTxDestination& asset_dest, const CTxDestination& token_dest, const bool blind_issuance, const uint256& contract_hash)
+void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_details, const CAmount asset_amount, const CAmount token_amount, const CTxDestination& asset_dest, const CTxDestination& token_dest, const bool blind_issuance, const uint256& contract_hash, const uint8_t denomination)
 {
     CHECK_NONFATAL(asset_amount > 0 || token_amount > 0);
     CHECK_NONFATAL(mtx.vout.size() > 0);
@@ -2909,8 +2924,11 @@ void issueasset_base(CMutableTransaction& mtx, RawIssuanceDetails& issuance_deta
     issuance_details.entropy = entropy;
     issuance_details.asset = asset;
     issuance_details.token = token;
+    if (denomination)
+        issuance_details.denomination = denomination;
 
     mtx.vin[issuance_input_index].assetIssuance.assetEntropy = contract_hash;
+    mtx.vin[issuance_input_index].assetIssuance.nDenomination = issuance_details.denomination;
 
     if (asset_amount > 0) {
         // Fee output is required to be last. We will insert _before_ the selected position, which preserves that.
@@ -2991,8 +3009,9 @@ static RPCHelpMan rawissueasset()
                                     {"asset_address", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Destination address of generated asset. Required if `asset_amount` given."},
                                     {"token_amount", RPCArg::Type::AMOUNT, RPCArg::Optional::OMITTED_NAMED_ARG, "Amount of reissuance token to generate, if any."},
                                     {"token_address", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Destination address of generated reissuance tokens. Required if `token_amount` given."},
-                                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to mark the issuance input for blinding or not. Only affects issuances with re-issuance tokens."},
+                                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{false}, "Whether to mark the issuance input for blinding or not. Only affects issuances with re-issuance tokens."},
                                     {"contract_hash", RPCArg::Type::STR_HEX, RPCArg::Default{"0000...0000"}, "Contract hash that is put into issuance definition. Must be 32 bytes worth in hex string form. This will affect the asset id."},
+                                    {"denomination", RPCArg::Type::NUM, RPCArg::Default{8}, "Number of decimals to denominate the asset - default: 8\n"},
                                 }
                             }
                         }
@@ -3085,8 +3104,10 @@ static RPCHelpMan rawissueasset()
         }
 
         // If we have issuances, check if reissuance tokens will be generated via blinding path
-        const UniValue blind_uni = issuance_o["blind"];
-        const bool blind_issuance = !blind_uni.isBool() || blind_uni.get_bool();
+        bool blind_issuance = false;
+        if (!issuance_o["blind"].isNull()) {
+            blind_issuance = issuance_o["blind"].get_bool();
+        }
 
         // Check for optional contract to hash into definition
         uint256 contract_hash;
@@ -3094,9 +3115,14 @@ static RPCHelpMan rawissueasset()
             contract_hash = ParseHashV(issuance_o["contract_hash"], "contract_hash");
         }
 
+        uint8_t denomination = 8;
+        if (!issuance_o["denomination"].isNull()) {
+            denomination = issuance_o["denomination"].get_int();
+        }
+
         RawIssuanceDetails details;
 
-        issueasset_base(mtx, details, asset_amount, token_amount, asset_dest, token_dest, blind_issuance, contract_hash);
+        issueasset_base(mtx, details, asset_amount, token_amount, asset_dest, token_dest, blind_issuance, contract_hash, denomination);
         if (details.input_index == -1) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Failed to find enough blank inputs for listed issuances.");
         }

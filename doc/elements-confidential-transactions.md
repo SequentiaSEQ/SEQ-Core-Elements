@@ -46,13 +46,13 @@ fee output, paid in the sidechain's default asset (L-BTC for Liquid).
 ## Cryptographic Primitives
 
 Elements' Confidential Assets capability is built on four cryptographic primitives
-implemented in the secpk25k1-zkp C++ library [^1]:
+implemented in the secp256k1-zkp C++ library [^1]:
 
 
 ### Pedersen Commitments
 
 In a confidential transaction, asset types and amounts are blinded
-using Pedersen commitments and mapped to  "asset commitments" and
+using Pedersen commitments and mapped to "asset commitments" and
 "value commitments".  These commitments obscure both the asset types
 and amounts, while allowing a verifier to prove that the sum of a
 transaction's inputs is equal to the sum of its outputs plus the

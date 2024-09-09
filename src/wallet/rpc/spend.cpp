@@ -5,6 +5,7 @@
 #include <assetsdir.h>
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <exchangerates.h>
 #include <issuance.h>
 #include <key_io.h>
 #include <policy/policy.h>
@@ -162,6 +163,7 @@ RPCHelpMan sendtoaddress()
                     {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                     {"ignoreblindfail", RPCArg::Type::BOOL, RPCArg::Default{true}, "Return a transaction even when a blinding attempt fails due to number of blinded inputs/outputs."},
                     {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
+                    {"fee_asset_label", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for fee payment."},
                     {"verbose", RPCArg::Type::BOOL, RPCArg::Default{false}, "If true, return extra information about the transaction."},
                 },
                 {
@@ -237,6 +239,19 @@ RPCHelpMan sendtoaddress()
 
     SetFeeEstimateMode(*pwallet, coin_control, /* conf_target */ request.params[6], /* estimate_mode */ request.params[7], /* fee_rate */ request.params[11], /* override_min_fee */ false);
 
+    if (g_con_any_asset_fees) {
+        // Default to using the same asset being sent in the transaction
+        CAsset feeAsset = asset;
+        if (request.params.size() > 12 && request.params[12].isStr() && !request.params[12].get_str().empty()) {
+            std::string strFeeAsset = request.params[12].get_str();
+            feeAsset = GetAssetFromString(strFeeAsset);
+            if (feeAsset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+            }
+        }
+        coin_control.m_fee_asset = feeAsset;
+    }
+
     EnsureWalletIsUnlocked(*pwallet);
 
     UniValue address_amounts(UniValue::VOBJ);
@@ -251,7 +266,7 @@ RPCHelpMan sendtoaddress()
 
     std::vector<CRecipient> recipients;
     ParseRecipients(address_amounts, address_assets, subtractFeeFromAmount, recipients);
-    bool verbose = request.params[12].isNull() ? false: request.params[12].get_bool();
+    bool verbose = request.params[13].isNull() ? false: request.params[13].get_bool();
 
     return SendMoney(*pwallet, coin_control, recipients, mapValue, verbose, ignore_blind_fail);
 },
@@ -291,6 +306,7 @@ RPCHelpMan sendmany()
                     },
                     {"ignoreblindfail", RPCArg::Type::BOOL, RPCArg::Default{true}, "Return a transaction even when a blinding attempt fails due to number of blinded inputs/outputs."},
                     {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
+                    {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::DefaultHint{"not set, fall back to asset being sent"}, "label or hex ID of asset used for fees"},                    
                     {"verbose", RPCArg::Type::BOOL, RPCArg::Default{false}, "If true, return extra information about the transaction."},
                 },
                 {
@@ -363,7 +379,18 @@ RPCHelpMan sendmany()
 
     std::vector<CRecipient> recipients;
     ParseRecipients(sendTo, assets, subtractFeeFromAmount, recipients);
-    bool verbose = request.params[11].isNull() ? false : request.params[11].get_bool();
+    if (g_con_any_asset_fees && !recipients.empty()) {
+        CAsset feeAsset = recipients[0].asset;
+        if (request.params.size() > 11) {
+            std::string strFeeAsset = request.params[11].get_str();
+            feeAsset = GetAssetFromString(strFeeAsset);
+            if (feeAsset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+            }
+        }
+        coin_control.m_fee_asset = feeAsset;
+    }
+    bool verbose = request.params[12].isNull() ? false : request.params[12].get_bool();
 
     return SendMoney(*pwallet, coin_control, recipients, std::move(mapValue), verbose, ignore_blind_fail);
 },
@@ -450,6 +477,9 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
     bool lockUnspents = false;
     UniValue subtractFeeFromOutputs;
     std::set<int> setSubtractFeeFromOutputs;
+    if (g_con_any_asset_fees && !tx.vout.empty()) {
+        coinControl.m_fee_asset = tx.vout[0].nAsset.GetAsset();
+    }
 
     if (!options.isNull()) {
       if (options.type() == UniValue::VBOOL) {
@@ -477,6 +507,7 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
                 {"locktime", UniValueType(UniValue::VNUM)},
                 {"fee_rate", UniValueType()}, // will be checked by AmountFromValue() in SetFeeEstimateMode()
                 {"feeRate", UniValueType()}, // will be checked by AmountFromValue() below
+                {"fee_asset", UniValueType(UniValue::VSTR)},
                 {"psbt", UniValueType(UniValue::VBOOL)},
                 {"solving_data", UniValueType(UniValue::VOBJ)},
                 {"subtractFeeFromOutputs", UniValueType(UniValue::VARR)},
@@ -493,17 +524,28 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
             coinControl.m_add_inputs = options["add_inputs"].get_bool();
         }
 
+        if (g_con_any_asset_fees) {
+            if (options.exists("fee_asset")) {
+                std::string strFeeAsset = options["fee_asset"].get_str();
+                CAsset feeAsset = GetAssetFromString(strFeeAsset);
+                if (feeAsset.IsNull()) {
+                    throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAsset.GetHex()));
+                }
+                coinControl.m_fee_asset = feeAsset;
+            }
+        }
+
         if (options.exists("changeAddress") || options.exists("change_address")) {
             const UniValue& change_address  = options.exists("change_address") ? options["change_address"] : options["changeAddress"];
             std::map<CAsset, CTxDestination> destinations;
 
             if (change_address.isStr()) {
-                // Single destination for default asset (policyAsset).
+                // Single destination for fee asset.
                 CTxDestination dest = DecodeDestination(change_address.get_str());
                 if (!IsValidDestination(dest)) {
                     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Change address must be a valid address");
                 }
-                destinations[::policyAsset] = dest;
+                destinations[coinControl.m_fee_asset.value_or(::policyAsset)] = dest;
             } else if (change_address.isObject()) {
                 // Map of assets to destinations.
                 std::map<std::string, UniValue> kvMap;
@@ -763,6 +805,7 @@ RPCHelpMan fundrawtransaction()
                             {"lockUnspents", RPCArg::Type::BOOL, RPCArg::Default{false}, "Lock selected unspent outputs"},
                             {"fee_rate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_ATOM + "/vB."},
                             {"feeRate", RPCArg::Type::AMOUNT, RPCArg::DefaultHint{"not set, fall back to wallet fee estimation"}, "Specify a fee rate in " + CURRENCY_UNIT + "/kvB."},
+                            {"fee_asset", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "The hex id or label of asset used for fee payment."},
                             {"subtractFeeFromOutputs", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR}, "The integers.\n"
                                                           "The fee will be equally deducted from the amount of each specified output.\n"
                                                           "Those recipients will receive less coins than you enter in their corresponding amount field.\n"
@@ -855,6 +898,9 @@ RPCHelpMan fundrawtransaction()
     UniValue result(UniValue::VOBJ);
     result.pushKV("hex", EncodeHexTx(CTransaction(tx)));
     result.pushKV("fee", ValueFromAmount(fee));
+    if (g_con_any_asset_fees) {
+        result.pushKV("fee_asset", coin_control.m_fee_asset.value_or(::policyAsset).GetHex());
+    }
     result.pushKV("changepos", change_position);
 
     return result;
@@ -990,6 +1036,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
                              "\nSpecify a fee rate in " + CURRENCY_ATOM + "/vB instead of relying on the built-in fee estimator.\n"
                              "Must be at least " + incremental_fee + " higher than the current transaction fee rate.\n"
                              "WARNING: before version 0.21, fee_rate was in " + CURRENCY_UNIT + "/kvB. As of 0.21, fee_rate is in " + CURRENCY_ATOM + "/vB.\n"},
+                    {"fee_asset", RPCArg::Type::STR_HEX, RPCArg::DefaultHint{"not set, fall back to fee asset in existing transaction"}, "Asset to use to pay fees\n"},
                     {"replaceable", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether the new transaction should still be\n"
                              "marked bip-125 replaceable. If true, the sequence numbers in the transaction will\n"
                              "be left unchanged from the original. If false, any input sequence numbers in the\n"
@@ -1010,6 +1057,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
             {
                 {RPCResult::Type::STR_AMOUNT, "origfee", "The fee of the replaced transaction."},
                 {RPCResult::Type::STR_AMOUNT, "fee", "The fee of the new transaction."},
+                {RPCResult::Type::STR_HEX, "fee_asset", /* optional */ g_con_any_asset_fees, "The asset being used to pay fees."},
                 {RPCResult::Type::ARR, "errors", "Errors encountered during processing (may be empty).",
                 {
                     {RPCResult::Type::STR, "", ""},
@@ -1036,6 +1084,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
     coin_control.fAllowWatchOnly = pwallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS);
     // optional parameters
     coin_control.m_signal_bip125_rbf = true;
+    CAsset fee_asset = ::policyAsset;
 
     if (!request.params[1].isNull()) {
         UniValue options = request.params[1];
@@ -1044,6 +1093,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
                 {"confTarget", UniValueType(UniValue::VNUM)},
                 {"conf_target", UniValueType(UniValue::VNUM)},
                 {"fee_rate", UniValueType()}, // will be checked by AmountFromValue() in SetFeeEstimateMode()
+                {"fee_asset", UniValueType(UniValue::VSTR)},
                 {"replaceable", UniValueType(UniValue::VBOOL)},
                 {"estimate_mode", UniValueType(UniValue::VSTR)},
             },
@@ -1057,6 +1107,15 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
 
         if (options.exists("replaceable")) {
             coin_control.m_signal_bip125_rbf = options["replaceable"].get_bool();
+        }
+
+        if (g_con_any_asset_fees && options.exists("fee_asset")) {
+            std::string feeAssetString = options["fee_asset"].get_str();
+            fee_asset = GetAssetFromString(feeAssetString);
+            if (fee_asset.IsNull()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, strprintf("Unknown label and invalid asset hex for fee: %s", feeAssetString));
+            }
+            coin_control.m_fee_asset = fee_asset;
         }
         SetFeeEstimateMode(*pwallet, coin_control, conf_target, options["estimate_mode"], options["fee_rate"], /* override_min_fee */ false);
     }
@@ -1125,6 +1184,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
 
     result.pushKV("origfee", ValueFromAmount(old_fee));
     result.pushKV("fee", ValueFromAmount(new_fee));
+    result.pushKV("fee_asset", fee_asset.GetHex());
     UniValue result_errors(UniValue::VARR);
     for (const bilingual_str& error : errors) {
         result_errors.push_back(error.original);
@@ -1555,7 +1615,9 @@ RPCHelpMan walletcreatefundedpsbt()
                     RPCResult::Type::OBJ, "", "",
                     {
                         {RPCResult::Type::STR, "psbt", "The resulting raw transaction (base64-encoded string)"},
-                        {RPCResult::Type::STR_AMOUNT, "fee", "Fee in " + CURRENCY_UNIT + " the resulting transaction pays"},
+                        {RPCResult::Type::STR_AMOUNT, "fee", g_con_any_asset_fees ? "Fee that the resulting transaction pays, denominated in the asset specified by 'fee_asset'" : "Fee in " + CURRENCY_UNIT + " the resulting transaction pays"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_asset", /* optional */ g_con_any_asset_fees, "Asset that the fee is paid with"},
+                        {RPCResult::Type::STR_AMOUNT, "fee_value", /* optional */ g_con_any_asset_fees, "Fee that the resulting transaction pays, denominated in " + CURRENCY_UNIT},
                         {RPCResult::Type::NUM, "changepos", "The position of the added change output, or -1"},
                     }
                                 },
@@ -1728,6 +1790,12 @@ RPCHelpMan walletcreatefundedpsbt()
     UniValue result(UniValue::VOBJ);
     result.pushKV("psbt", EncodeBase64(ssTx.str()));
     result.pushKV("fee", ValueFromAmount(fee));
+    if (g_con_any_asset_fees) {
+        CAsset fee_asset = coin_control.m_fee_asset.value_or(::policyAsset);
+        CValue fee_value = ExchangeRateMap::GetInstance().ConvertAmountToValue(fee, fee_asset);
+        result.pushKV("fee_asset", fee_asset.GetHex());
+        result.pushKV("fee_value", ValueFromAmount(fee_value.GetValue()));
+    }
     result.pushKV("changepos", change_position);
     return result;
 },

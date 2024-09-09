@@ -1,10 +1,10 @@
 AC_PREREQ([2.69])
 define(_CLIENT_VERSION_MAJOR, 23)
-define(_CLIENT_VERSION_MINOR, 99)
-define(_CLIENT_VERSION_BUILD, 0)
-define(_CLIENT_VERSION_RC, 0)
-define(_CLIENT_VERSION_IS_RELEASE, false)
-define(_COPYRIGHT_YEAR, 2022)
+define(_CLIENT_VERSION_MINOR, 2)
+define(_CLIENT_VERSION_BUILD, 2)
+define(_CLIENT_VERSION_RC, 1)
+define(_CLIENT_VERSION_IS_RELEASE, true)
+define(_COPYRIGHT_YEAR, 2024)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Elements Project]])
 AC_INIT([Elements Core],m4_join([.], _CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MINOR, _CLIENT_VERSION_BUILD)m4_if(_CLIENT_VERSION_RC, [0], [], [rc]_CLIENT_VERSION_RC),[https://github.com/ElementsProject/elements/issues],[elements],[https://elementsproject.org/])
@@ -24,7 +24,6 @@ BITCOIN_GUI_NAME=elements-qt
 BITCOIN_CLI_NAME=elements-cli
 BITCOIN_TX_NAME=elements-tx
 BITCOIN_UTIL_NAME=elements-util
-BITCOIN_CHAINSTATE_NAME=elements-chainstate
 BITCOIN_WALLET_TOOL_NAME=elements-wallet
 dnl Multi Process
 BITCOIN_MP_NODE_NAME=elements-node
@@ -267,6 +266,12 @@ AC_ARG_ENABLE([liquid],
   [liquid_build=yes],
   [liquid_build=no])
 
+AC_ARG_ENABLE([any_asset_fees],
+  [AS_HELP_STRING([--enable-any-asset-fees],
+  [Enable build that uses constants for any asset fees feature])],
+  [any_asset_fees=yes],
+  [any_asset_fees=no])
+
 if test "$use_asm" = "yes"; then
   AC_DEFINE([USE_ASM], [1], [Define this symbol to build in assembly routines])
 fi
@@ -274,6 +279,11 @@ fi
 if test "$liquid_build" = "yes"; then
   AC_DEFINE(LIQUID, 1, [Define this symbol for Liquid builds])
 fi
+
+if test "$any_asset_fees" = "yes"; then
+  AC_DEFINE(ANY_ASSET_FEES, 1, [Define this symbol to modify constants for any asset fees feature])
+fi
+
 AC_ARG_ENABLE([zmq],
   [AS_HELP_STRING([--disable-zmq],
   [disable ZMQ notifications])],
@@ -655,12 +665,6 @@ AC_ARG_ENABLE([util-util],
   [build_bitcoin_util=$enableval],
   [build_bitcoin_util=$build_bitcoin_utils])
 
-AC_ARG_ENABLE([experimental-util-chainstate],
-  [AS_HELP_STRING([--enable-experimental-util-chainstate],
-  [build experimental bitcoin-chainstate executable (default=no)])],
-  [build_bitcoin_chainstate=$enableval],
-  [build_bitcoin_chainstate=no])
-
 AC_ARG_WITH([libs],
   [AS_HELP_STRING([--with-libs],
   [build libraries (default=yes)])],
@@ -736,10 +740,6 @@ case $host in
            dnl This must precede the call to BITCOIN_FIND_BDB48 below.
            BDB_CFLAGS="-I$bdb_prefix/include"
            BDB_LIBS="-L$bdb_prefix/lib -ldb_cxx-4.8"
-         fi
-
-         if test "$use_sqlite" != "no" && $BREW list --versions sqlite3 >/dev/null; then
-           export PKG_CONFIG_PATH="$($BREW --prefix sqlite3 2>/dev/null)/lib/pkgconfig:$PKG_CONFIG_PATH"
          fi
 
          if $BREW list --versions qt@5 >/dev/null; then
@@ -1287,7 +1287,6 @@ if test "$enable_fuzz" = "yes"; then
   build_bitcoin_cli=no
   build_bitcoin_tx=no
   build_bitcoin_util=no
-  build_bitcoin_chainstate=no
   build_bitcoin_wallet=no
   build_bitcoind=no
   build_bitcoin_libs=no
@@ -1458,6 +1457,12 @@ if test "$use_external_signer" != "no"; then
     ;;
     *)
       AC_MSG_CHECKING([whether Boost.Process can be used])
+      TEMP_CXXFLAGS="$CXXFLAGS"
+      dnl Boost 1.78 requires the following workaround.
+      dnl See: https://github.com/boostorg/process/issues/235
+      CXXFLAGS="$CXXFLAGS -Wno-error=narrowing"
+      TEMP_CPPFLAGS="$CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
       TEMP_LDFLAGS="$LDFLAGS"
       dnl Boost 1.73 and older require the following workaround.
       LDFLAGS="$LDFLAGS $PTHREAD_CFLAGS"
@@ -1465,6 +1470,8 @@ if test "$use_external_signer" != "no"; then
         [have_boost_process="yes"],
         [have_boost_process="no"])
       LDFLAGS="$TEMP_LDFLAGS"
+      CPPFLAGS="$TEMP_CPPFLAGS"
+      CXXFLAGS="$TEMP_CXXFLAGS"
       AC_MSG_RESULT([$have_boost_process])
       if test "$have_boost_process" = "yes"; then
         use_external_signer="yes"
@@ -1643,10 +1650,6 @@ AC_MSG_RESULT($build_bitcoin_wallet)
 AC_MSG_CHECKING([whether to build bitcoin-util])
 AM_CONDITIONAL([BUILD_BITCOIN_UTIL], [test $build_bitcoin_util = "yes"])
 AC_MSG_RESULT($build_bitcoin_util)
-
-AC_MSG_CHECKING([whether to build experimental bitcoin-chainstate])
-AM_CONDITIONAL([BUILD_BITCOIN_CHAINSTATE], [test $build_bitcoin_chainstate = "yes"])
-AC_MSG_RESULT($build_bitcoin_chainstate)
 
 AC_MSG_CHECKING([whether to build libraries])
 AM_CONDITIONAL([BUILD_BITCOIN_LIBS], [test $build_bitcoin_libs = "yes"])
@@ -1841,6 +1844,7 @@ AM_CONDITIONAL([WORDS_BIGENDIAN], [test "$ac_cv_c_bigendian" = "yes"])
 AM_CONDITIONAL([USE_NATPMP], [test "$use_natpmp" = "yes"])
 AM_CONDITIONAL([USE_UPNP], [test "$use_upnp" = "yes"])
 AM_CONDITIONAL([LIQUID], [test "$liquid_build" = "yes"])
+AM_CONDITIONAL([ANY_ASSET_FEES], [test "$any_asset_fees" = "yes"])
 
 dnl for minisketch
 AM_CONDITIONAL([ENABLE_CLMUL], [test "$enable_clmul" = "yes"])
@@ -1868,7 +1872,6 @@ AC_SUBST(BITCOIN_GUI_NAME)
 AC_SUBST(BITCOIN_CLI_NAME)
 AC_SUBST(BITCOIN_TX_NAME)
 AC_SUBST(BITCOIN_UTIL_NAME)
-AC_SUBST(BITCOIN_CHAINSTATE_NAME)
 AC_SUBST(BITCOIN_WALLET_TOOL_NAME)
 AC_SUBST(BITCOIN_MP_NODE_NAME)
 AC_SUBST(BITCOIN_MP_GUI_NAME)
@@ -1995,6 +1998,7 @@ echo "  with upnp       = $use_upnp"
 echo "  with natpmp     = $use_natpmp"
 echo "  use asm         = $use_asm"
 echo "  liquid_build    = $liquid_build"
+echo "  any_asset_fees  = $any_asset_fees"
 echo "  USDT tracing    = $use_usdt"
 echo "  sanitizers      = $use_sanitizers"
 echo "  debug enabled   = $enable_debug"

@@ -3,7 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <asset.h>
+#include <exchangerates.h>
 #include <policy/feerate.h>
+#include <policy/value.h>
+#include <primitives/transaction.h>
 
 #include <tinyformat.h>
 
@@ -34,6 +38,15 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes) const
     }
 
     return nFee;
+}
+
+CAmount CFeeRate::GetFee(uint32_t num_bytes, const CAsset& asset) const
+{
+    CValue nFee = CValue(this->GetFee(num_bytes));
+    if (g_con_any_asset_fees) {
+        nFee = ExchangeRateMap::GetInstance().ConvertValueToAmount(nFee, asset); 
+    }
+    return nFee.GetValue();
 }
 
 std::string CFeeRate::ToString(const FeeEstimateMode& fee_estimate_mode) const

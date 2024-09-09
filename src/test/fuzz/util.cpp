@@ -471,7 +471,7 @@ CTxMemPoolEntry ConsumeTxMemPoolEntry(FuzzedDataProvider& fuzzed_data_provider, 
     const bool spends_coinbase = fuzzed_data_provider.ConsumeBool();
     const unsigned int sig_op_cost = fuzzed_data_provider.ConsumeIntegralInRange<unsigned int>(0, MAX_BLOCK_SIGOPS_COST);
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
-    return CTxMemPoolEntry{MakeTransactionRef(tx), fee, time, entry_height, spends_coinbase, sig_op_cost, {}, setPeginsSpent};
+    return CTxMemPoolEntry{MakeTransactionRef(tx), fee, ::policyAsset, fee, time, entry_height, spends_coinbase, sig_op_cost, {}, setPeginsSpent};
 }
 
 bool ContainsSpentInput(const CTransaction& tx, const CCoinsViewCache& inputs) noexcept

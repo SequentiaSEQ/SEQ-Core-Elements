@@ -6,6 +6,7 @@
 #include <validation.h>
 
 #include <arith_uint256.h>
+#include <asset.h>
 #include <chain.h>
 #include <chainparams.h>
 #include <checkqueue.h>
@@ -17,6 +18,7 @@
 #include <consensus/validation.h>
 #include <cuckoocache.h>
 #include <deploymentstatus.h>
+#include <exchangerates.h>
 #include <flatfile.h>
 #include <hash.h>
 #include <index/blockfilterindex.h>
@@ -31,6 +33,7 @@
 #include <policy/policy.h>
 #include <policy/rbf.h>
 #include <policy/settings.h>
+#include <policy/value.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <script/pegins.h>
@@ -882,11 +885,20 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     int64_t nSigOpsCost = GetTransactionSigOpCost(tx, m_view, STANDARD_SCRIPT_VERIFY_FLAGS);
 
-    // We only consider policyAsset
-    ws.m_base_fees = fee_map[policyAsset];
+    // ConstructTransaction() ensures that transactions can only have a single fee output
+    // and therefore that there will be exactly one entry in fee_map.
+    // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate
+    // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple
+    // fee assets.
+    CAsset feeAsset = g_con_any_asset_fees ? 
+        fee_map.begin()->first : 
+        ::policyAsset;
+    ws.m_base_fees = fee_map[feeAsset];
 
     // ws.m_modified_fees includes any fee deltas from PrioritiseTransaction
-    ws.m_modified_fees = ws.m_base_fees;
+    ws.m_modified_fees = g_con_any_asset_fees ? 
+        ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() : 
+        ws.m_base_fees;
     m_pool.ApplyDelta(hash, ws.m_modified_fees);
 
     // Keep track of transactions that spend a coinbase, which we re-scan
@@ -904,7 +916,8 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         }
     }
 
-    entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
+    CValue currentFeeValue = ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset);
+    entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, feeAsset, currentFeeValue, nAcceptTime, m_active_chainstate.m_chain.Height(),
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     ws.m_vsize = entry->GetTxSize();
 

@@ -251,7 +251,7 @@ CAmountMap CachedTxGetAvailableCredit(const CWallet& wallet, const CWalletTx& wt
 
 void CachedTxGetAmounts(const CWallet& wallet, const CWalletTx& wtx,
                   std::list<COutputEntry>& listReceived,
-                  std::list<COutputEntry>& listSent, CAmount& nFee, const isminefilter& filter)
+                  std::list<COutputEntry>& listSent, CAmount& nFee, CAsset& nFeeAsset, const isminefilter& filter)
 {
     nFee = 0;
     listReceived.clear();
@@ -261,7 +261,9 @@ void CachedTxGetAmounts(const CWallet& wallet, const CWalletTx& wtx,
     CAmountMap mapDebit = CachedTxGetDebit(wallet, wtx, filter);
     if (mapDebit > CAmountMap()) // debit>0 means we signed/sent this transaction
     {
-        nFee = -GetFeeMap(*wtx.tx)[::policyAsset];
+        CAmountMap feeMap = GetFeeMap(*wtx.tx);
+        nFeeAsset = g_con_any_asset_fees ? feeMap.begin()->first : ::policyAsset;
+        nFee = -feeMap[nFeeAsset];
     }
 
     LOCK(wallet.cs_wallet);
