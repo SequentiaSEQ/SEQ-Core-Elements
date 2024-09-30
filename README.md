@@ -35,14 +35,8 @@ export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site NOWARN_CXX
 ```
 
 ### Configure
-Simple configuration:
 ```bash
 ./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-tests --disable-fuzz-binary
-```
-
-I (@fare) have been configuring my test systems this way, enabling tests and extended functional tests:
-```bash
-./configure --enable-any-asset-fees --enable-debug --disable-bench --disable-fuzz-binary --enable-extended-functional-tests
 ```
 
 Note that the `--enable-any-asset-fees` flag is an addition by Sequentia,
