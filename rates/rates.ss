@@ -30,9 +30,10 @@
 ;;; Imports
 
 (import
+  (for-syntax :std/srfi/13)
   (group-in :std format iter sort sugar values)
   (group-in :std/cli getopt multicall)
-  (group-in :std/misc hash path number)
+  (group-in :std/misc hash list path number)
   (group-in :std/net httpd request uri)
   (only-in :std/net/address inet-address->string)
   (group-in :std/srfi |1|)
@@ -267,13 +268,65 @@
                 oracle (json-object->string path) (json-object->string data))
        #f))))
 
+;;; Basic HTTP handlers
+
+;; / -- handler for the main page
+(def (root-handler req res)
+  (http-response-write
+   res 200 '(("Content-Type" . "text/html"))
+   (with-output-to-string []
+     (cut write-xml
+          `(html
+            (head
+             (meta (@ (http-equiv "Content-Type") (content "text/html; charset=utf-8")))
+             (title "Sequentia Rates Server")
+             (body
+              (h1 "Hello, " ,(inet-address->string (http-request-client req)))
+              (p "Welcome to this "
+                 (a (@ (href "https://sequentia.io")) "Sequentia")
+                 " rates server. "
+                 "Please use "
+                 (a (@ (href "/rates")) "our JSON-RPC interface") "."))))))))
+
+(def (default-handler req res) ; default -- 404
+  (http-response-write res 404 '(("Content-Type" . "text/plain")) "Page not found."))
+
+(def handlers [["/" root-handler]])
+
+
+;;; Infrastructure for JSON getter functions:
+;;; defining and registering getter, HTTP handler, CLI entry-point.
+
+(def rates-mutex (make-mutex "rates"))
+
+(defrule (define-json-getter (getter assets-config services-config) body ...)
+  (with-id define-json-getter
+       ((handler #'getter '-handler)
+        (entry-point (string-filter (lambda (x) (not (eqv? x #\-))) (as-string (syntax->datum #'getter)))))
+    (def (getter
+          assets-config: (assets-config (rates-assets-config))
+          services-config: (services-config (rates-services-config)))
+      body ...)
+    (def (handler req res)
+      (with-lock
+        rates-mutex
+        (cut http-response-write
+             res 200 '(("Content-Type" . "application/json-rpc"))
+             (json-object->string (getter)))))
+    (define-entry-point (entry-point)
+      (help: (as-string "Pretty print " 'entry-point " data") getopt: [])
+      (rates-environment)
+      (pj (getter)))
+    (push! [(as-string "/" 'entry-point) handler] handlers)))
+
+
+;;; Actual JSON getter functions
+
 ;; Given assets-config and services-config, and using the cache,
 ;; return a table that to each currency code (string) associates a table from service name (string)
 ;; to conversion rate (Real) from the currency to RFU (aka USD).
 ;; (Table (Table Real <- String) <- String) <- assets-config: ?JSON services-config: ?JSON
-(def (get-rates
-      assets-config: (assets-config (rates-assets-config))
-      services-config: (services-config (rates-services-config)))
+(define-json-getter (get-rates assets-config services-config)
   (hash-value-map
    assets-config
    (lambda (asset)
@@ -282,20 +335,23 @@
         (cons oracle (get-rate/oracle-path oracle path services-config: services-config)))
       (hash-ref asset "oracles")))))
 
+
 ;; Get the median rate among those available in a table, or #f if no rates are available.
 ;; Real <- (Table Real <- String)
 (def (median<-rates rates)
   (median (filter identity (hash-values rates)) #f))
+
+;; Get the median rates from all the rates
+(def (median-rates<-all-rates rates)
+  (hash-value-map rates median<-rates))
 
 ;; Get the median rates for the configured currencies
 ;; (Table Real <- String) <- assets-config: ?JSON services-config: ?JSON
 (def (get-median-rates
       assets-config: (assets-config (rates-assets-config))
       services-config: (services-config (rates-services-config)))
-  (hash-value-map
-   (get-rates assets-config: assets-config
-              services-config: services-config)
-   median<-rates))
+  (median-rates<-all-rates
+   (get-rates assets-config: assets-config services-config: services-config)))
 
 (def (normalize-rate x)
   (integer-part (round x)))
@@ -305,19 +361,12 @@
 (def COIN-decimals 8)
 (def COIN (expt 10 COIN-decimals))
 
-;; Return an associative array mapping nAsset (as hex string) to 1e8 times
-;; the value of one atom of the asset (minimal integer value, 1, as in 1 satoshi)
-;; in atom of the RFU (i.e. minimal integer value, 1)
-(def (get-fee-exchange-rates
-      assets-config: (assets-config (rates-assets-config))
-      services-config: (services-config (rates-services-config)))
-  (def rates (get-median-rates assets-config: assets-config
-                               services-config: services-config))
 
-  ;; How much is 1 atom (10^-decimals) of a
+(def (normalized-rates<-median-rates median-rates assets-config: assets-config)
+  ;; How much is 1 atom (10^-decimals) of a RFU
   (def (semi-rate asset (default #f))
     (def config (hash-ref assets-config asset (hash)))
-    (alet ((rate (hash-ref rates asset default)))
+    (alet ((rate (hash-ref median-rates asset default)))
       (* rate
          (hash-ref config "fudge_factor" 1)
          (expt 10 (- (hash-ref config "decimals" COIN-decimals))))))
@@ -331,6 +380,37 @@
       (hash-put! h nAsset
                  (normalize-rate (* COIN (/ asset-rate RFU-rate))))))
   h)
+
+
+;; Return an associative array mapping nAsset (as hex string) to 1e8 times
+;; the value of one atom of the asset (minimal integer value, 1, as in 1 satoshi)
+;; in atom of the RFU (i.e. minimal integer value, 1)
+(define-json-getter (get-fee-exchange-rates assets-config services-config)
+  (normalized-rates<-median-rates
+   (get-median-rates assets-config: assets-config
+                     services-config: services-config)
+   assets-config: assets-config))
+
+
+(define-json-getter (get-assets assets-config services-config)
+  (def all-rates (get-rates assets-config: assets-config
+                            services-config: services-config))
+  (def median-rates (median-rates<-all-rates all-rates))
+  (def normalized-rates (normalized-rates<-median-rates
+                         median-rates assets-config: assets-config))
+  (def h (hash))
+  (for (((values asset config) (in-hash assets-config)))
+    (def (c x) (hash-get config x))
+    (alet (nAsset (c "nAsset"))
+      (hash-put! h nAsset
+                 (hash
+                  ("ticker" asset)
+                  ("name" (c "name"))
+                  ("normalized_rate" (hash-get normalized-rates nAsset))
+                  ("median_rate" (hash-get median-rates asset))
+                  ("oracle_rates" (hash-get all-rates asset))))))
+  h)
+
 
 ;;; The access methods
 
@@ -477,56 +557,12 @@
 ;;; TODO: Connecting to a sequentia node
 
 
-;; /rates -- handler for the rates page
-(def rates-mutex (make-mutex "rates"))
-(def (rates-handler req res)
-  (with-lock
-   rates-mutex
-   (cut http-response-write
-        res 200 '(("Content-Type" . "application/json-rpc"))
-        (json-object->string (get-rates)))))
-
-;; /getfeeexchangerates -- handler for the rates page
-(def (getfeeexchangerates-handler req res)
-  (with-lock
-   rates-mutex
-   (cut http-response-write
-        res 200 '(("Content-Type" . "application/json-rpc"))
-        (json-object->string (get-fee-exchange-rates)))))
-
-;; / -- handler for the main page
-(def (root-handler req res)
-  (http-response-write
-   res 200 '(("Content-Type" . "text/html"))
-   (with-output-to-string []
-     (cut write-xml
-          `(html
-            (head
-             (meta (@ (http-equiv "Content-Type") (content "text/html; charset=utf-8")))
-             (title "Sequentia Rates Server")
-             (body
-              (h1 "Hello, " ,(inet-address->string (http-request-client req)))
-              (p "Welcome to this "
-                 (a (@ (href "https://sequentia.io")) "Sequentia")
-                 " rates server. "
-                 "Please use "
-                 (a (@ (href "/rates")) "our JSON-RPC interface") "."))))))))
-
-;; default -- 404
-(def (default-handler req res)
-  (http-response-write res 404 '(("Content-Type" . "text/plain")) "Page not found."))
-
-(def handlers
-  [["/" root-handler]
-   ["/rates" rates-handler]
-   ["/getfeeexchangerates" getfeeexchangerates-handler]])
-
 ;; 29256 comes from the last bytes of echo -n 'sequentia rates server' | sha256sum
-(define-entry-point (server address: (address "127.0.0.1:29256"))
+(define-entry-point (server address: (address "0.0.0.0:29256"))
   (help: "Start a server"
    getopt: [(option 'address "-a" "--address"
             help: "Address on which to start a server"
-            default: "127.0.0.1:29256")])
+            default: "0.0.0.0:29256")])
   (rates-environment)
   (displayln "Current rates are:")
   (pj (get-rates))
@@ -539,18 +575,6 @@
   (for-each (cut apply http-register-handler httpd <>) handlers)
   ;; Wait for it to end
   (thread-join! httpd))
-
-(define-entry-point (getrates)
-  (help: "Pretty-print rates"
-   getopt: [])
-  (rates-environment)
-  (pj (get-rates)))
-
-(define-entry-point (getfeeexchangerates)
-  (help: "Pretty-print getfeeexchangerates data"
-   getopt: [])
-  (rates-environment)
-  (pj (get-fee-exchange-rates)))
 
 (set-default-entry-point! 'server)
 ;(dump-stack-trace? #f)

@@ -12,7 +12,8 @@
 
    "The present entry defines the special Reference Fee Unit (RFU) is defined.",
    "The default if left undefined is:",
-   {"nAsset": false, "decimals": 8, "fudge_factor": 1, "oracles": {"constant": 1}},
+   {"name": "Reference Fee Unit",
+    "nAsset": false, "decimals": 8, "fudge_factor": 1, "oracles": {"constant": 1}},
 
    "Below, decimals is defined to be 9,",
    "which means 1 RFU comprises exactly 1e9 Reference Fee Atoms (RFA),",
@@ -43,6 +44,7 @@
   ["In the example below, decimals is omitted and defaults to 8, i.e. 1 BTC = 1e8 satoshi",
    "where satoshi is the atom of value, just like in Bitcoin"],
 
+  "name": "Bitcoin",
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000001",
   "oracles":
   {"blockchain.info": "BTC",
@@ -79,6 +81,7 @@
    "the USD token uses cents as atoms, 1e2 atoms per USD, with a 3% incentive,",
    "So that getrates will return 1, and getfeeexchangerates will return 10300000"],
 
+  "name": "United States Dollar",
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000099",
   "decimals": 2,
   "fudge_factor": 1.03,
@@ -89,6 +92,7 @@
  {"__comment__":
   ["ETH purists may have preferred decimals: 18, but there aren't enough information bits",
    "to represent such large numbers on the Bitcoin side."],
+  "name": "Ethereum",
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000002",
   "decimals": 8,
   "oracles":
@@ -101,6 +105,7 @@
  "AAPL":
  {"__comments__":
   ["We'll use decimals: 6 so we have 1/1000000th fractional shares"],
+  "name": "Apple, Inc.",
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000101",
   "decimals": 6,
   "oracles":
@@ -109,6 +114,7 @@
  "TSLA":
  {"__comments__":
   ["We'll use decimals: 4 so we have 1/10000th fractional shares"],
+  "name": "Tesla, Inc.",
   "nAsset": "0000000000000000000000000000000000000000000000000000000000000102",
   "decimals": 4,
   "oracles":
