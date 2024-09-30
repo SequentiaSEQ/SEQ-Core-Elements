@@ -72,10 +72,16 @@ stdenv.mkDerivation rec {
     "--with-boost-libdir=${boost.out}/lib"
     "--disable-bench"
     "--enable-any-asset-fees"
-  ] ++ lib.optionals (!doCheck) [
+    "--without-natpmp"
+    "--without-upnp"
+    "--without-zmq"
+    "--without-usdt"
+  ] ++ (if doCheck then [
+    "--enable-extended-functional-tests"
+    ] else [
     "--disable-tests"
     "--disable-gui-tests"
-  ] ++ lib.optionals (!withWallet) [
+  ]) ++ lib.optionals (!withWallet) [
     "--disable-wallet"
   ] ++ lib.optionals withGui [
     "--with-gui=qt5"
@@ -88,7 +94,7 @@ stdenv.mkDerivation rec {
 
   nativeCheckInputs = [ python3 ];
 
-  doCheck = false;
+  doCheck = true;
 
   checkFlags =
     [ "LC_ALL=en_US.UTF-8" ]
