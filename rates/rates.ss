@@ -558,11 +558,11 @@
 
 
 ;; 29256 comes from the last bytes of echo -n 'sequentia rates server' | sha256sum
-(define-entry-point (server address: (address "127.0.0.1:29256"))
+(define-entry-point (server address: (address "0.0.0.0:29256"))
   (help: "Start a server"
    getopt: [(option 'address "-a" "--address"
             help: "Address on which to start a server"
-            default: "127.0.0.1:29256")])
+            default: "0.0.0.0:29256")])
   (rates-environment)
   (displayln "Current rates are:")
   (pj (get-rates))
