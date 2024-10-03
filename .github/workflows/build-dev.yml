@@ -3,6 +3,8 @@ name: Build-dev
 on:
   workflow_dispatch:
   push:
+    tags:
+      - "*"
     branches:
       - master
       - dev
@@ -32,11 +34,11 @@ jobs:
           sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
           source ~/.bashrc
-        
+
       - name: Install Windows dependencies
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
         run: sudo apt-get install zip g++-mingw-w64-x86-64-posix
-      
+
       - name: Install OSX dependencies
         if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
         run: |
@@ -99,7 +101,7 @@ jobs:
           cp src/elementsd src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-linux/bin/
           cp src/.libs/libelementsconsensus.so* sequentia-dev-linux/lib/
           tar -cvf sequentia-dev-linux.tar --owner=0 --group=0 --numeric-owner sequentia-dev-linux
-      
+
       - name: Prepare artifacts - Windows
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' }}
         run: |
@@ -107,7 +109,7 @@ jobs:
           cp src/elementsd.exe src/elements-cli* src/elements-tx* src/elements-util* src/elements-wallet* sequentia-dev-win64/bin/
           cp src/.libs/libelementsconsensus-0.dll sequentia-dev-win64/lib/
           zip -r sequentia-dev-win64.zip sequentia-dev-win64
-      
+
       - name: Prepare artifacts - OSX
         if: ${{ env.TARGET == 'x86_64-apple-darwin' }}
         run: |
@@ -123,7 +125,7 @@ jobs:
           name: sequentia-dev-${{ env.TARGET }}
           path: |
             *.tar
-      
+
       - name: Publish artifact Windows
         if: ${{ env.TARGET == 'x86_64-w64-mingw32' && ( success() || ( failure() && steps.tests.conclusion == 'failure' ) ) }}
         uses: actions/upload-artifact@v4
