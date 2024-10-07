@@ -154,3 +154,6 @@ dist/
 
 # nix
 result
+
+#vscode
+.vscode

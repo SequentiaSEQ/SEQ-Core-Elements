@@ -1332,7 +1332,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
 
-    g_con_any_asset_fees = gArgs.GetBoolArg("-con_any_asset_fees", false);
+    g_con_any_asset_fees = gArgs.GetBoolArg("-con_any_asset_fees", g_con_any_asset_fees);
     if (g_con_any_asset_fees) {
         // If fees can be paid in any asset, node operators need to be able to specify asset exchange
         // rates using either the static config file and/or the exchange rates RPCs.
