@@ -651,7 +651,7 @@ private:
          EXCLUSIVE_LOCKS_REQUIRED(cs_main, m_pool.cs);
 
     // Compare a package's feerate against minimum allowed.
-    bool CheckFeeRate(size_t package_size, CAmount package_fee, TxValidationState& state) EXCLUSIVE_LOCKS_REQUIRED(::cs_main, m_pool.cs)
+    bool CheckFeeRate(size_t package_size, CAmount package_fee, TxValidationState& state, CAsset& fee_asset) EXCLUSIVE_LOCKS_REQUIRED(::cs_main, m_pool.cs)
     {
         AssertLockHeld(::cs_main);
         AssertLockHeld(m_pool.cs);
@@ -660,8 +660,8 @@ private:
             return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
         }
 
-        if (package_fee < ::minRelayTxFee.GetFee(package_size)) {
-            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size)));
+        if (package_fee < ::minRelayTxFee.GetFee(package_size, fee_asset)) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size, fee_asset)));
         }
         return true;
     }
@@ -890,14 +890,14 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // TODO: For a stronger guarantee, add consensus check for multiple fees and invalidate
     // if fee_map.size() != 1. Alternatively, extend any asset feature to support multiple
     // fee assets.
-    CAsset feeAsset = g_con_any_asset_fees ? 
-        fee_map.begin()->first : 
+    CAsset feeAsset = g_con_any_asset_fees ?
+        fee_map.begin()->first :
         ::policyAsset;
     ws.m_base_fees = fee_map[feeAsset];
 
     // ws.m_modified_fees includes any fee deltas from PrioritiseTransaction
-    ws.m_modified_fees = g_con_any_asset_fees ? 
-        ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() : 
+    ws.m_modified_fees = g_con_any_asset_fees ?
+        ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() :
         ws.m_base_fees;
     m_pool.ApplyDelta(hash, ws.m_modified_fees);
 
@@ -927,7 +927,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     // No transactions are allowed below minRelayTxFee except from disconnected
     // blocks
-    if (!bypass_limits && !CheckFeeRate(ws.m_vsize, ws.m_modified_fees, state)) return false;
+    if (!bypass_limits && !CheckFeeRate(ws.m_vsize, ws.m_modified_fees, state, feeAsset)) return false;
 
     ws.m_iters_conflicting = m_pool.GetIterSet(ws.m_conflicts);
     // Calculate in-mempool ancestors, up to a limit.
