@@ -655,7 +655,7 @@ private:
     {
         AssertLockHeld(::cs_main);
         AssertLockHeld(m_pool.cs);
-        CAmount mempoolRejectFee = m_pool.GetMinFee(gArgs.GetIntArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(package_size);
+        CAmount mempoolRejectFee = m_pool.GetMinFee(gArgs.GetIntArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(package_size, fee_asset);
         if (mempoolRejectFee > 0 && package_fee < mempoolRejectFee) {
             return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
         }
@@ -899,6 +899,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     ws.m_modified_fees = g_con_any_asset_fees ?
         ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() :
         ws.m_base_fees;
+    std::cout << ExchangeRateMap::GetInstance().ConvertAmountToValue(ws.m_base_fees, feeAsset).GetValue() << "|" << ws.m_base_fees << std::endl;
     m_pool.ApplyDelta(hash, ws.m_modified_fees);
 
     // Keep track of transactions that spend a coinbase, which we re-scan
